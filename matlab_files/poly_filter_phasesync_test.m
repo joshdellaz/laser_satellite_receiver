@@ -1,43 +1,46 @@
+%TODO define/know actual meaning of phase offset
+%TODO make better step-by-step graphs on same figure
+%TODO fix "exceeeds number of array elements" in line 68 for some phase
+%offsets
+%TODO fix sampling for phase > pi/2 (might just be incorrect final comparison... shift by 1 bit in input data?)
+
+%parameter definitions
+clear
 close all
-amp = 1;
 freq = 12.5e6;
-phase = 3*pi()/8;
-samplerate = 100e6;
+phase = pi();%in rads
+samplerate = 105e6;
 num_banks = 4;
 rolloff = 0;
 N = samplerate/(2*freq);
-samples_offset = -num_banks*N*phase/(2*pi());
 span = 4;%num of symbols of filter
-sps = 3*N;%num of samples in symbol period
+sps = 3*round(N);%num of samples in symbol period
+initial_n_offset = num_banks*round(N) + 1;
+num_of_data_bits = 100;
 
+%generate square wave w/ 20 bit alternation and then random sequence
+input_data(1:20) = [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1];
+input_data(21:120) = randi([0, 1], num_of_data_bits, 1);
+input_samples = repelem(input_data, 21);%TODO get rid of magic numbers used to get 4.2 sps
+input_samples = circshift(input_samples, -(round(42*phase/(2*pi()))));
+input_samples = downsample(input_samples, 5);
+% figure
+% stem(input_samples(50:99));
 
-sine1 = dsp.SineWave('Frequency', freq, 'PhaseOffset', phase, 'SampleRate', samplerate);
-sine1.SamplesPerFrame = 100;
-input = sine1();
+%print random sequence
+%disp(input_data(21:120));%use num2str to make prettier?
 
-input = upsample(input, 4);
-input = input';
+%correct waveform and apply polyphase filterbank
+input_signal = (input_samples - 0.5).*2;
 
-%default = sqrt cosine. Change?
+input_signal = resample(input_signal, 4, 1, 2, 9);
+
 fircoefs = rcosdesign(rolloff, span, sps);
 
-figure();
-stem(input(1:50));
-title('Oversampled input signal');
-ylabel('r(n)');
-xlabel('n');
-
-figure();
-x = -24:24;
-stem(x, fircoefs);
-title('Unshifted Matched Filter');
-ylabel('Amplitude');
-xlabel('n');
-
-for i = 1:(2*N)
+for i = 0:(2*round(N))
     for j = 1:num_banks
         
-        shiftedinput = circshift(input,-(i*num_banks + j + samples_offset));
+        shiftedinput = circshift(input_signal,-(i*num_banks + j + initial_n_offset));
         bankout = abs(shiftedinput(1:49).*fircoefs);
         banksum(i*num_banks + j) = sum(bankout);
 
@@ -54,4 +57,42 @@ title('Sum of shifted filter output (x(n)*h(n-k))');
 ylabel('x(n)*h(n-k)');
 xlabel('k/N (fraction of symbol)');
 
+%find phase offset
+[maxval, index] = min(banksum);%use averaging?
+best_sample = round(index/num_banks);
+best_bank = mod(index, num_banks);
+n_offset =  best_sample*round(N) + best_bank;
+phase = (n_offset/(round(N)*num_banks))*pi() - pi()/2;%assuming 1 symbol = pi phase
 
+%do the sampling
+for i = 0:(20+num_of_data_bits - 1)
+    if input_signal(round((i)*N*num_banks) + n_offset) >= 0 %rounding issues due to N?
+        output(i+1) = 1;
+        selected_points_x(i+1) = round((i)*N*num_banks) + n_offset;%for later infographic
+    else
+        output(i+1) = 0;
+        selected_points_x(i+1) = round((i)*N*num_banks) + n_offset;%for later infographic
+    end
+end
+
+%plot selected sample point & print phase offset
+disp(output);
+figure
+hold on
+stem(input_signal(1:800));
+stem(selected_points_x(1:48), (output(1:48)-0.5).*2, 'LineWidth',2);
+legend('Input signal (Oversampled)', 'Selected data sample points');
+hold off
+disp("Phase offset (rads) = ");
+disp(phase);
+
+%print decoded sequence
+disp("Decoded sequence = ");
+disp(output);
+
+%compare decoded sequence
+if(isequal(input_data, output))
+    disp("All bits successfully sampled");
+else
+    disp("Unsuccessful sampling");
+end

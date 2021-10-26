@@ -1,14 +1,10 @@
-%TODO define/know actual meaning of phase offset
-%TODO make better step-by-step graphs on same figure
-%TODO fix "exceeeds number of array elements" in line 68 for some phase
-%offsets
-%TODO fix sampling for phase > pi/2 (might just be incorrect final comparison... shift by 1 bit in input data?)
+%TODO define/know actual meaning of phase offset - make sure input and calc
+%phase are same for cases > pi/2
 
 %parameter definitions
 clear
-close all
 freq = 12.5e6;
-phase = pi();%in rads
+phase = pi()/4;%in rads
 samplerate = 105e6;
 num_banks = 4;
 rolloff = 0;
@@ -24,8 +20,21 @@ input_data(21:120) = randi([0, 1], num_of_data_bits, 1);
 input_samples = repelem(input_data, 21);%TODO get rid of magic numbers used to get 4.2 sps
 input_samples = circshift(input_samples, -(round(42*phase/(2*pi()))));
 input_samples = downsample(input_samples, 5);
-% figure
-% stem(input_samples(50:99));
+if phase > pi()/2%if shift > half of sample, first sample is shifted by one
+    input_data = circshift(input_data, -1);
+elseif phase >= 3*pi()/2
+    input_data = circshift(input_data, -2);
+end
+
+
+disp("Input Phase offset (rads) = ");
+disp(phase);
+
+figure
+tiledlayout(3,1)
+nexttile
+stem(input_samples(2:51));
+title(["Output of ADC w/ Phase offset = " phase]);
 
 %print random sequence
 %disp(input_data(21:120));%use num2str to make prettier?
@@ -34,6 +43,10 @@ input_samples = downsample(input_samples, 5);
 input_signal = (input_samples - 0.5).*2;
 
 input_signal = resample(input_signal, 4, 1, 2, 9);
+
+nexttile
+stem(input_signal(1:200));
+title('Upsampled Signal');
 
 fircoefs = rcosdesign(rolloff, span, sps);
 
@@ -47,15 +60,15 @@ for i = 0:(2*round(N))
     end
 end
 
-filterphaseoffset = (0:15)./15;
-filterphaseoffset(16:31) = 1+(0:15)./15;
+% filterphaseoffset = (0:15)./15;
+% filterphaseoffset(16:31) = 1+(0:15)./15;
 
 
-figure
-stem(filterphaseoffset, banksum(1:31));
-title('Sum of shifted filter output (x(n)*h(n-k))');
-ylabel('x(n)*h(n-k)');
-xlabel('k/N (fraction of symbol)');
+% figure
+% stem(filterphaseoffset, banksum(1:31));
+% title('Sum of shifted filter output (x(n)*h(n-k))');
+% ylabel('x(n)*h(n-k)');
+% xlabel('k/N (fraction of symbol)');
 
 %find phase offset
 [maxval, index] = min(banksum);%use averaging?
@@ -76,19 +89,21 @@ for i = 0:(20+num_of_data_bits - 1)
 end
 
 %plot selected sample point & print phase offset
-disp(output);
-figure
-hold on
-stem(input_signal(1:800));
-stem(selected_points_x(1:48), (output(1:48)-0.5).*2, 'LineWidth',2);
+nexttile
+hold on 
+stem(input_signal(1:200));
+stem(selected_points_x(1:12), (output(1:12)-0.5).*2, 'LineWidth',2);
 legend('Input signal (Oversampled)', 'Selected data sample points');
+title('Optimal Sampling Points');
 hold off
-disp("Phase offset (rads) = ");
-disp(phase);
+disp("Calculated Phase offset (rads) = ");
+disp(abs(phase));
 
 %print decoded sequence
+disp("Generated Input Data = ");
+disp(num2str(input_data));
 disp("Decoded sequence = ");
-disp(output);
+disp(num2str(output));
 
 %compare decoded sequence
 if(isequal(input_data, output))

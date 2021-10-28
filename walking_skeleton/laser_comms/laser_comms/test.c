@@ -28,4 +28,4 @@ bool fullSend(void) {
 
 
 
-free(data);
+free(data);//change pointer name

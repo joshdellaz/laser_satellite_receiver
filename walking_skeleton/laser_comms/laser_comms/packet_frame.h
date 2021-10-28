@@ -1,6 +1,8 @@
 #include <stdint.h>
 
-#define DATA_LENGTH_BYTES 256
+#define PACKET_DATA_LENGTH_BYTES 256
+#define FEC_SCHEME_FIELD_SIZE 1//[bytes]. Make this a static variable instead of macro?
+
 
 typedef enum fec_scheme_type {
 

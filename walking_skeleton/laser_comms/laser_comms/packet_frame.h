@@ -1,8 +1,8 @@
 #include <stdint.h>
 
 #define PACKET_DATA_LENGTH_BYTES 256
-#define FEC_SCHEME_FIELD_SIZE 1//[bytes]. Make this a static variable instead of macro?
-
+#define NUM_PACKETS_LENGTH_BYTES 2
+#define CRC_DATA_LENGTH_BYTES 4
 
 typedef enum fec_scheme_type {
 
@@ -11,7 +11,7 @@ typedef enum fec_scheme_type {
 
 }fec_scheme_type;
 
-typedef struct packet_t {
+typedef struct packet_t {//add #IF's for num_packet size
 
 	fec_scheme_type fec_scheme;
 	uint16_t total_num_packets;//These necessary?

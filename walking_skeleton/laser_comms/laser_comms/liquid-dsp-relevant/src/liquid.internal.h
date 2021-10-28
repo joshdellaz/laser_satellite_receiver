@@ -33,7 +33,7 @@
 #define __LIQUID_INTERNAL_H__
 
 // Configuration file
-#include "config.h"
+//#include "config.h"
 
 #include <stdarg.h>
 #include <complex.h>

@@ -18,5 +18,46 @@
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="packet_frame.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\crc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\interleaver.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\random\src\scramble.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\sequence\src\msequence.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="polyphase_filterbank_sync.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="samples_to_bits.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\sequence\src\bsequence.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="liquid_condensed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="packet_frame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="liquid-dsp-relevant\examples\liquid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="liquid-dsp-relevant\src\liquid.internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -72,6 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\examples;D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -139,7 +140,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\crc.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\interleaver.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\random\src\scramble.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\sequence\src\bsequence.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\sequence\src\msequence.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="packet_frame.c" />
+    <ClCompile Include="polyphase_filterbank_sync.c" />
+    <ClCompile Include="samples_to_bits.c" />
+    <ClCompile Include="test.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="liquid-dsp-relevant\examples\liquid.h" />
+    <ClInclude Include="liquid-dsp-relevant\src\liquid.internal.h" />
+    <ClInclude Include="liquid_condensed.h" />
+    <ClInclude Include="packet_frame.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

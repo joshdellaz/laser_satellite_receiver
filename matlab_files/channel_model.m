@@ -4,10 +4,15 @@
 % The burst erasures are made using a 4-state markov model based on the 
 % paper from https://ieeexplore.ieee.org/document/5683891 
 
+% when entering parameters, please ensure the time between samples is
+% greater than the min burst length by an integer factor
 clear all;
-sPerBit = 10; % should oversample to emulate a continuous signal
+bitRate = 1000; % bits per second
+chnlCyc = 0.05; % min burst length in seconds
+sampRate = 10000; % sample per second, oversample to emulate analog signal
 numBits = 1000000; % number of randomly generated bits
 SNR = 10; % signal to noise ratio in dB, used for Gaussian noise
+sPerBit = sampRate/bitRate;
 
 % Probabilities associated with certain state transitions in the Markov
 % model, based on the paper linked above 
@@ -44,11 +49,11 @@ probM(4,4) = 1 - P_a2;
 % random bits (associated with OOK signal power):
 data = randsrc(numBits,1,[1,0]);
 % simulation of analog signal by oversampling:
-cleanSig = repelem(data, sPerBit); 
+cleanSig = repelem(data, sPerBit);
 % addition of Gaussian noise:
 outSig = awgn(cleanSig, SNR); 
 % array for the state of the channel during each bit:
-chnlState = zeros(numBits,1); 
+chnlState = zeros(numBits/(bitRate*chnlCyc),1); 
 initProb = rand(); % for the initial state of the channel
 if (initProb <= 0.25)
     chnlState(1,1) = 1;
@@ -62,8 +67,8 @@ end
 
 % burstEr for the erased bits (bursts) and burstsHist for testing the
 % markov model (burst length probability density)
-burstEr = zeros(numBits,1);
-burstsHist = zeros(numBits,1);
+burstEr = zeros(numBits/(bitRate*chnlCyc),1);
+burstsHist = zeros(numBits/(bitRate*chnlCyc),1);
 burstLen = 0; % used for keeping track of the length of the burst
 
 % cumulative sum of the transition matrix which will be used along with a
@@ -86,10 +91,10 @@ for i = 2 : length(chnlState)
         burstLen = 0;
     end
 end % the first index is missing from the burst length calculation, which 
-% is ok due to the relative large # of iterations (bits)
+% is ok due to the relatively large # of iterations (bits)
 
 % oversample the bursts by the same amount as bits for analog emulation:
-burstEr = repelem(burstEr,sPerBit); 
+burstEr = repelem(burstEr,sPerBit*chnlCyc*bitRate); 
 % wherever there is a burst, the output power level is set to 5 which is
 % significantly above the noisy "1" bits. This is for proper distinction of
 % erasure vs noise
@@ -98,14 +103,15 @@ outSig(burstEr > 0) = 5;
 % for checking the probability ditrubution of burst lengths... needs to 
 % follow the results from this paper: (which it does)
 % https://ieeexplore.ieee.org/document/5683891
-burstsHist = burstsHist(burstsHist ~= 0); 
+burstsHist = chnlCyc * burstsHist(burstsHist ~= 0); 
 figure();
-h = histogram(burstsHist,[0.5:1:40.5],'Normalization','probability');
+h = histogram(burstsHist, chnlCyc*[0.5:1:40.5], 'Normalization','probability');
 
 % Power signal plots of the 20 middle bits, with and without the expected
 % detriorations (Gaussian noise + Burst erasures)
 figure();
-t = 1 : length(data)*sPerBit;
+t = 1 : numBits*sPerBit;
+t = t / (bitRate*sPerBit);
 plot(t,[cleanSig outSig])
-axis([sPerBit*numBits/2 sPerBit*(50 + numBits/2) -1.0 2.0])
+axis([(numBits/2)/bitRate, (80 + numBits/2)/bitRate, -1.0, 2.0])
 legend('Original Signal','Received Signal')

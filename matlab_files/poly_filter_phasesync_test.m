@@ -1,14 +1,12 @@
-%TODO define/know actual meaning of phase offset - make sure input and calc
-%phase are same for cases > pi/2
+%TODO define/know actual meaning of phase offset
+%TODO implement bitrate shift as parameter
 
 %parameter definitions
 clear
-freq = 12.5e6;
-phase = pi()/4;%in rads
-samplerate = 105e6;
+phase = 0;%in rads
 num_banks = 4;
 rolloff = 0;
-N = samplerate/(2*freq);
+N = 4.2;%Can't have more than 1 decimal!!! Number of samples per bit
 span = 4;%num of symbols of filter
 sps = 3*round(N);%num of samples in symbol period
 initial_n_offset = num_banks*round(N) + 1;
@@ -17,58 +15,48 @@ num_of_data_bits = 100;
 %generate square wave w/ 20 bit alternation and then random sequence
 input_data(1:20) = [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1];
 input_data(21:120) = randi([0, 1], num_of_data_bits, 1);
-input_samples = repelem(input_data, 21);%TODO get rid of magic numbers used to get 4.2 sps
-input_samples = circshift(input_samples, -(round(42*phase/(2*pi()))));
-input_samples = downsample(input_samples, 5);
-if phase > pi()/2%if shift > half of sample, first sample is shifted by one
+
+%Apply appropriate sample rate
+input_samples = repelem(input_data, N*10);
+input_samples = circshift(input_samples, -(round(10*N*phase/(2*pi()))));
+input_samples = downsample(input_samples, 10);
+
+%if shift > half of sample, first sample is shifted by one
+if phase > pi()/2
     input_data = circshift(input_data, -1);
 elseif phase >= 3*pi()/2
     input_data = circshift(input_data, -2);
 end
 
-
+%Print some useful stuff
 disp("Input Phase offset (rads) = ");
 disp(phase);
-
 figure
 tiledlayout(3,1)
 nexttile
 stem(input_samples(2:51));
 title(["Output of ADC w/ Phase offset = " phase]);
 
-%print random sequence
-%disp(input_data(21:120));%use num2str to make prettier?
-
-%correct waveform and apply polyphase filterbank
+%correct waveform for proper processing
 input_signal = (input_samples - 0.5).*2;
-
 input_signal = resample(input_signal, 4, 1, 2, 9);
 
+%Print some useful stuff
 nexttile
 stem(input_signal(1:200));
 title('Upsampled Signal');
 
+%Create and apply polyphase filterbank
 fircoefs = rcosdesign(rolloff, span, sps);
-
 for i = 0:(2*round(N))
     for j = 1:num_banks
         
         shiftedinput = circshift(input_signal,-(i*num_banks + j + initial_n_offset));
-        bankout = abs(shiftedinput(1:49).*fircoefs);
+        bankout = abs(shiftedinput(1:(1+sps*span)).*fircoefs);
         banksum(i*num_banks + j) = sum(bankout);
 
     end
 end
-
-% filterphaseoffset = (0:15)./15;
-% filterphaseoffset(16:31) = 1+(0:15)./15;
-
-
-% figure
-% stem(filterphaseoffset, banksum(1:31));
-% title('Sum of shifted filter output (x(n)*h(n-k))');
-% ylabel('x(n)*h(n-k)');
-% xlabel('k/N (fraction of symbol)');
 
 %find phase offset
 [maxval, index] = min(banksum);%use averaging?

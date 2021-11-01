@@ -723,6 +723,17 @@ D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_
 D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\examples\liquid.h(1103): message : see declaration of 'LIQUID_CRC_NONE'
 D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\examples\liquid.h(1103,20): fatal error C1003: error count exceeds 100; stopping compilation
   test.c
-D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(10,27): warning C4047: '=': 'uint8_t *' differs in levels of indirection from 'int'
-D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(10,27): error C2106: '=': left operand must be l-value
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(19,20): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(38,8): warning C4013: 'getCRC' undefined; assuming extern returning int
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(41,16): warning C4013: 'assemblePacket' undefined; assuming extern returning int
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(44,15): warning C4013: 'assembleFrame' undefined; assuming extern returning int
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(45,20): warning C4018: '<': signed/unsigned mismatch
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(55,18): warning C4013: 'disassembleFrame' undefined; assuming extern returning int
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(57,19): warning C4013: 'disassemblePacket' undefined; assuming extern returning int
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(59,14): warning C4013: 'checkCRC' undefined; assuming extern returning int
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(52,11): warning C4101: 'rxpacket_vector': unreferenced local variable
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(53,15): warning C4101: 'rxpacket_length': unreferenced local variable
   Generating Code...
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(41): error C4700: uninitialized local variable 'packet_vector' used
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(44): error C4700: uninitialized local variable 'frame_vector' used
+D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\test.c(59): error C4700: uninitialized local variable 'rxpacket_data' used

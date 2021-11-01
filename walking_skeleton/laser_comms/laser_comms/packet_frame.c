@@ -25,10 +25,25 @@ bool removeFEC() {
 	return 0;
 }
 
+bool checkCRC(packet_t* received_packet) {
+
+	crc_scheme   check = LIQUID_CRC_32; // error-detection scheme
+	uint32_t calcd_crc = (uint32_t)crc_generate_key(check, received_packet->data, PACKET_DATA_LENGTH_BYTES);
+
+	if (received_packet->crc != calcd_crc) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+	
+}
+
+
 bool getCRC(packet_t * packet) {//Note that deviating from crc32 size would require code to be changed across project. Not adaptable currently
 
 	crc_scheme   check = LIQUID_CRC_32; // error-detection scheme
-	packet->crc = (uint32_t)crc_generate_key(check, packet->data, DATA_LENGTH_BYTES);
+	packet->crc = (uint32_t)crc_generate_key(check, packet->data, PACKET_DATA_LENGTH_BYTES);
 
 	return 0;
 }
@@ -87,6 +102,13 @@ bool getMaximumLengthSequencePreamble(uint8_t * mls_preamble, unsigned int *mls_
 	return 0;
 }
 
+//return = 
+bool syncFrameUsingMLSPreamble() {
+
+
+
+}
+
 
 //Output format = byte array of bits to be transmitted where lowest index should be transmitted first
 //ENSURE *frame and *packet are freed after use!
@@ -119,7 +141,13 @@ bool assembleFrame(uint8_t * frame, , unsigned int * frame_length, uint8_t * pac
 }
 
 
-bool disassembleFrame(uint8_t* frame, uint8_t* packet) {//Just checks MLS autocorrelation, determines start of packet, and strips preamble
+bool disassembleFrame(uint8_t* frame, , unsigned int* frame_length, uint8_t* packet, unsigned int packet_length) {//ADD MALLOC
+	//Just checks MLS autocorrelation, determines start of packet, and strips preamble
+
+	//Placeholder (REPLACE):
+	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
+		packet[i] = frame[(&frame_length - PACKET_DATA_LENGTH_BYTES) + i];//1 offset due to indexing?
+	}
 
 	return 0;
 }
@@ -154,11 +182,39 @@ bool assemblePacket(packet_t *packet_data, uint8_t *packet, unsigned int *packet
 	return 0;
 }
 
-bool disassemblePacket() {
+bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int* packet_length) {//ADD MALLOC
+
+	uint32_t temp_crc = 0;
+	uint32_t mask = 0;
+	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
+		mask = 0;
+		mask = 0xFF << 8*i;
+		temp_crc = temp_crc | (mask & packet[&packet_length-1 -i]);
+	}
+	packet_data->crc = temp_crc;
+
+	//TODO BELOW
+
+	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
+		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i));//needs mask? Not sure
+	}
+
+	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
+		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i));//needs mask? Not sure
+	}
+
+	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
+		packet[1 + 2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
+	}
+
 	return 0;
 }
 
-bool fragmentDataBufferIntoFrames() {
+bool fragmentDataBufferIntoFrames(uint8_t * input, uint8_t * output) {
 	//TODO wait until later
 	//This is where the packet_t->data should get malloc'd, I think.
+}
+
+bool assembleFramesIntoDataBuffer(uint8_t* input, uint8_t* output) {
+	//TODO wait until later
 }

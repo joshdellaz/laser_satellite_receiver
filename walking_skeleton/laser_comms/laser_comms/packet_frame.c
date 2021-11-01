@@ -1,4 +1,4 @@
-#include "liquid_condensed.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -13,13 +13,13 @@
 
 //Move these into separate file? Considering having "utils" file containing smaller functions, and keeping the higher-level stuff here
 
-bool applyFEC() {
+bool applyFEC(void) {
 	//rs & other liquid implementations are easy to implement.. openFEC (LDPC) is more complex
 	
 	return 0;
 }
 
-bool removeFEC() {
+bool removeFEC(void) {
 
 
 	return 0;
@@ -48,22 +48,22 @@ bool getCRC(packet_t * packet) {//Note that deviating from crc32 size would requ
 	return 0;
 }
 
-bool applyScrambling() {
+bool applyScrambling(void) {
 
 	return 0;
 }
 
-bool removeScrambling() {
+bool removeScrambling(void) {
 
 	return 0;
 }
 
-bool applyInterleaving() {
+bool applyInterleaving(void) {
 
 	return 0;
 }
 
-bool removeInterleaving() {
+bool removeInterleaving(void) {
 
 	return 0;
 }
@@ -78,17 +78,17 @@ bool getMaximumLengthSequencePreamble(uint8_t * mls_preamble, unsigned int *mls_
 	unsigned int repititions = 5;	//Number of MLS repititions in preamble
 
 	// create and initialize m-sequence
-	msequence_s ms = msequence_create_default(m);//Fix these struct name definitions... Liquid maybe borked?
+	msequence ms = msequence_create_default(m);//Fix these struct name definitions... Liquid maybe borked?
 	//msequence_print(ms);
 	unsigned int n = msequence_get_length(ms);
 
 	// create and initialize first binary sequence on m-sequence
-	bsequence_s mls = bsequence_create(n);
+	bsequence mls = bsequence_create(n);
 	bsequence_init_msequence(mls, ms);
 
 
 	//Repeat specified number of times and move to new array
-	mls_preamble = (uint8_t*)malloc(repititions * (mls->s_len));
+	mls_preamble = (uint8_t*)malloc((repititions * (mls->s_len)));
 	for (int i = 0; i < repititions; i++) {
 		for (int j = 0; j < (mls->s_len); j++) {
 			mls_preamble[i*(mls->s_len) + j] = (mls->s)[j];
@@ -103,7 +103,7 @@ bool getMaximumLengthSequencePreamble(uint8_t * mls_preamble, unsigned int *mls_
 }
 
 //return = 
-bool syncFrameUsingMLSPreamble() {
+bool syncFrameUsingMLSPreamble(void) {
 
 
 
@@ -112,7 +112,7 @@ bool syncFrameUsingMLSPreamble() {
 
 //Output format = byte array of bits to be transmitted where lowest index should be transmitted first
 //ENSURE *frame and *packet are freed after use!
-bool assembleFrame(uint8_t * frame, , unsigned int * frame_length, uint8_t * packet, unsigned int packet_length) {//Basically just adds preamble
+bool assembleFrame(uint8_t * frame, unsigned int * frame_length, uint8_t * packet, unsigned int packet_length) {//Basically just adds preamble
 	
 	//Add 10101010... to start
 	unsigned int alternating_preamble_length = 2;
@@ -122,7 +122,7 @@ bool assembleFrame(uint8_t * frame, , unsigned int * frame_length, uint8_t * pac
 
 	//Add MLS preamble next
 	unsigned int mls_preamble_length = 0;
-	uint8_t* mls_preamble;
+	uint8_t* mls_preamble = NULL;
 
 	getMaximumLengthSequencePreamble(mls_preamble, mls_preamble_length);
 	for (int i = 0; i < mls_preamble_length; i++) {
@@ -141,12 +141,12 @@ bool assembleFrame(uint8_t * frame, , unsigned int * frame_length, uint8_t * pac
 }
 
 
-bool disassembleFrame(uint8_t* frame, , unsigned int* frame_length, uint8_t* packet, unsigned int packet_length) {//ADD MALLOC
+bool disassembleFrame(uint8_t* frame, unsigned int* frame_length, uint8_t* packet, unsigned int packet_length) {//ADD MALLOC
 	//Just checks MLS autocorrelation, determines start of packet, and strips preamble
 
 	//Placeholder (REPLACE):
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
-		packet[i] = frame[(&frame_length - PACKET_DATA_LENGTH_BYTES) + i];//1 offset due to indexing?
+		packet[i] = &frame[(*frame_length - PACKET_DATA_LENGTH_BYTES) + i];//1 offset due to indexing?
 	}
 
 	return 0;
@@ -159,16 +159,16 @@ bool assemblePacket(packet_t *packet_data, uint8_t *packet, unsigned int *packet
 
 	packet_length = (sizeof(packet_t) - 1) + PACKET_DATA_LENGTH_BYTES;
 
-	packet = (uint8_t*)malloc(packet_length* sizeof(uint8_t));
+	packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
 
-	packet[0] = packet_data->fec_scheme;
+	packet[0] = packet_data->selected_fec_scheme;
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES) - 1 - i));//needs mask? Not sure
+		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES) - 1 - i);//needs mask? Not sure
 	}
 	
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i));//needs mask? Not sure
+		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i);//needs mask? Not sure
 	}
 
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
@@ -176,7 +176,7 @@ bool assemblePacket(packet_t *packet_data, uint8_t *packet, unsigned int *packet
 	}
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		packet[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES)-1 - i));//needs mask? Not sure
+		packet[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES)-1 - i);//needs mask? Not sure
 	}
 
 	return 0;
@@ -189,18 +189,18 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int* pac
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
 		mask = 0;
 		mask = 0xFF << 8*i;
-		temp_crc = temp_crc | (mask & packet[&packet_length-1 -i]);
+		temp_crc = temp_crc | (mask & packet[*packet_length-1 -i]);
 	}
 	packet_data->crc = temp_crc;
 
 	//TODO BELOW
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i));//needs mask? Not sure
+		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i);//needs mask? Not sure
 	}
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i));//needs mask? Not sure
+		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i);//needs mask? Not sure
 	}
 
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {

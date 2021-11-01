@@ -28,17 +28,17 @@ bool fullSendTest(void) {
 	//Is the following order correct?
 
 	packet_t packet_data;//malloc this?
-	packet_data.fec_scheme = LDPC;
-	uint8_t* packet_vector;
+	packet_data.selected_fec_scheme = LDPC;
+	uint8_t* packet_vector = NULL;
 	unsigned int packet_length;
 	unsigned int frame_length;
-	uint8_t* frame_vector;
+	uint8_t* frame_vector = NULL;
 
 	packet_data.data = generateRandPacket();
-	getCRC(packet_data);
+	getCRC(&packet_data);
 	//applyFEC(packet)//does this act on the entire packet? Assuming no.
 	//applyInterleaving()
-	assemblePacket(packet_data, packet_vector, &packet_length);//not sure if this should be before or after interleaving
+	assemblePacket(&packet_data, packet_vector, &packet_length);//not sure if this should be before or after interleaving
 	free(packet_data.data);
 	//applyScrambling()
 	assembleFrame(frame_vector, &frame_length, packet_vector, packet_length);
@@ -52,11 +52,11 @@ bool fullSendTest(void) {
 	uint8_t* rxpacket_vector;
 	unsigned int rxpacket_length;
 
-	disassembleFrame();
+	//disassembleFrame();
 
-	disassemblePacket();
+	//disassemblePacket();
 
-	if (checkCRC(rxpacket_data)) {
+	if (checkCRC(&rxpacket_data)) {
 		printf("CRC Doesn't Match!");
 	}
 	else {

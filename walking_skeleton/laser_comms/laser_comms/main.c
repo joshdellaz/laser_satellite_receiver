@@ -1,3 +1,5 @@
-int main(void) {
+#include "test.h"
 
+int main(void) {
+	fullSendTest();
 }

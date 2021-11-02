@@ -161,6 +161,7 @@
     <ClInclude Include="liquid-dsp-relevant\src\liquid.internal.h" />
     <ClInclude Include="liquid_condensed.h" />
     <ClInclude Include="packet_frame.h" />
+    <ClInclude Include="test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

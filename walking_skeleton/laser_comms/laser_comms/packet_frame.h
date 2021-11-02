@@ -17,7 +17,7 @@ typedef struct packet_t {//add #IF's for num_packet size
 	fec_scheme_type selected_fec_scheme;
 	uint16_t total_num_packets;//These necessary?
 	uint16_t current_packet_num;
-	uint8_t* data; //Should we indidcate data length here?
+	uint8_t *data; //Should we indidcate data length here?
 	uint32_t crc;
 
 } packet_t;//TODO: add field for FEC additional stuff?

@@ -88,13 +88,13 @@ bool getMaximumLengthSequencePreamble(uint8_t * mls_preamble, unsigned int *mls_
 
 
 	//Repeat specified number of times and move to new array
-	mls_preamble = (uint8_t*)malloc((repititions * (mls->s_len)));
-	for (int i = 0; i < repititions; i++) {
-		for (int j = 0; j < (mls->s_len); j++) {
-			mls_preamble[i*(mls->s_len) + j] = (mls->s)[j];
+	mls_preamble = (uint8_t*)malloc(((mls->s_len))* repititions);
+	for (unsigned int i = 0; i < repititions; i++) {
+		for (unsigned int j = 0; j < (mls->s_len); j++) {
+			mls_preamble[i*(mls->s_len) + j] = (uint8_t)((mls->s)[j]);
 		}
 	}
-	mls_preamble_length = repititions*(mls->s_len);
+	*mls_preamble_length = repititions*(mls->s_len);
 
 	// clean up memory
 	bsequence_destroy(mls);
@@ -106,7 +106,7 @@ bool getMaximumLengthSequencePreamble(uint8_t * mls_preamble, unsigned int *mls_
 bool syncFrameUsingMLSPreamble(void) {
 
 
-
+	return 0;
 }
 
 
@@ -116,7 +116,7 @@ bool assembleFrame(uint8_t * frame, unsigned int * frame_length, uint8_t * packe
 	
 	//Add 10101010... to start
 	unsigned int alternating_preamble_length = 2;
-	for (int i = 0; i < alternating_preamble_length; i++) {
+	for (unsigned int i = 0; i < alternating_preamble_length; i++) {
 		frame[i] = 0b10101010;
 	}
 
@@ -124,18 +124,18 @@ bool assembleFrame(uint8_t * frame, unsigned int * frame_length, uint8_t * packe
 	unsigned int mls_preamble_length = 0;
 	uint8_t* mls_preamble = NULL;
 
-	getMaximumLengthSequencePreamble(mls_preamble, mls_preamble_length);
-	for (int i = 0; i < mls_preamble_length; i++) {
+	getMaximumLengthSequencePreamble(mls_preamble, &mls_preamble_length);
+	for (unsigned int i = 0; i < mls_preamble_length; i++) {
 		frame[alternating_preamble_length + i] = mls_preamble[i];
 	}
 	free(mls_preamble);
 
 	//Add packet data
-	for (int i = 0; i < packet_length; i++) {
+	for (unsigned int i = 0; i < packet_length; i++) {
 		frame[alternating_preamble_length + mls_preamble_length + i] = packet[i];
 	}
 
-	frame_length = alternating_preamble_length + mls_preamble_length + packet_length;
+	*frame_length = alternating_preamble_length + mls_preamble_length + packet_length;
 
 	return 0;
 }
@@ -146,7 +146,7 @@ bool disassembleFrame(uint8_t* frame, unsigned int* frame_length, uint8_t* packe
 
 	//Placeholder (REPLACE):
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
-		packet[i] = &frame[(*frame_length - PACKET_DATA_LENGTH_BYTES) + i];//1 offset due to indexing?
+		packet[i] = frame[(*frame_length - PACKET_DATA_LENGTH_BYTES) + i];//1 offset due to indexing?
 	}
 
 	return 0;
@@ -157,18 +157,18 @@ bool disassembleFrame(uint8_t* frame, unsigned int* frame_length, uint8_t* packe
 bool assemblePacket(packet_t *packet_data, uint8_t *packet, unsigned int *packet_length) {//much much easier if fields n*8 bits?
 	
 
-	packet_length = (sizeof(packet_t) - 1) + PACKET_DATA_LENGTH_BYTES;
+	*packet_length = (sizeof(packet_t) - 1) + PACKET_DATA_LENGTH_BYTES;
 
 	packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
 
 	packet[0] = packet_data->selected_fec_scheme;
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES) - 1 - i);//needs mask? Not sure
+		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES - 1 - i));//needs mask? Not sure
 	}
 	
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i);//needs mask? Not sure
+		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));//needs mask? Not sure
 	}
 
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
@@ -176,7 +176,7 @@ bool assemblePacket(packet_t *packet_data, uint8_t *packet, unsigned int *packet
 	}
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		packet[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES)-1 - i);//needs mask? Not sure
+		packet[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));//needs mask? Not sure
 	}
 
 	return 0;
@@ -196,11 +196,11 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int* pac
 	//TODO BELOW
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i);//needs mask? Not sure
+		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8 * (NUM_PACKETS_LENGTH_BYTES-1 - i));//needs mask? Not sure
 	}
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES)-1 - i);//needs mask? Not sure
+		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES-1 - i));//needs mask? Not sure
 	}
 
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
@@ -213,8 +213,11 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int* pac
 bool fragmentDataBufferIntoFrames(uint8_t * input, uint8_t * output) {
 	//TODO wait until later
 	//This is where the packet_t->data should get malloc'd, I think.
+	return 0;
 }
 
 bool assembleFramesIntoDataBuffer(uint8_t* input, uint8_t* output) {
 	//TODO wait until later
+
+	return 0;
 }

@@ -112,41 +112,51 @@ bool syncFrameUsingMLSPreamble(void) {
 
 //Output format = byte array of bits to be transmitted where lowest index should be transmitted first
 //ENSURE *frame and *packet are freed after use!
-bool assembleFrame(uint8_t * frame, unsigned int * frame_length, uint8_t * packet, unsigned int packet_length) {//Basically just adds preamble
+bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * packet, unsigned int packet_length) {//Basically just adds preamble
 	
-	//Add 10101010... to start
-	unsigned int alternating_preamble_length = 2;
-	for (unsigned int i = 0; i < alternating_preamble_length; i++) {
-		frame[i] = 0b10101010;
-	}
+
+	
 
 	//Add MLS preamble next
+	unsigned int alternating_preamble_length = 2;
 	unsigned int mls_preamble_length = 0;
 	uint8_t* mls_preamble = NULL;
 
 	getMaximumLengthSequencePreamble(mls_preamble, &mls_preamble_length);
+
+	*frame_length = alternating_preamble_length + mls_preamble_length + packet_length;
+	*frame = (uint8_t*)malloc((*frame_length) * sizeof(uint8_t));
+
+	//Add 10101010... to start
+
+	for (unsigned int i = 0; i < alternating_preamble_length; i++) {
+		(*frame)[i] = 0b10101010;
+	}
+
 	for (unsigned int i = 0; i < mls_preamble_length; i++) {
-		frame[alternating_preamble_length + i] = mls_preamble[i];
+		(*frame)[alternating_preamble_length + i] = 0b10101010;//for easy testing before MLS is working
+		//frame[alternating_preamble_length + i] = mls_preamble[i];
 	}
 	free(mls_preamble);
 
 	//Add packet data
 	for (unsigned int i = 0; i < packet_length; i++) {
-		frame[alternating_preamble_length + mls_preamble_length + i] = packet[i];
+		(*frame)[alternating_preamble_length + mls_preamble_length + i] = packet[i];
 	}
 
-	*frame_length = alternating_preamble_length + mls_preamble_length + packet_length;
+	
 
 	return 0;
 }
 
+//Just checks MLS autocorrelation, determines start of packet, and strips preamble
+bool disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_length) {
 
-bool disassembleFrame(uint8_t* frame, unsigned int* frame_length, uint8_t* packet, unsigned int packet_length) {//ADD MALLOC
-	//Just checks MLS autocorrelation, determines start of packet, and strips preamble
+	*packet = (uint8_t*)malloc(PACKET_DATA_LENGTH_BYTES);
 
-	//Placeholder (REPLACE):
+	//Placeholder (REPLACE WITH START OF PACKET SYNC EVENTUALLY):
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
-		packet[i] = frame[(*frame_length - PACKET_DATA_LENGTH_BYTES) + i];//1 offset due to indexing?
+		(*packet)[i] = frame[frame_length - PACKET_DATA_LENGTH_BYTES - (2*NUM_PACKETS_LENGTH_BYTES) - 1 + i];
 	}
 
 	return 0;
@@ -154,57 +164,68 @@ bool disassembleFrame(uint8_t* frame, unsigned int* frame_length, uint8_t* packe
 
 //Returns pointer to malloc'd packet that must be free'd later. Also returns packet_length
 //Macro usage probably okay because we ddont expect to change any of those values dynamically
-bool assemblePacket(packet_t *packet_data, uint8_t *packet, unsigned int *packet_length) {//much much easier if fields n*8 bits?
+bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packet_length) {//much much easier if fields n*8 bits?
 	
 
 	*packet_length = (sizeof(packet_t) - 1) + PACKET_DATA_LENGTH_BYTES;
 
-	packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
+	*packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
 
-	packet[0] = packet_data->selected_fec_scheme;
+	(*packet)[0] = packet_data->selected_fec_scheme;
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES - 1 - i));//needs mask? Not sure
+		(*packet)[1 + i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES - 1 - i));//needs mask? Not sure
 	}
 	
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));//needs mask? Not sure
+		(*packet)[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));//needs mask? Not sure
 	}
 
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
-		packet[1 + 2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
+		(*packet)[1 + 2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
 	}
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		packet[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));//needs mask? Not sure
+		(*packet)[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));//needs mask? Not sure
 	}
 
 	return 0;
 }
 
-bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int* packet_length) {//ADD MALLOC
+bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int packet_length) {//Something going wrong here... packet_t values not being set
 
-	uint32_t temp_crc = 0;
-	uint32_t mask = 0;
+	uint32_t temp_32 = 0;
+	uint16_t temp_16 = 0;
+	uint32_t mask32 = 0;
+	uint16_t mask16 = 0;
+
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		mask = 0;
-		mask = 0xFF << 8*i;
-		temp_crc = temp_crc | (mask & packet[*packet_length-1 -i]);
+		mask32 = 0;
+		mask32 = 0xFF << 8*i;
+		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[packet_length- i] << 8*i));
 	}
-	packet_data->crc = temp_crc;
-
-	//TODO BELOW
+	packet_data->crc = temp_32;
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + i] = 0xFF & (packet_data->total_num_packets >> 8 * (NUM_PACKETS_LENGTH_BYTES-1 - i));//needs mask? Not sure
+
+		mask16 = 0;
+		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -i);
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[i] << 8 * i));
 	}
 
+	packet_data->total_num_packets = temp_16;
+
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		packet[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES-1 - i));//needs mask? Not sure
+
+		mask16 = 0;
+		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES - i);
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i] << 8*i));
 	}
+
+	packet_data->current_packet_num = temp_16;
 
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
-		packet[1 + 2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
+		(packet_data->data)[i] = packet[2*NUM_PACKETS_LENGTH_BYTES + i];
 	}
 
 	return 0;

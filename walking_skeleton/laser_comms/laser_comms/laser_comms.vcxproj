@@ -144,9 +144,12 @@
   <ItemGroup>
     <ClCompile Include="liquid-dsp-relevant\src\fec\src\crc.c" />
     <ClCompile Include="liquid-dsp-relevant\src\fec\src\interleaver.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\libliquid.c" />
     <ClCompile Include="liquid-dsp-relevant\src\random\src\scramble.c" />
     <ClCompile Include="liquid-dsp-relevant\src\sequence\src\bsequence.c" />
     <ClCompile Include="liquid-dsp-relevant\src\sequence\src\msequence.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\utility\src\byte_utilities.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\utility\src\msb_index.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="packet_frame.c" />
     <ClCompile Include="polyphase_filterbank_sync.c" />

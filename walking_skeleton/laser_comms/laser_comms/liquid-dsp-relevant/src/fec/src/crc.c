@@ -113,9 +113,9 @@ unsigned int crc_generate_key(crc_scheme      _scheme,
         return 0;
     case LIQUID_CRC_NONE:      return 0;
     case LIQUID_CRC_CHECKSUM:  return checksum_generate_key(_msg, _n);
-    case LIQUID_CRC_8:         return crc8_generate_key(_msg, _n);
-    case LIQUID_CRC_16:        return crc16_generate_key(_msg, _n);
-    case LIQUID_CRC_24:        return crc24_generate_key(_msg, _n);
+    //case LIQUID_CRC_8:         return crc8_generate_key(_msg, _n);
+    //case LIQUID_CRC_16:        return crc16_generate_key(_msg, _n);
+    //case LIQUID_CRC_24:        return crc24_generate_key(_msg, _n);
     case LIQUID_CRC_32:        return crc32_generate_key(_msg, _n);
     default:
         liquid_error(LIQUID_EICONFIG,"crc_generate_key(), unknown/unsupported scheme: %d", _scheme);

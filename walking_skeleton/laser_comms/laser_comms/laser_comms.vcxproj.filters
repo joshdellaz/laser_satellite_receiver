@@ -45,6 +45,15 @@
     <ClCompile Include="liquid-dsp-relevant\src\sequence\src\bsequence.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\utility\src\byte_utilities.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\libliquid.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\utility\src\msb_index.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="liquid_condensed.h">

@@ -50,8 +50,8 @@ bool fullSendTest(void) {
 
 	//Commented out functions are not yet implemented, so cannot be tested
 	//applyFEC(packet)
-	//applyInterleaving()//Not sure if this is the right time to call it
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
+	applyInterleaving(packet_vector, packet_length);
 	//applyScrambling()
 
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
@@ -80,6 +80,7 @@ bool fullSendTest(void) {
 	unsigned int rxpacket_length = 0;
 
 	disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
+	removeInterleaving(rxpacket_vector, packet_length);
 
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
 

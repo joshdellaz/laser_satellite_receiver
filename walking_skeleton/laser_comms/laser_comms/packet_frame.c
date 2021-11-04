@@ -70,12 +70,32 @@ bool removeScrambling(uint8_t* input, unsigned int input_length) {
 //Applies LiquidDSP's interleaving to input buffer of input_length
 bool applyInterleaving(uint8_t* input, unsigned int input_length) {
 
+	// create the interleaver
+	interleaver q = interleaver_create(input_length);
+	interleaver_set_depth(q, 4);//This should be fine, right?
+
+	// interleave the data
+	interleaver_encode(q, input, input);
+
+	// destroy the interleaver object
+	interleaver_destroy(q);//not sure if a new interleaver object can be created on the tx and rx end or not... Probably fine!
+
 	return 0;
 }
 
 //TODO
 //Removes LiquidDSP's interleaving to input buffer of input_length
 bool removeInterleaving(uint8_t* input, unsigned int input_length) {
+
+	// create the interleaver
+	interleaver q = interleaver_create(input_length);
+	interleaver_set_depth(q, 4);//This should be fine, right?
+
+	// de-interleave the data
+	interleaver_decode(q, input, input);
+
+	// destroy the interleaver object
+	interleaver_destroy(q);//not sure if a new interleaver object can be created on the tx and rx end or not... Probably fine!
 
 	return 0;
 }

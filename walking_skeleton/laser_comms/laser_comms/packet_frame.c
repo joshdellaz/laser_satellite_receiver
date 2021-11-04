@@ -9,22 +9,26 @@
 #include "liquid.internal.h"
 
 
-
-
 //Move these into separate file? Considering having "utils" file containing smaller functions, and keeping the higher-level stuff here
 
+//Unless otherwise indicated, functions return 0 upon success and 1 upon failure
+
+//TODO
+//Applies FEC to input buffer. Type of FEC depends on type selected.
 bool applyFEC(void) {
-	//rs & other liquid implementations are easy to implement.. openFEC (LDPC) is more complex
 	
 	return 0;
 }
 
+//TODO
+//Removes FEC from the input buffer. Type of FEC depends on type selected.
 bool removeFEC(void) {
-
 
 	return 0;
 }
 
+//Calculates the crc of the "data" field of the input packet and compares it against the "crc" field
+//Returns 1 if crcs not equal, 0 if equal
 bool checkCRC(packet_t* received_packet) {
 
 	crc_scheme   check = LIQUID_CRC_32; // error-detection scheme
@@ -39,7 +43,7 @@ bool checkCRC(packet_t* received_packet) {
 	
 }
 
-
+//Calculates the crc of the "data" field of the input packet and assigns it to the "crc" field
 bool getCRC(packet_t * packet) {//Note that deviating from crc32 size would require code to be changed across project. Not adaptable currently
 
 	crc_scheme   check = LIQUID_CRC_32; // error-detection scheme
@@ -48,31 +52,39 @@ bool getCRC(packet_t * packet) {//Note that deviating from crc32 size would requ
 	return 0;
 }
 
-bool applyScrambling(void) {
+//TODO
+//Applies LiquidDSP's scrambling to input buffer of input_length
+bool applyScrambling(uint8_t * input, unsigned int input_length) {
 
 	return 0;
 }
 
-bool removeScrambling(void) {
+//TODO
+//Removes LiquidDSP's scrambling to input buffer of input_length
+bool removeScrambling(uint8_t* input, unsigned int input_length) {
 
 	return 0;
 }
 
-bool applyInterleaving(void) {
+//TODO
+//Applies LiquidDSP's interleaving to input buffer of input_length
+bool applyInterleaving(uint8_t* input, unsigned int input_length) {
 
 	return 0;
 }
 
-bool removeInterleaving(void) {
+//TODO
+//Removes LiquidDSP's interleaving to input buffer of input_length
+bool removeInterleaving(uint8_t* input, unsigned int input_length) {
 
 	return 0;
 }
 
 
-//
-bool getMaximumLengthSequencePreamble(uint8_t * mls_preamble, unsigned int *mls_preamble_length) {
+//Generates MLS preamble based on parameters within function and assigns it, along with its length to the arguments
+bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls_preamble_length) {
 
-	// options
+	//options
 	//TODO: Pick a good value for m
 	unsigned int m = 10;   // shift register length, n=2^m - 1
 	unsigned int repititions = 5;	//Number of MLS repititions in preamble
@@ -88,10 +100,10 @@ bool getMaximumLengthSequencePreamble(uint8_t * mls_preamble, unsigned int *mls_
 
 
 	//Repeat specified number of times and move to new array
-	mls_preamble = (uint8_t*)malloc(((mls->s_len))* repititions);
+	*mls_preamble = (uint8_t*)malloc(((mls->s_len))* repititions);
 	for (unsigned int i = 0; i < repititions; i++) {
 		for (unsigned int j = 0; j < (mls->s_len); j++) {
-			mls_preamble[i*(mls->s_len) + j] = (uint8_t)((mls->s)[j]);
+			(*mls_preamble)[i*(mls->s_len) + j] = (uint8_t)((mls->s)[j]);
 		}
 	}
 	*mls_preamble_length = repititions*(mls->s_len);
@@ -102,61 +114,62 @@ bool getMaximumLengthSequencePreamble(uint8_t * mls_preamble, unsigned int *mls_
 	return 0;
 }
 
-//return = 
-bool syncFrameUsingMLSPreamble(void) {
-
+//TODO
+//Checks the autocorrelation of frame input buffer and determines the indices of the first bit of the packet field.
+//Note: byte_ and bit_index are indexed from zero (0).
+bool syncFrameUsingMLSPreamble(uint8_t *input, unsigned int * byte_index, unsigned int * bit_index) {
 
 	return 0;
 }
 
 
-//Output format = byte array of bits to be transmitted where lowest index should be transmitted first
-//ENSURE *frame and *packet are freed after use!
+////Assembles data from "packet" input buffer into output buffer "frame" of length "frame_length"
+//NOTE: Ensure *frame and *packet are freed after use!
 bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * packet, unsigned int packet_length) {//Basically just adds preamble
-	
 
-	
-
-	//Add MLS preamble next
+	//Add MLS preamble 
 	unsigned int alternating_preamble_length = 2;
 	unsigned int mls_preamble_length = 0;
 	uint8_t* mls_preamble = NULL;
 
-	getMaximumLengthSequencePreamble(mls_preamble, &mls_preamble_length);
+	getMaximumLengthSequencePreamble(&mls_preamble, &mls_preamble_length);
 
 	*frame_length = alternating_preamble_length + mls_preamble_length + packet_length;
 	*frame = (uint8_t*)malloc((*frame_length) * sizeof(uint8_t));
 
-	//Add 10101010... to start
-
+	//Add two 10101010 bytes to the start of frame
+	//TODO remove?
 	for (unsigned int i = 0; i < alternating_preamble_length; i++) {
 		(*frame)[i] = 0b10101010;
 	}
 
+	//Add rest of preamble to start of frame
+	//TODO change to MLS preamble
 	for (unsigned int i = 0; i < mls_preamble_length; i++) {
-		(*frame)[alternating_preamble_length + i] = 0b10101010;//for easy testing before MLS is working
-		//frame[alternating_preamble_length + i] = mls_preamble[i];
+		(*frame)[alternating_preamble_length + i] = mls_preamble[i];
 	}
 	free(mls_preamble);
 
-	//Add packet data
+	//Add packet data to frame
 	for (unsigned int i = 0; i < packet_length; i++) {
 		(*frame)[alternating_preamble_length + mls_preamble_length + i] = packet[i];
 	}
 
-	
-
 	return 0;
 }
 
-//Just checks MLS autocorrelation, determines start of packet, and strips preamble
+//Takes byte buffer containing entire frame of length frame_length and extracts the packet
+//data field to the "packet" argument
+//TODO: add MLS autocorrelation check (and phase sync?) to determine the start of packet
+//TODO: consider how this function may need to be restructured once phase and frame sync 
+//is added, since input will be in samples instead of bits
 bool disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_length) {
 
 	unsigned int packet_length = 1 + CRC_DATA_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + (2 * NUM_PACKETS_LENGTH_BYTES);
 
 	*packet = (uint8_t*)malloc((sizeof(uint8_t))*packet_length);
 
-	//Placeholder (REPLACE WITH START OF PACKET SYNC EVENTUALLY):
+	//Placeholder to strip preamble(REPLACE WITH PACKET SYNC CODE EVENTUALLY):
 	for (int i = 0; i < packet_length; i++) {
 		(*packet)[i] = frame[frame_length - packet_length + i];
 	}
@@ -164,23 +177,23 @@ bool disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_lengt
 	return 0;
 }
 
-//Returns pointer to malloc'd packet that must be free'd later. Also returns packet_length
-//Macro usage probably okay because we ddont expect to change any of those values dynamically
-bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packet_length) {//much much easier if fields n*8 bits?
+//Assembles data from packet_data into output buffer "packet" of length "packet_length"
+//NOTE: Ensure *packet is freed after use!
+bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packet_length) {
 	
+	//Macro usage probably okay because we ddont expect to change any of those values dynamically?
 
 	*packet_length = 1 + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES;
-
 	*packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
 
 	(*packet)[0] = packet_data->selected_fec_scheme;
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		(*packet)[1 + i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES - 1 - i));//needs mask? Not sure
+		(*packet)[1 + i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES - 1 - i));
 	}
 	
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		(*packet)[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));//needs mask? Not sure
+		(*packet)[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));
 	}
 
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
@@ -188,19 +201,23 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 	}
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		(*packet)[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));//needs mask? Not sure
+		(*packet)[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
 	}
 
 	return 0;
 }
 
-bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int packet_length) {//Something going wrong here... packet_t values not being set
+//Takes byte buffer containing entire packet of length packet_length and parses it, 
+//assigning its fields to the packet_t struct type appropriately
+bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int packet_length) {
 
 	uint32_t temp_32 = 0;
 	uint16_t temp_16 = 0;
 	uint32_t mask32 = 0;
 	uint16_t mask16 = 0;
 
+	//Parse crc bits of input packet, assemble them into single variable, and save to packet_t "crc" field
+	//The rest of function does the same thing for other fields
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
 		mask32 = 0;
 		mask32 = 0xFF << 8*i;
@@ -214,7 +231,6 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -i);
 		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[i - 1] << 8 * i));
 	}
-
 	packet_data->total_num_packets = temp_16;
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
@@ -223,7 +239,6 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES - i);
 		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i  - 1] << 8*i));
 	}
-
 	packet_data->current_packet_num = temp_16;
 
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
@@ -233,14 +248,20 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 	return 0;
 }
 
-bool fragmentDataBufferIntoFrames(uint8_t * input, uint8_t * output) {
-	//TODO wait until later
-	//This is where the packet_t->data should get malloc'd, I think.
+
+//TODO
+//Takes "input" data buffer of length "input_length", fragments it into packets, turns those packets into frames, 
+//and assembles frames into single "output" buffer of "output_length" that can be easily transmitted
+bool fragmentDataBufferIntoFrames(uint8_t * input, unsigned int input_length, uint8_t * output, unsigned int output_length) {
 	return 0;
 }
 
-bool assembleFramesIntoDataBuffer(uint8_t* input, uint8_t* output) {
-	//TODO wait until later
+//TODO
+//Inverse of fragmentDataBufferIntoFrames.
+//Takes "input" data buffer of length "input_length", strips its frame and packet encapsulation, 
+//and assembles data fields of frames into a single "output" buffer of length "output_length" that can be easily saved
+bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length) {
+	
 
 	return 0;
 }

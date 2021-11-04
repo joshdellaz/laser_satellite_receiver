@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+//Returns pointer to a randomized uint8_t array of length PACKET_DATA_LENGTH_BYTES
 uint8_t * generateRandPacket(void) {
 	uint8_t* data = (uint8_t*)malloc(PACKET_DATA_LENGTH_BYTES);
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
@@ -14,7 +16,7 @@ uint8_t * generateRandPacket(void) {
 }
 
 
-//big disruption
+//For now, just randomly corrupts input_data array of specified length
 applyChannel(uint8_t * input_data, unsigned int input_data_length) {
 	for (unsigned int i = 0; i < input_data_length; i++) {
 		if (i % 8 == 0) {
@@ -23,10 +25,11 @@ applyChannel(uint8_t * input_data, unsigned int input_data_length) {
 	}
 }
 
+//Current full-data-pipeline test
 bool fullSendTest(void) {
 
-	//Is the following order correct?
-
+	//Init all the things. 
+	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions
 	packet_t packet_data;//malloc this?
 	packet_data.selected_fec_scheme = LDPC;
 	uint8_t* packet_vector = NULL;
@@ -35,34 +38,42 @@ bool fullSendTest(void) {
 	uint8_t* frame_vector = NULL;//malloc? yes
 
 	packet_data.data = generateRandPacket();
-	getCRC(&packet_data);
 
 	printf("Original Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
 		printf("%d", packet_data.data[i]);
 	}
 	printf("\n\n");
-	//applyFEC(packet)//does this act on the entire packet? Assuming no.
-	//applyInterleaving()
-	assemblePacket(&packet_data, &packet_vector, &packet_length);//not sure if this should be before or after interleaving
-	free(packet_data.data);
+
+	getCRC(&packet_data);
+
+
+	//Commented out functions are not yet implemented, so cannot be tested
+	//applyFEC(packet)
+	//applyInterleaving()//Not sure if this is the right time to call it
+	assemblePacket(&packet_data, &packet_vector, &packet_length);
 	//applyScrambling()
 
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
+
 	printf("Orignal frame:\n");
 	for (unsigned int i = 0; i < frame_length; i++) {
 		printf("%d", frame_vector[i]);
 	}
 	printf("\n\n");
 	
+
+	//Comment or un-comment, depending on the test you are trying to run
+	//TODO consider turning into macro functionality in future
 	//applyChannel(frame_vector, frame_length);
 
-	printf("New frame (after going through channel):\n");
-	for (unsigned int i = 0; i < frame_length; i++) {
-		printf("%d", frame_vector[i]);
-	}
-	printf("\n\n");
+	//printf("New frame (after going through channel):\n");
+	//for (unsigned int i = 0; i < frame_length; i++) {
+	//	printf("%d", frame_vector[i]);
+	//}
+	//printf("\n\n");
 
+	//Init "rx" stuff
 	packet_t rxpacket_data;//malloc this?
 	rxpacket_data.data = (uint8_t*)malloc(PACKET_DATA_LENGTH_BYTES);
 	uint8_t* rxpacket_vector = NULL;
@@ -85,6 +96,9 @@ bool fullSendTest(void) {
 		printf("CRC Matches!\n\n");
 	}
 
+
+	//Must free everything malloc'd
+	free(packet_data.data);
 	free(rxpacket_data.data);
 	free(rxpacket_vector);
 	free(packet_vector);

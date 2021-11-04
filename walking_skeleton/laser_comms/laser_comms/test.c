@@ -41,26 +41,27 @@ bool fullSendTest(void) {
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
 		printf("%d", packet_data.data[i]);
 	}
-	printf("\n");
+	printf("\n\n");
 	//applyFEC(packet)//does this act on the entire packet? Assuming no.
 	//applyInterleaving()
 	assemblePacket(&packet_data, &packet_vector, &packet_length);//not sure if this should be before or after interleaving
 	free(packet_data.data);
 	//applyScrambling()
+
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
 	printf("Orignal frame:\n");
 	for (unsigned int i = 0; i < frame_length; i++) {
 		printf("%d", frame_vector[i]);
 	}
+	printf("\n\n");
 	
-
 	//applyChannel(frame_vector, frame_length);
 
-	printf("\n\nNew frame (after going through channel):\n");
+	printf("New frame (after going through channel):\n");
 	for (unsigned int i = 0; i < frame_length; i++) {
 		printf("%d", frame_vector[i]);
 	}
-	printf("\n");
+	printf("\n\n");
 
 	packet_t rxpacket_data;//malloc this?
 	rxpacket_data.data = (uint8_t*)malloc(PACKET_DATA_LENGTH_BYTES);
@@ -72,16 +73,16 @@ bool fullSendTest(void) {
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
 
 	printf("Received Data:\n");
-	for (unsigned int i = 0; i < frame_length; i++) {
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
 		printf("%d", rxpacket_data.data[i]);
 	}
-	printf("\n");
+	printf("\n\n");
 
 	if (checkCRC(&rxpacket_data)) {
-		printf("CRC Doesn't Match!\n");
+		printf("CRC Doesn't Match!\n\n");
 	}
 	else {
-		printf("CRC Matches!\n");
+		printf("CRC Matches!\n\n");
 	}
 
 	free(rxpacket_data.data);

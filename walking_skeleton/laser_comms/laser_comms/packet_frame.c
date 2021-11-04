@@ -152,11 +152,13 @@ bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * pack
 //Just checks MLS autocorrelation, determines start of packet, and strips preamble
 bool disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_length) {
 
-	*packet = (uint8_t*)malloc(PACKET_DATA_LENGTH_BYTES);
+	unsigned int packet_length = 1 + CRC_DATA_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + (2 * NUM_PACKETS_LENGTH_BYTES);
+
+	*packet = (uint8_t*)malloc((sizeof(uint8_t))*packet_length);
 
 	//Placeholder (REPLACE WITH START OF PACKET SYNC EVENTUALLY):
-	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
-		(*packet)[i] = frame[frame_length - PACKET_DATA_LENGTH_BYTES - (2*NUM_PACKETS_LENGTH_BYTES) - 1 + i];
+	for (int i = 0; i < packet_length; i++) {
+		(*packet)[i] = frame[frame_length - packet_length + i];
 	}
 
 	return 0;
@@ -167,7 +169,7 @@ bool disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_lengt
 bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packet_length) {//much much easier if fields n*8 bits?
 	
 
-	*packet_length = (sizeof(packet_t) - 1) + PACKET_DATA_LENGTH_BYTES;
+	*packet_length = 1 + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES;
 
 	*packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
 
@@ -202,7 +204,7 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
 		mask32 = 0;
 		mask32 = 0xFF << 8*i;
-		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[packet_length- i] << 8*i));
+		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[packet_length - 1 - i] << 8*i));
 	}
 	packet_data->crc = temp_32;
 
@@ -210,7 +212,7 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 
 		mask16 = 0;
 		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -i);
-		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[i] << 8 * i));
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[i - 1] << 8 * i));
 	}
 
 	packet_data->total_num_packets = temp_16;
@@ -219,13 +221,13 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 
 		mask16 = 0;
 		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES - i);
-		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i] << 8*i));
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i  - 1] << 8*i));
 	}
 
 	packet_data->current_packet_num = temp_16;
 
 	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
-		(packet_data->data)[i] = packet[2*NUM_PACKETS_LENGTH_BYTES + i];
+		(packet_data->data)[i] = packet[2*NUM_PACKETS_LENGTH_BYTES +1 + i];
 	}
 
 	return 0;

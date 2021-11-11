@@ -1,17 +1,10 @@
-% This script creates a certain number of randomly generated bits and then  
-% adds 2 types of signal deterioration encountered in Free-Space Optical 
-% channels: white Gaussian noise and burst erasures 
-% The burst erasures are made using a 4-state markov model based on the 
-% paper from https://ieeexplore.ieee.org/document/5683891 
+function [outSig,burstEr,burstsHist,t] = channel_sim(data,bitRate,sampRate,chnlCyc,SNR) %#codegen
 
-% when entering parameters, please ensure the time between samples is
-% greater than the min burst length by an integer factor
-clear all;
-bitRate = 1000; % bits per second
-chnlCyc = 0.05; % min burst length in seconds
-sampRate = 10000; % sample per second, oversample to emulate analog signal
-numBits = 1000000; % number of randomly generated bits
-SNR = 10; % signal to noise ratio in dB, used for Gaussian noise
+%bitRate = 1000; % bits per second
+%chnlCyc = chnlCyc * 1e-6; % min burst length in seconds%%%%%%%%%%%%%%
+%sampRate = 10000; % sample per second, oversample to emulate analog signal
+numBits = length(data); % number of randomly generated bits
+%SNR = 10; % signal to noise ratio in dB, used for Gaussian noise
 sPerBit = sampRate/bitRate;
 
 % Probabilities associated with certain state transitions in the Markov
@@ -46,8 +39,6 @@ probM(4,2) = P_a2;
 probM(4,3) = 0;
 probM(4,4) = 1 - P_a2;
 
-% random bits (associated with OOK signal power):
-data = randsrc(numBits,1,[1,0]);
 % simulation of analog signal by oversampling:
 cleanSig = repelem(data, sPerBit);
 % addition of Gaussian noise:
@@ -79,7 +70,7 @@ compM = cumsum(probM,2);
 % existence of burst erasure during each bit
 for i = 2 : length(chnlState)
     randnum = rand();
-    chnlState(i,1) = min(find(compM(chnlState(i-1),:) > randnum));
+    chnlState(i,1) = find(compM(chnlState(i-1),:) > randnum, 1);
     % if in a "bad" (NLoS) state, 100% chance of burst (Steven is 
     % considering 50% chance of burst in his code, which could be done here
     % by replacing the 0 below with 0.5)
@@ -104,14 +95,8 @@ outSig(burstEr > 0) = 5;
 % follow the results from this paper: (which it does)
 % https://ieeexplore.ieee.org/document/5683891
 burstsHist = chnlCyc * burstsHist(burstsHist ~= 0); 
-figure();
-h = histogram(burstsHist, chnlCyc*[0.5:1:40.5], 'Normalization','probability');
 
-% Power signal plots of the 20 middle bits, with and without the expected
-% detriorations (Gaussian noise + Burst erasures)
-figure();
 t = 1 : numBits*sPerBit;
 t = t / (bitRate*sPerBit);
-plot(t,[cleanSig outSig])
-axis([(numBits/2)/bitRate, (80 + numBits/2)/bitRate, -1.0, 2.0])
-legend('Original Signal','Received Signal')
+end
+

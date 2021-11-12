@@ -7,9 +7,9 @@
 #include "liquid.internal.h"
 
 
-//Returns pointer to a randomized uint8_t array of length PACKET_DATA_LENGTH_WITH_FEC
+//Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec
 uint8_t * generateRandPacket(void) {
-	uint8_t* data = (uint8_t*)malloc(PACKET_DATA_LENGTH_WITH_FEC);
+	uint8_t* data = (uint8_t*)malloc(packet_data_length_with_fec);
 	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
 		data[i] = rand() & 0xff;
 	}
@@ -27,13 +27,10 @@ applyChannel(uint8_t * input_data, unsigned int input_data_length) {
 }
 
 //
-getFECDataLengths() {
-
-	unsigned int n = PACKET_DATA_LENGTH_NO_FEC;                     // data length (bytes)
-	fec_scheme fs = LIQUID_FEC_HAMMING74;   // error-correcting scheme
+void getFECDataLengths(void) {
 
 	// create arrays
-	unsigned int n_enc = fec_get_enc_msg_length(fs, n);
+	packet_data_length_with_fec = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
 }
 
 //Current full-data-pipeline test
@@ -86,7 +83,7 @@ bool fullSendTest(void) {
 
 	//Init "rx" stuff
 	packet_t rxpacket_data;//malloc this?
-	rxpacket_data.data = (uint8_t*)malloc(PACKET_DATA_LENGTH_WITH_FEC);
+	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec);
 	uint8_t* rxpacket_vector = NULL;
 	unsigned int rxpacket_length = 0;
 

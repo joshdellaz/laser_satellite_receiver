@@ -9,14 +9,12 @@
 #define CRC_DATA_LENGTH_BYTES 4
 #define FRAME_LENGTH_BYTES //TODO determine proper value
 #define FEC_TYPE LIQUID_FEC_HAMMING74 //Other options = 
-#define PACKET_DATA_LENGTH_NO_FEC 256
-//Below if statements only work for pre_fec length of 256
-#if FEC_TYPE == LIQUID_FEC_HAMMING74
-	#define PACKET_DATA_LENGTH_WITH_FEC 448 
-#endif
+#define PACKET_DATA_LENGTH_NO_FEC 1000
 
+extern int packet_data_length_with_fec;
 
 //Enum type to avoid magic numbers
+//TODO evaluate if needed for design
 typedef enum fec_scheme_type {
 
 	LDPC = 1,

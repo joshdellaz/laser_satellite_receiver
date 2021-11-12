@@ -4,30 +4,41 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "liquid.internal.h"
 
 
-//Returns pointer to a randomized uint8_t array of length PACKET_DATA_LENGTH_BYTES
+//Returns pointer to a randomized uint8_t array of length PACKET_DATA_LENGTH_WITH_FEC
 uint8_t * generateRandPacket(void) {
-	uint8_t* data = (uint8_t*)malloc(PACKET_DATA_LENGTH_BYTES);
-	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
+	uint8_t* data = (uint8_t*)malloc(PACKET_DATA_LENGTH_WITH_FEC);
+	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
 		data[i] = rand() & 0xff;
 	}
 	return data;
 }
 
 
-//For now, just randomly corrupts input_data array of specified length
+//1 (maybe) lsb bit error every 8 bytes
 applyChannel(uint8_t * input_data, unsigned int input_data_length) {
 	for (unsigned int i = 0; i < input_data_length; i++) {
 		if (i % 8 == 0) {
-			input_data[i] = (rand() & 0xff) & input_data[i];
+			input_data[i] = (input_data[i] >> 1) << 1;//only flips bit if lsb was a 1
 		}
 	}
 }
 
+//
+getFECDataLengths() {
+
+	unsigned int n = PACKET_DATA_LENGTH_NO_FEC;                     // data length (bytes)
+	fec_scheme fs = LIQUID_FEC_HAMMING74;   // error-correcting scheme
+
+	// create arrays
+	unsigned int n_enc = fec_get_enc_msg_length(fs, n);
+}
+
 //Current full-data-pipeline test
 bool fullSendTest(void) {
-
+	
 	//Init all the things. 
 	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions
 	packet_t packet_data;//malloc this?
@@ -40,16 +51,16 @@ bool fullSendTest(void) {
 	packet_data.data = generateRandPacket();
 
 	printf("Original Data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
 		printf("%d", packet_data.data[i]);
 	}
 	printf("\n\n");
 
 	getCRC(&packet_data);
 
-
 	//Commented out functions are not yet implemented, so cannot be tested
-	//applyFEC(packet)
+	applyFEC(packet_data.data);
+
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
 	applyInterleaving(packet_vector, packet_length);
 	//applyScrambling()
@@ -65,7 +76,7 @@ bool fullSendTest(void) {
 
 	//Comment or un-comment, depending on the test you are trying to run
 	//TODO consider turning into macro functionality in future
-	//applyChannel(frame_vector, frame_length);
+	applyChannel(frame_vector, frame_length);
 
 	//printf("New frame (after going through channel):\n");
 	//for (unsigned int i = 0; i < frame_length; i++) {
@@ -75,7 +86,7 @@ bool fullSendTest(void) {
 
 	//Init "rx" stuff
 	packet_t rxpacket_data;//malloc this?
-	rxpacket_data.data = (uint8_t*)malloc(PACKET_DATA_LENGTH_BYTES);
+	rxpacket_data.data = (uint8_t*)malloc(PACKET_DATA_LENGTH_WITH_FEC);
 	uint8_t* rxpacket_vector = NULL;
 	unsigned int rxpacket_length = 0;
 
@@ -83,9 +94,10 @@ bool fullSendTest(void) {
 	removeInterleaving(rxpacket_vector, packet_length);
 
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
+	removeFEC(rxpacket_data.data);
 
 	printf("Received Data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
 		printf("%d", rxpacket_data.data[i]);
 	}
 	printf("\n\n");

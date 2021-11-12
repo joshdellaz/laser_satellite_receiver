@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 #include "packet_frame.h"
 #include "liquid.internal.h"
+#include <liquid.h>
 
 
 //Move these into separate file? Considering having "utils" file containing smaller functions, and keeping the higher-level stuff here
@@ -15,14 +15,49 @@
 
 //TODO
 //Applies FEC to input buffer. Type of FEC depends on type selected.
-bool applyFEC(void) {
+bool applyFEC(uint8_t* input) {
 	
+	// options
+	unsigned int n = PACKET_DATA_LENGTH_NO_FEC;
+	fec_scheme fs = FEC_TYPE;   // error-correcting scheme
+
+	// create object
+	fec q = fec_create(fs, NULL);
+
+	unsigned char msg_enc[PACKET_DATA_LENGTH_WITH_FEC];
+
+	// encode message
+	fec_encode(q, n, input, msg_enc);//fix lengths
+
+	for (int i = 0; i < PACKET_DATA_LENGTH_WITH_FEC; i++) {
+		input[i] = msg_enc[i];
+	}
+
+	fec_destroy(q);
+
 	return 0;
 }
 
 //TODO
 //Removes FEC from the input buffer. Type of FEC depends on type selected.
-bool removeFEC(void) {
+bool removeFEC(uint8_t * input) {
+
+	unsigned int n = PACKET_DATA_LENGTH_NO_FEC;
+	fec_scheme fs = FEC_TYPE;   // error-correcting scheme
+
+	// create object
+	fec q = fec_create(fs, NULL);
+	
+	unsigned char msg_enc[PACKET_DATA_LENGTH_NO_FEC];
+
+	// decode message
+	fec_decode(q, n, input, msg_enc);//fix lengths
+
+	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+		input[i] = msg_enc[i];
+	}
+
+	fec_destroy(q);
 
 	return 0;
 }
@@ -32,7 +67,7 @@ bool removeFEC(void) {
 bool checkCRC(packet_t* received_packet) {
 
 	crc_scheme   check = LIQUID_CRC_32; // error-detection scheme
-	uint32_t calcd_crc = (uint32_t)crc_generate_key(check, received_packet->data, PACKET_DATA_LENGTH_BYTES);
+	uint32_t calcd_crc = (uint32_t)crc_generate_key(check, received_packet->data, PACKET_DATA_LENGTH_NO_FEC);
 
 	if (received_packet->crc != calcd_crc) {
 		return 1;
@@ -47,7 +82,7 @@ bool checkCRC(packet_t* received_packet) {
 bool getCRC(packet_t * packet) {//Note that deviating from crc32 size would require code to be changed across project. Not adaptable currently
 
 	crc_scheme   check = LIQUID_CRC_32; // error-detection scheme
-	packet->crc = (uint32_t)crc_generate_key(check, packet->data, PACKET_DATA_LENGTH_BYTES);
+	packet->crc = (uint32_t)crc_generate_key(check, packet->data, PACKET_DATA_LENGTH_NO_FEC);
 
 	return 0;
 }
@@ -185,7 +220,7 @@ bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * pack
 //is added, since input will be in samples instead of bits
 bool disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_length) {
 
-	unsigned int packet_length = 1 + CRC_DATA_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + (2 * NUM_PACKETS_LENGTH_BYTES);
+	unsigned int packet_length = 1 + CRC_DATA_LENGTH_BYTES + PACKET_DATA_LENGTH_WITH_FEC + (2 * NUM_PACKETS_LENGTH_BYTES);
 
 	*packet = (uint8_t*)malloc((sizeof(uint8_t))*packet_length);
 
@@ -203,7 +238,7 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 	
 	//Macro usage probably okay because we ddont expect to change any of those values dynamically?
 
-	*packet_length = 1 + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES;
+	*packet_length = 1 + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_WITH_FEC;
 	*packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
 
 	(*packet)[0] = packet_data->selected_fec_scheme;
@@ -216,12 +251,12 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 		(*packet)[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));
 	}
 
-	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
+	for (int i = 0; i < PACKET_DATA_LENGTH_WITH_FEC; i++) {
 		(*packet)[1 + 2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
 	}
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		(*packet)[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
+		(*packet)[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_WITH_FEC + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
 	}
 
 	return 0;
@@ -261,7 +296,7 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 	}
 	packet_data->current_packet_num = temp_16;
 
-	for (int i = 0; i < PACKET_DATA_LENGTH_BYTES; i++) {
+	for (int i = 0; i < PACKET_DATA_LENGTH_WITH_FEC; i++) {
 		(packet_data->data)[i] = packet[2*NUM_PACKETS_LENGTH_BYTES +1 + i];
 	}
 

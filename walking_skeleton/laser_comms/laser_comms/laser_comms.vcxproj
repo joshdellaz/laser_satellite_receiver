@@ -357,8 +357,26 @@
     </ClCompile>
     <ClCompile Include="liquid-dsp-relevant\src\fec\src\crc.c" />
     <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_conv.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_conv_pmatrix.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_conv_poly.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_conv_punctured.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_golay2412.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming128.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming128_gentab.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming1511.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming3126.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming74.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming84.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_pass.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_rep3.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_rep5.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_rs.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_secded2216.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_secded3932.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_secded7264.c" />
     <ClCompile Include="liquid-dsp-relevant\src\fec\src\interleaver.c" />
     <ClCompile Include="liquid-dsp-relevant\src\libliquid.c" />
     <ClCompile Include="liquid-dsp-relevant\src\random\src\scramble.c" />
@@ -366,6 +384,7 @@
     <ClCompile Include="liquid-dsp-relevant\src\sequence\src\msequence.c" />
     <ClCompile Include="liquid-dsp-relevant\src\utility\src\byte_utilities.c" />
     <ClCompile Include="liquid-dsp-relevant\src\utility\src\msb_index.c" />
+    <ClCompile Include="liquid-dsp-relevant\src\utility\src\pack_bytes.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="packet_frame.c" />
     <ClCompile Include="polyphase_filterbank_sync.c" />

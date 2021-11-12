@@ -16,6 +16,9 @@
     <Filter Include="Source Files\libfec">
       <UniqueIdentifier>{69ddd191-4002-40e8-9078-0b94f76fac08}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\liquid">
+      <UniqueIdentifier>{d664092f-03f0-4377-99a3-6ea50ea4ad68}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -27,37 +30,10 @@
     <ClCompile Include="test.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="liquid-dsp-relevant\src\fec\src\crc.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="liquid-dsp-relevant\src\fec\src\interleaver.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="liquid-dsp-relevant\src\random\src\scramble.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="liquid-dsp-relevant\src\sequence\src\msequence.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="polyphase_filterbank_sync.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="samples_to_bits.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="liquid-dsp-relevant\src\sequence\src\bsequence.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="liquid-dsp-relevant\src\utility\src\byte_utilities.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="liquid-dsp-relevant\src\libliquid.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="liquid-dsp-relevant\src\utility\src\msb_index.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="libfec-3.0.1\cpu_mode_ppc.c">
@@ -272,6 +248,90 @@
     </ClCompile>
     <ClCompile Include="libfec-3.0.1\vtest615.c">
       <Filter>Source Files\libfec</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\sequence\src\bsequence.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\utility\src\byte_utilities.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\crc.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\interleaver.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\libliquid.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\utility\src\msb_index.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\sequence\src\msequence.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\random\src\scramble.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_conv.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_conv_pmatrix.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_conv_poly.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_conv_punctured.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_golay2412.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming74.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming84.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming128.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming128_gentab.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming1511.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_hamming3126.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_pass.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_rep3.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_rep5.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_rs.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_secded2216.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_secded3932.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\fec\src\fec_secded7264.c">
+      <Filter>Source Files\liquid</Filter>
+    </ClCompile>
+    <ClCompile Include="liquid-dsp-relevant\src\utility\src\pack_bytes.c">
+      <Filter>Source Files\liquid</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

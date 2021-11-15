@@ -1,5 +1,1 @@
-﻿  packet_frame.c
-D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\packet_frame.c(229,20): warning C4018: '<': signed/unsigned mismatch
-  test.c
-  Generating Code...
-  laser_comms.vcxproj -> D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\Debug\laser_comms.exe
+﻿  laser_comms.vcxproj -> D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\Debug\laser_comms.exe

@@ -273,6 +273,9 @@
     <ClCompile Include="libfec-3.0.1\vtest615.c">
       <Filter>Source Files\libfec</Filter>
     </ClCompile>
+    <ClCompile Include="channel.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="liquid_condensed.h">
@@ -319,6 +322,9 @@
     </ClInclude>
     <ClInclude Include="libfec-3.0.1\rs-common.h">
       <Filter>Source Files\libfec</Filter>
+    </ClInclude>
+    <ClInclude Include="channel.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,1 +1,23 @@
-﻿  laser_comms.vcxproj -> D:\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\Debug\laser_comms.exe
+﻿  channel.c
+  crc.c
+C:\Users\khora\OneDrive\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\src\fec\src\crc.c(31,1): fatal error C1083: Cannot open include file: 'liquid.internal.h': No such file or directory
+  interleaver.c
+C:\Users\khora\OneDrive\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\src\fec\src\interleaver.c(34,1): fatal error C1083: Cannot open include file: 'liquid.internal.h': No such file or directory
+  libliquid.c
+C:\Users\khora\OneDrive\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\src\liquid.internal.h(43,1): fatal error C1083: Cannot open include file: 'liquid.h': No such file or directory
+  scramble.c
+C:\Users\khora\OneDrive\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\src\random\src\scramble.c(31,1): fatal error C1083: Cannot open include file: 'liquid.internal.h': No such file or directory
+  bsequence.c
+C:\Users\khora\OneDrive\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\src\sequence\src\bsequence.c(34,1): fatal error C1083: Cannot open include file: 'liquid.internal.h': No such file or directory
+  msequence.c
+C:\Users\khora\OneDrive\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\src\sequence\src\msequence.c(32,1): fatal error C1083: Cannot open include file: 'liquid.internal.h': No such file or directory
+  byte_utilities.c
+C:\Users\khora\OneDrive\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\src\utility\src\byte_utilities.c(32,1): fatal error C1083: Cannot open include file: 'liquid.internal.h': No such file or directory
+  msb_index.c
+C:\Users\khora\OneDrive\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\liquid-dsp-relevant\src\utility\src\msb_index.c(24,1): fatal error C1083: Cannot open include file: 'liquid.internal.h': No such file or directory
+  main.c
+  packet_frame.c
+C:\Users\khora\OneDrive\Documents\GitHub\laser_satellite_receiver\walking_skeleton\laser_comms\laser_comms\packet_frame.c(9,1): fatal error C1083: Cannot open include file: 'liquid.internal.h': No such file or directory
+  polyphase_filterbank_sync.c
+  test.c
+  Generating Code...

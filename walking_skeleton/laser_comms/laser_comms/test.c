@@ -1,4 +1,5 @@
 #include "packet_frame.h"
+#include "channel.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -15,15 +16,6 @@ uint8_t * generateRandPacket(void) {
 	return data;
 }
 
-
-//For now, just randomly corrupts input_data array of specified length
-applyChannel(uint8_t * input_data, unsigned int input_data_length) {
-	for (unsigned int i = 0; i < input_data_length; i++) {
-		if (i % 8 == 0) {
-			input_data[i] = (rand() & 0xff) & input_data[i];
-		}
-	}
-}
 
 //Current full-data-pipeline test
 bool fullSendTest(void) {

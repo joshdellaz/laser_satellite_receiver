@@ -1,9 +1,14 @@
+%NOTE: THIS FILE IS OUTDATED. SEE LDPCCODE.m FOR UP-TO-DATE FUNCTION FOR
+%PHASE SYNC
+
 %TODO define/know actual meaning of phase offset
 %TODO implement bitrate shift as parameter
 
+
+
 %parameter definitions
 clear
-phase = 0;%in rads
+phase = 5*pi()/8;%in rads
 num_banks = 4;
 rolloff = 0;
 N = 4.2;%Can't have more than 1 decimal!!! Number of samples per bit
@@ -13,6 +18,7 @@ initial_n_offset = num_banks*round(N) + 1;
 num_of_data_bits = 100;
 
 %generate square wave w/ 20 bit alternation and then random sequence
+input_data = zeros(1, 120);
 input_data(1:20) = [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1];
 input_data(21:120) = randi([0, 1], num_of_data_bits, 1);
 
@@ -28,7 +34,7 @@ elseif phase >= 3*pi()/2
     input_data = circshift(input_data, -2);
 end
 
-%Print some useful stuff
+% %Print some useful stuff
 disp("Input Phase offset (rads) = ");
 disp(phase);
 figure
@@ -47,6 +53,7 @@ stem(input_signal(1:200));
 title('Upsampled Signal');
 
 %Create and apply polyphase filterbank
+banksum = zeros(1, 2*round(N)*num_banks + num_banks);
 fircoefs = rcosdesign(rolloff, span, sps);
 for i = 0:(2*round(N))
     for j = 1:num_banks
@@ -66,7 +73,10 @@ n_offset =  best_sample*round(N) + best_bank;
 phase = (n_offset/(round(N)*num_banks))*pi() - pi()/2;%assuming 1 symbol = pi phase
 
 %do the sampling
-for i = 0:(20+num_of_data_bits - 1)
+size = 20+num_of_data_bits;
+output = zeros(1, size);
+selected_points_x = zeros(1, size);
+for i = 0:(size - 1)
     if input_signal(round((i)*N*num_banks) + n_offset) >= 0 %rounding issues due to N?
         output(i+1) = 1;
         selected_points_x(i+1) = round((i)*N*num_banks) + n_offset;%for later infographic

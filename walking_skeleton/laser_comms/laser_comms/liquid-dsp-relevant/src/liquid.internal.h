@@ -44,7 +44,7 @@
 
 //
 //#if defined HAVE_FEC_H && defined HAVE_LIBFEC
-//#  define LIBFEC_ENABLED 1
+#define LIBFEC_ENABLED 0
 //#endif
 //
 // report error
@@ -110,506 +110,505 @@ unsigned int crc24_generate_key(unsigned char * _msg, unsigned int _msg_len);
 unsigned int crc32_generate_key(unsigned char * _msg, unsigned int _msg_len);
 
 //
-//// fec : basic object
-//struct fec_s {
-//    // common
-//    
-//  scheme;
-//    //unsigned int dec_msg_len;
-//    //unsigned int enc_msg_len;
-//    float rate;
-//
-//    // lengths: convolutional, Reed-Solomon
-//    unsigned int num_dec_bytes;
-//    unsigned int num_enc_bytes;
-//
-//    // convolutional : internal memory structure
-//    unsigned char * enc_bits;
-//    void * vp;      // decoder object
-//    int * poly;     // polynomial
-//    unsigned int R; // primitive rate, inverted (e.g. R=3 for 1/3)
-//    unsigned int K; // constraint length
-//    unsigned int P; // puncturing rate (e.g. p=3 for 3/4)
-//    int * puncturing_matrix;
-//
-//    // viterbi decoder function pointers
-//    void*(*create_viterbi)(int);
-//    //void (*set_viterbi_polynomial)(int*);
-//    int  (*init_viterbi)(void*,int);
-//    int  (*update_viterbi_blk)(void*,unsigned char*,int);
-//    int  (*chainback_viterbi)(void*,unsigned char*,unsigned int,unsigned int);
-//    void (*delete_viterbi)(void*);
-//
-//    // Reed-Solomon
-//    int symsize;    // symbol size (bits per symbol)
-//    int genpoly;    // generator polynomial
-//    int fcs;        //
-//    int prim;       //
-//    int nroots;     // number of roots in the polynomial
-//    //int ntrials;    //
-//    unsigned int rspad; // number of implicit padded symbols
-//    int nn;         // 2^symsize - 1
-//    int kk;         // nn - nroots
-//    void * rs;      // Reed-Solomon internal object
-//
-//    // Reed-Solomon decoder
-//    unsigned int num_blocks;    // number of blocks: ceil(dec_msg_len / nn)
-//    unsigned int dec_block_len; // number of decoded bytes per block: 
-//    unsigned int enc_block_len; // number of encoded bytes per block: 
-//    unsigned int res_block_len; // residual bytes in last block
-//    unsigned int pad;           // padding for each block
-//    unsigned char * tblock;     // decoder input sequence [size: 1 x n]
-//    int * errlocs;              // error locations [size: 1 x n]
-//    int * derrlocs;             // decoded error locations [size: 1 x n]
-//    int erasures;               // number of erasures
-//
-//    // encode function pointer
-//    int (*encode_func)(fec _q,
-//                       unsigned int _dec_msg_len,
-//                       unsigned char * _msg_dec,
-//                       unsigned char * _msg_enc);
-//
-//    // decode function pointer
-//    int (*decode_func)(fec _q,
-//                       unsigned int _dec_msg_len,
-//                       unsigned char * _msg_enc,
-//                       unsigned char * _msg_dec);
-//
-//    // decode function pointer (soft decision)
-//    int (*decode_soft_func)(fec _q,
-//                            unsigned int _dec_msg_len,
-//                            unsigned char * _msg_enc,
-//                            unsigned char * _msg_dec);
-//};
-//
-//// simple type testing
-//int fec_scheme_is_convolutional(fec_scheme _scheme);
-//int fec_scheme_is_punctured(fec_scheme _scheme);
-//int fec_scheme_is_reedsolomon(fec_scheme _scheme);
-//int fec_scheme_is_hamming(fec_scheme _scheme);
-//int fec_scheme_is_repeat(fec_scheme _scheme);
-//
-//// Pass
-//fec fec_pass_create(void *_opts);
-//int fec_pass_destroy(fec _q);
-//int fec_pass_print(fec _q);
-//int fec_pass_encode(fec _q,
-//                    unsigned int _dec_msg_len,
-//                    unsigned char * _msg_dec,
-//                    unsigned char * _msg_enc);
-//int fec_pass_decode(fec _q,
-//                    unsigned int _dec_msg_len,
-//                    unsigned char * _msg_enc,
-//                    unsigned char * _msg_dec);
-//
-//// Repeat (3)
-//fec fec_rep3_create(void *_opts);
-//int fec_rep3_destroy(fec _q);
-//int fec_rep3_print(fec _q);
-//int fec_rep3_encode(fec _q,
-//                    unsigned int _dec_msg_len,
-//                    unsigned char * _msg_dec,
-//                    unsigned char * _msg_enc);
-//int fec_rep3_decode(fec _q,
-//                    unsigned int _dec_msg_len,
-//                    unsigned char * _msg_enc,
-//                    unsigned char * _msg_dec);
-//int fec_rep3_decode_soft(fec _q,
-//                         unsigned int _dec_msg_len,
-//                         unsigned char * _msg_enc,
-//                         unsigned char * _msg_dec);
-//
-//// Repeat (5)
-//fec fec_rep5_create(void *_opts);
-//int fec_rep5_destroy(fec _q);
-//int fec_rep5_print(fec _q);
-//int fec_rep5_encode(fec _q,
-//                    unsigned int _dec_msg_len,
-//                    unsigned char * _msg_dec,
-//                    unsigned char * _msg_enc);
-//int fec_rep5_decode(fec _q,
-//                    unsigned int _dec_msg_len,
-//                    unsigned char * _msg_enc,
-//                    unsigned char * _msg_dec);
-//int fec_rep5_decode_soft(fec _q,
-//                         unsigned int _dec_msg_len,
-//                         unsigned char * _msg_enc,
-//                         unsigned char * _msg_dec);
-//
-//// Hamming(7,4)
-//extern unsigned char hamming74_enc_gentab[16];
-//extern unsigned char hamming74_dec_gentab[128];
-//fec fec_hamming74_create(void *_opts);
-//int fec_hamming74_destroy(fec _q);
-//int fec_hamming74_print(fec _q);
-//int fec_hamming74_encode(fec _q,
-//                         unsigned int _dec_msg_len,
-//                         unsigned char * _msg_dec,
-//                         unsigned char * _msg_enc);
-//int fec_hamming74_decode(fec _q,
-//                         unsigned int _dec_msg_len,
-//                         unsigned char * _msg_enc,
-//                         unsigned char * _msg_dec);
-//int fec_hamming74_decode_soft(fec _q,
-//                              unsigned int _dec_msg_len,
-//                              unsigned char * _msg_enc,
-//                              unsigned char * _msg_dec);
-//// soft decoding of one symbol
-//unsigned char fecsoft_hamming74_decode(unsigned char * _soft_bits);
-//
-//// Hamming(8,4)
-//extern unsigned char hamming84_enc_gentab[16];
-//extern unsigned char hamming84_dec_gentab[256];
-//fec fec_hamming84_create(void *_opts);
-//int fec_hamming84_destroy(fec _q);
-//int fec_hamming84_print(fec _q);
-//int fec_hamming84_encode(fec _q,
-//                         unsigned int _dec_msg_len,
-//                         unsigned char * _msg_dec,
-//                         unsigned char * _msg_enc);
-//int fec_hamming84_decode(fec _q,
-//                         unsigned int _dec_msg_len,
-//                         unsigned char * _msg_enc,
-//                         unsigned char * _msg_dec);
-//int fec_hamming84_decode_soft(fec _q,
-//                              unsigned int _dec_msg_len,
-//                              unsigned char * _msg_enc,
-//                              unsigned char * _msg_dec);
-//// soft decoding of one symbol
-//unsigned char fecsoft_hamming84_decode(unsigned char * _soft_bits);
-//
-//// Hamming(12,8)
-//
-//unsigned int fec_hamming128_encode_symbol(unsigned int _sym_dec);
-//unsigned int fec_hamming128_decode_symbol(unsigned int _sym_enc);
-//extern unsigned short int hamming128_enc_gentab[256];   // encoding table
-//
-//fec fec_hamming128_create(void *_opts);
-//int fec_hamming128_destroy(fec _q);
-//int fec_hamming128_print(fec _q);
-//int fec_hamming128_encode(fec _q,
-//                          unsigned int _dec_msg_len,
-//                          unsigned char * _msg_dec,
-//                          unsigned char * _msg_enc);
-//int fec_hamming128_decode(fec _q,
-//                          unsigned int _dec_msg_len,
-//                          unsigned char * _msg_enc,
-//                          unsigned char * _msg_dec);
-//int fec_hamming128_decode_soft(fec _q,
-//                               unsigned int _dec_msg_len,
-//                               unsigned char * _msg_enc,
-//                               unsigned char * _msg_dec);
-//// soft decoding of one symbol
-//unsigned int fecsoft_hamming128_decode(unsigned char * _soft_bits);
-//extern unsigned char fecsoft_hamming128_n3[256][17];
-//unsigned int fecsoft_hamming128_decode_n3(unsigned char * _soft_bits);
-//
-//
-//// Hamming(15,11)
-//unsigned int fec_hamming1511_encode_symbol(unsigned int _sym_dec);
-//unsigned int fec_hamming1511_decode_symbol(unsigned int _sym_enc);
-//
-//// Hamming(31,26)
-//unsigned int fec_hamming3126_encode_symbol(unsigned int _sym_dec);
-//unsigned int fec_hamming3126_decode_symbol(unsigned int _sym_enc);
-//
-//
-//// Golay(24,12)
-//
-//unsigned int fec_golay2412_encode_symbol(unsigned int _sym_dec);
-//unsigned int fec_golay2412_decode_symbol(unsigned int _sym_enc);
-//extern unsigned int golay2412_P[12];
-//extern unsigned int golay2412_Gt[24];
-//extern unsigned int golay2412_H[12];
-//
-//// multiply input vector with matrix
-//unsigned int golay2412_matrix_mul(unsigned int   _v,
-//                                  unsigned int * _A,
-//                                  unsigned int   _n);
-//
-//// search for p[i] such that w(v+p[i]) <= 2, return -1 on fail
-//int golay2412_parity_search(unsigned int _v);
-//
-//fec fec_golay2412_create(void *_opts);
-//int fec_golay2412_destroy(fec _q);
-//int fec_golay2412_print(fec _q);
-//int fec_golay2412_encode(fec _q,
-//                         unsigned int _dec_msg_len,
-//                         unsigned char * _msg_dec,
-//                         unsigned char * _msg_enc);
-//int fec_golay2412_decode(fec _q,
-//                         unsigned int _dec_msg_len,
-//                         unsigned char * _msg_enc,
-//                         unsigned char * _msg_dec);
-//
-//// SEC-DED (22,16)
-//
-//// compute parity on 16-bit input
-//unsigned char fec_secded2216_compute_parity(unsigned char * _m);
-//
-//// compute syndrome on 22-bit input
-//unsigned char fec_secded2216_compute_syndrome(unsigned char * _v);
-//
-//// encode symbol
-////  _sym_dec    :   decoded symbol [size: 2 x 1]
-////  _sym_enc    :   encoded symbol [size: 3 x 1], _sym_enc[0] has only 6 bits
-//int fec_secded2216_encode_symbol(unsigned char * _sym_dec,
-//                                 unsigned char * _sym_enc);
-//
-//// decode symbol, returning 0/1/2 for zero/one/multiple errors detected
-////  _sym_enc    :   encoded symbol [size: 3 x 1], _sym_enc[0] has only 6 bits
-////  _sym_dec    :   decoded symbol [size: 2 x 1]
-//int  fec_secded2216_decode_symbol(unsigned char * _sym_enc,
-//                                  unsigned char * _sym_dec);
-//
-//// estimate error vector, returning 0/1/2 for zero/one/multiple errors detected
-////  _sym_enc    :   encoded symbol [size: 3 x 1], _sym_enc[0] has only 6 bits
-////  _e_hat      :   estimated error vector [size: 3 x 1]
-//int  fec_secded2216_estimate_ehat(unsigned char * _sym_enc,
-//                                  unsigned char * _e_hat);
-//
-//// parity matrix [6 x 16 bits], [6 x 2 bytes]
-//extern unsigned char secded2216_P[12];
-//
-//// syndrome vectors of errors with weight exactly equal to 1
-//extern unsigned char secded2216_syndrome_w1[22];
-//
-//fec fec_secded2216_create(void *_opts);
-//int fec_secded2216_destroy(fec _q);
-//int fec_secded2216_print(fec _q);
-//int fec_secded2216_encode(fec _q,
-//                          unsigned int _dec_msg_len,
-//                          unsigned char * _msg_dec,
-//                          unsigned char * _msg_enc);
-//int fec_secded2216_decode(fec _q,
-//                          unsigned int _dec_msg_len,
-//                          unsigned char * _msg_enc,
-//                          unsigned char * _msg_dec);
-//
-//// SEC-DED (39,32)
-//
-//// compute parity on 32-bit input
-//unsigned char fec_secded3932_compute_parity(unsigned char * _m);
-//
-//// compute syndrome on 39-bit input
-//unsigned char fec_secded3932_compute_syndrome(unsigned char * _v);
-//
-//// encode symbol
-////  _sym_dec    :   decoded symbol [size: 4 x 1]
-////  _sym_enc    :   encoded symbol [size: 5 x 1], _sym_enc[0] has only 7 bits
-//int fec_secded3932_encode_symbol(unsigned char * _sym_dec,
-//                                 unsigned char * _sym_enc);
-//
-//// estimate error vector, returning 0/1/2 for zero/one/multiple errors detected
-////  _sym_enc    :   encoded symbol [size: 5 x 1], _sym_enc[0] has only 7 bits
-////  _e_hat      :   estimated error vector [size: 5 x 1]
-//int  fec_secded3932_estimate_ehat(unsigned char * _sym_enc,
-//                                  unsigned char * _e_hat);
-//
-//// decode symbol, returning 0/1/2 for zero/one/multiple errors detected
-////  _sym_enc    :   encoded symbol [size: 5 x 1], _sym_enc[0] has only 7 bits
-////  _sym_dec    :   decoded symbol [size: 4 x 1]
-//int fec_secded3932_decode_symbol(unsigned char * _sym_enc,
-//                                unsigned char * _sym_dec);
-//
-//// parity matrix [7 x 32 bits], [7 x 4 bytes]
-//extern unsigned char secded3932_P[28];
-//
-//// syndrome vectors of errors with weight exactly equal to 1
-//extern unsigned char secded3932_syndrome_w1[39];
-//
-//fec fec_secded3932_create(void *_opts);
-//int fec_secded3932_destroy(fec _q);
-//int fec_secded3932_print(fec _q);
-//int fec_secded3932_encode(fec _q,
-//                          unsigned int _dec_msg_len,
-//                          unsigned char * _msg_dec,
-//                          unsigned char * _msg_enc);
-//int fec_secded3932_decode(fec _q,
-//                          unsigned int _dec_msg_len,
-//                          unsigned char * _msg_enc,
-//                          unsigned char * _msg_dec);
-//
-//// SEC-DED (72,64)
-//
-//// compute parity byte on 64-byte input
-//unsigned char fec_secded7264_compute_parity(unsigned char * _v);
-//
-//// compute syndrome on 72-bit input
-//unsigned char fec_secded7264_compute_syndrome(unsigned char * _v);
-//
-//// encode symbol
-////  _sym_dec    :   input symbol [size: 8 x 1]
-////  _sym_enc    :   input symbol [size: 9 x 1]
-//int fec_secded7264_encode_symbol(unsigned char * _sym_dec,
-//                                 unsigned char * _sym_enc);
-//
-//// estimate error vector, returning 0/1/2 for zero/one/multiple errors detected
-////  _sym_enc    :   encoded symbol [size: 9 x 1]
-////  _e_hat      :   estimated error vector [size: 9 x 1]
-//int fec_secded7264_estimate_ehat(unsigned char * _sym_enc,
-//                                 unsigned char * _e_hat);
-//
-//// decode symbol, returning 0/1/2 for zero/one/multiple errors detected
-////  _sym_enc    :   input symbol [size: 8 x 1]
-////  _sym_dec    :   input symbol [size: 9 x 1]
-//int fec_secded7264_decode_symbol(unsigned char * _sym_enc,
-//                                 unsigned char * _sym_dec);
-//
-//extern unsigned char secded7264_P[64];
-//extern unsigned char secded7264_syndrome_w1[72];
-//
-//fec fec_secded7264_create(void *_opts);
-//int fec_secded7264_destroy(fec _q);
-//int fec_secded7264_print(fec _q);
-//int fec_secded7264_encode(fec _q,
-//                          unsigned int _dec_msg_len,
-//                          unsigned char * _msg_dec,
-//                          unsigned char * _msg_enc);
-//int fec_secded7264_decode(fec _q,
-//                          unsigned int _dec_msg_len,
-//                          unsigned char * _msg_enc,
-//                          unsigned char * _msg_dec);
-//
-//
-//// Convolutional: r1/2 K=7
-////                r1/2 K=9
-////                r1/3 K=9
-////                r1/6 K=15
-//
-//// compute encoded message length for block codes
-////  _dec_msg_len    :   decoded message length (bytes)
-////  _m              :   input block size (bits)
-////  _k              :   output block size (bits)
-//unsigned int fec_block_get_enc_msg_len(unsigned int _dec_msg_len,
-//                                       unsigned int _m,
-//                                       unsigned int _k);
-//
-//// compute encoded message length for convolutional codes
-////  _dec_msg_len    :   decoded message length
-////  _K              :   constraint length
-////  _p              :   puncturing rate, r = _p / (_p+1)
-//unsigned int fec_conv_get_enc_msg_len(unsigned int _dec_msg_len,
-//                                      unsigned int _K,
-//                                      unsigned int _p);
-//
-//// convolutional code polynomials
-//extern int fec_conv27_poly[2];
-//extern int fec_conv29_poly[2];
-//extern int fec_conv39_poly[3];
-//extern int fec_conv615_poly[6];
-//
-//// convolutional code puncturing matrices  [R x P]
-//extern int fec_conv27p23_matrix[4];     // [2 x 2]
-//extern int fec_conv27p34_matrix[6];     // [2 x 3]
-//extern int fec_conv27p45_matrix[8];     // [2 x 4]
-//extern int fec_conv27p56_matrix[10];    // [2 x 5]
-//extern int fec_conv27p67_matrix[12];    // [2 x 6]
-//extern int fec_conv27p78_matrix[14];    // [2 x 7]
-//
-//extern int fec_conv29p23_matrix[4];     // [2 x 2]
-//extern int fec_conv29p34_matrix[6];     // [2 x 3]
-//extern int fec_conv29p45_matrix[8];     // [2 x 4]
-//extern int fec_conv29p56_matrix[10];    // [2 x 5]
-//extern int fec_conv29p67_matrix[12];    // [2 x 6]
-//extern int fec_conv29p78_matrix[14];    // [2 x 7]
-//
-//fec fec_conv_create(fec_scheme _fs);
-//int fec_conv_destroy(fec _q);
-//int fec_conv_print(fec _q);
-//int fec_conv_encode(fec _q,
-//                    unsigned int _dec_msg_len,
-//                    unsigned char * _msg_dec,
-//                    unsigned char * _msg_enc);
-//int fec_conv_decode_hard(fec _q,
-//                         unsigned int _dec_msg_len,
-//                         unsigned char * _msg_enc,
-//                         unsigned char * _msg_dec);
-//int fec_conv_decode_soft(fec _q,
-//                         unsigned int _dec_msg_len,
-//                         unsigned char * _msg_enc,
-//                         unsigned char * _msg_dec);
-//int fec_conv_decode(fec _q, unsigned char * _msg_dec);
-//int fec_conv_setlength(fec _q, unsigned int _dec_msg_len);
-//
-//// internal initialization methods (sets r, K, viterbi methods)
-//int fec_conv_init_v27(fec _q);
-//int fec_conv_init_v29(fec _q);
-//int fec_conv_init_v39(fec _q);
-//int fec_conv_init_v615(fec _q);
-//
-//// punctured convolutional codes
-//fec fec_conv_punctured_create(fec_scheme _fs);
-//int fec_conv_punctured_destroy(fec _q);
-//int fec_conv_punctured_print(fec _q);
-//int fec_conv_punctured_encode(fec _q,
-//                               unsigned int _dec_msg_len,
-//                               unsigned char * _msg_dec,
-//                               unsigned char * _msg_enc);
-//int fec_conv_punctured_decode_hard(fec _q,
-//                                   unsigned int _dec_msg_len,
-//                                   unsigned char * _msg_enc,
-//                                   unsigned char * _msg_dec);
-//int fec_conv_punctured_decode_soft(fec _q,
-//                                   unsigned int _dec_msg_len,
-//                                   unsigned char * _msg_enc,
-//                                   unsigned char * _msg_dec);
-//int fec_conv_punctured_setlength(fec _q, unsigned int _dec_msg_len);
-//
-//// internal initialization methods (sets r, K, viterbi methods,
-//// and puncturing matrix)
-//int fec_conv_init_v27p23(fec _q);
-//int fec_conv_init_v27p34(fec _q);
-//int fec_conv_init_v27p45(fec _q);
-//int fec_conv_init_v27p56(fec _q);
-//int fec_conv_init_v27p67(fec _q);
-//int fec_conv_init_v27p78(fec _q);
-//
-//int fec_conv_init_v29p23(fec _q);
-//int fec_conv_init_v29p34(fec _q);
-//int fec_conv_init_v29p45(fec _q);
-//int fec_conv_init_v29p56(fec _q);
-//int fec_conv_init_v29p67(fec _q);
-//int fec_conv_init_v29p78(fec _q);
-//
-//// Reed-Solomon
-//
-//// compute encoded message length for Reed-Solomon codes
-////  _dec_msg_len    :   decoded message length
-////  _nroots         :   number of roots in polynomial
-////  _nn             :   
-////  _kk             :   
-//unsigned int fec_rs_get_enc_msg_len(unsigned int _dec_msg_len,
-//                                    unsigned int _nroots,
-//                                    unsigned int _nn,
-//                                    unsigned int _kk);
-//
-//
-//fec fec_rs_create(fec_scheme _fs);
-//int fec_rs_destroy(fec _q);
-//int fec_rs_init_p8(fec _q);
-//int fec_rs_setlength(fec _q,
-//                     unsigned int _dec_msg_len);
-//int fec_rs_encode(fec _q,
-//                  unsigned int _dec_msg_len,
-//                  unsigned char * _msg_dec,
-//                  unsigned char * _msg_enc);
-//int fec_rs_decode(fec _q,
-//                  unsigned int _dec_msg_len,
-//                  unsigned char * _msg_enc,
-//                  unsigned char * _msg_dec);
-//
-//// phi(x) = -logf( tanhf( x/2 ) )
-//float sumproduct_phi(float _x);
-//
-//// iterate over the sum-product algorithm:
-//// returns 1 if parity checks, 0 otherwise
-////  _m          :   rows
-////  _n          :   cols
-////  _H          :   sparse binary parity check matrix [size: _m x _n]
-////  _LLR        :   received signal (soft bits, LLR) [size: _n x 1]
-////  _c_hat      :   estimated transmitted signal [size: _n x 1]
-////  _max_steps  :   maximum number of steps before bailing
+// fec : basic object
+struct fec_s {
+    // common
+    fec_scheme scheme;
+    //unsigned int dec_msg_len;
+    //unsigned int enc_msg_len;
+    float rate;
+
+    // lengths: convolutional, Reed-Solomon
+    unsigned int num_dec_bytes;
+    unsigned int num_enc_bytes;
+
+    // convolutional : internal memory structure
+    unsigned char * enc_bits;
+    void * vp;      // decoder object
+    int * poly;     // polynomial
+    unsigned int R; // primitive rate, inverted (e.g. R=3 for 1/3)
+    unsigned int K; // constraint length
+    unsigned int P; // puncturing rate (e.g. p=3 for 3/4)
+    int * puncturing_matrix;
+
+    // viterbi decoder function pointers
+    void*(*create_viterbi)(int);
+    //void (*set_viterbi_polynomial)(int*);
+    int  (*init_viterbi)(void*,int);
+    int  (*update_viterbi_blk)(void*,unsigned char*,int);
+    int  (*chainback_viterbi)(void*,unsigned char*,unsigned int,unsigned int);
+    void (*delete_viterbi)(void*);
+
+    // Reed-Solomon
+    int symsize;    // symbol size (bits per symbol)
+    int genpoly;    // generator polynomial
+    int fcs;        //
+    int prim;       //
+    int nroots;     // number of roots in the polynomial
+    //int ntrials;    //
+    unsigned int rspad; // number of implicit padded symbols
+    int nn;         // 2^symsize - 1
+    int kk;         // nn - nroots
+    void * rs;      // Reed-Solomon internal object
+
+    // Reed-Solomon decoder
+    unsigned int num_blocks;    // number of blocks: ceil(dec_msg_len / nn)
+    unsigned int dec_block_len; // number of decoded bytes per block: 
+    unsigned int enc_block_len; // number of encoded bytes per block: 
+    unsigned int res_block_len; // residual bytes in last block
+    unsigned int pad;           // padding for each block
+    unsigned char * tblock;     // decoder input sequence [size: 1 x n]
+    int * errlocs;              // error locations [size: 1 x n]
+    int * derrlocs;             // decoded error locations [size: 1 x n]
+    int erasures;               // number of erasures
+
+    // encode function pointer
+    int (*encode_func)(fec _q,
+                       unsigned int _dec_msg_len,
+                       unsigned char * _msg_dec,
+                       unsigned char * _msg_enc);
+
+    // decode function pointer
+    int (*decode_func)(fec _q,
+                       unsigned int _dec_msg_len,
+                       unsigned char * _msg_enc,
+                       unsigned char * _msg_dec);
+
+    // decode function pointer (soft decision)
+    int (*decode_soft_func)(fec _q,
+                            unsigned int _dec_msg_len,
+                            unsigned char * _msg_enc,
+                            unsigned char * _msg_dec);
+};
+
+// simple type testing
+int fec_scheme_is_convolutional(fec_scheme _scheme);
+int fec_scheme_is_punctured(fec_scheme _scheme);
+int fec_scheme_is_reedsolomon(fec_scheme _scheme);
+int fec_scheme_is_hamming(fec_scheme _scheme);
+int fec_scheme_is_repeat(fec_scheme _scheme);
+
+// Pass
+fec fec_pass_create(void *_opts);
+int fec_pass_destroy(fec _q);
+int fec_pass_print(fec _q);
+int fec_pass_encode(fec _q,
+                    unsigned int _dec_msg_len,
+                    unsigned char * _msg_dec,
+                    unsigned char * _msg_enc);
+int fec_pass_decode(fec _q,
+                    unsigned int _dec_msg_len,
+                    unsigned char * _msg_enc,
+                    unsigned char * _msg_dec);
+
+// Repeat (3)
+fec fec_rep3_create(void *_opts);
+int fec_rep3_destroy(fec _q);
+int fec_rep3_print(fec _q);
+int fec_rep3_encode(fec _q,
+                    unsigned int _dec_msg_len,
+                    unsigned char * _msg_dec,
+                    unsigned char * _msg_enc);
+int fec_rep3_decode(fec _q,
+                    unsigned int _dec_msg_len,
+                    unsigned char * _msg_enc,
+                    unsigned char * _msg_dec);
+int fec_rep3_decode_soft(fec _q,
+                         unsigned int _dec_msg_len,
+                         unsigned char * _msg_enc,
+                         unsigned char * _msg_dec);
+
+// Repeat (5)
+fec fec_rep5_create(void *_opts);
+int fec_rep5_destroy(fec _q);
+int fec_rep5_print(fec _q);
+int fec_rep5_encode(fec _q,
+                    unsigned int _dec_msg_len,
+                    unsigned char * _msg_dec,
+                    unsigned char * _msg_enc);
+int fec_rep5_decode(fec _q,
+                    unsigned int _dec_msg_len,
+                    unsigned char * _msg_enc,
+                    unsigned char * _msg_dec);
+int fec_rep5_decode_soft(fec _q,
+                         unsigned int _dec_msg_len,
+                         unsigned char * _msg_enc,
+                         unsigned char * _msg_dec);
+
+// Hamming(7,4)
+extern unsigned char hamming74_enc_gentab[16];
+extern unsigned char hamming74_dec_gentab[128];
+fec fec_hamming74_create(void *_opts);
+int fec_hamming74_destroy(fec _q);
+int fec_hamming74_print(fec _q);
+int fec_hamming74_encode(fec _q,
+                         unsigned int _dec_msg_len,
+                         unsigned char * _msg_dec,
+                         unsigned char * _msg_enc);
+int fec_hamming74_decode(fec _q,
+                         unsigned int _dec_msg_len,
+                         unsigned char * _msg_enc,
+                         unsigned char * _msg_dec);
+int fec_hamming74_decode_soft(fec _q,
+                              unsigned int _dec_msg_len,
+                              unsigned char * _msg_enc,
+                              unsigned char * _msg_dec);
+// soft decoding of one symbol
+unsigned char fecsoft_hamming74_decode(unsigned char * _soft_bits);
+
+// Hamming(8,4)
+extern unsigned char hamming84_enc_gentab[16];
+extern unsigned char hamming84_dec_gentab[256];
+fec fec_hamming84_create(void *_opts);
+int fec_hamming84_destroy(fec _q);
+int fec_hamming84_print(fec _q);
+int fec_hamming84_encode(fec _q,
+                         unsigned int _dec_msg_len,
+                         unsigned char * _msg_dec,
+                         unsigned char * _msg_enc);
+int fec_hamming84_decode(fec _q,
+                         unsigned int _dec_msg_len,
+                         unsigned char * _msg_enc,
+                         unsigned char * _msg_dec);
+int fec_hamming84_decode_soft(fec _q,
+                              unsigned int _dec_msg_len,
+                              unsigned char * _msg_enc,
+                              unsigned char * _msg_dec);
+// soft decoding of one symbol
+unsigned char fecsoft_hamming84_decode(unsigned char * _soft_bits);
+
+// Hamming(12,8)
+
+unsigned int fec_hamming128_encode_symbol(unsigned int _sym_dec);
+unsigned int fec_hamming128_decode_symbol(unsigned int _sym_enc);
+extern unsigned short int hamming128_enc_gentab[256];   // encoding table
+
+fec fec_hamming128_create(void *_opts);
+int fec_hamming128_destroy(fec _q);
+int fec_hamming128_print(fec _q);
+int fec_hamming128_encode(fec _q,
+                          unsigned int _dec_msg_len,
+                          unsigned char * _msg_dec,
+                          unsigned char * _msg_enc);
+int fec_hamming128_decode(fec _q,
+                          unsigned int _dec_msg_len,
+                          unsigned char * _msg_enc,
+                          unsigned char * _msg_dec);
+int fec_hamming128_decode_soft(fec _q,
+                               unsigned int _dec_msg_len,
+                               unsigned char * _msg_enc,
+                               unsigned char * _msg_dec);
+// soft decoding of one symbol
+unsigned int fecsoft_hamming128_decode(unsigned char * _soft_bits);
+extern unsigned char fecsoft_hamming128_n3[256][17];
+unsigned int fecsoft_hamming128_decode_n3(unsigned char * _soft_bits);
+
+
+// Hamming(15,11)
+unsigned int fec_hamming1511_encode_symbol(unsigned int _sym_dec);
+unsigned int fec_hamming1511_decode_symbol(unsigned int _sym_enc);
+
+// Hamming(31,26)
+unsigned int fec_hamming3126_encode_symbol(unsigned int _sym_dec);
+unsigned int fec_hamming3126_decode_symbol(unsigned int _sym_enc);
+
+
+// Golay(24,12)
+
+unsigned int fec_golay2412_encode_symbol(unsigned int _sym_dec);
+unsigned int fec_golay2412_decode_symbol(unsigned int _sym_enc);
+extern unsigned int golay2412_P[12];
+extern unsigned int golay2412_Gt[24];
+extern unsigned int golay2412_H[12];
+
+// multiply input vector with matrix
+unsigned int golay2412_matrix_mul(unsigned int   _v,
+                                  unsigned int * _A,
+                                  unsigned int   _n);
+
+// search for p[i] such that w(v+p[i]) <= 2, return -1 on fail
+int golay2412_parity_search(unsigned int _v);
+
+fec fec_golay2412_create(void *_opts);
+int fec_golay2412_destroy(fec _q);
+int fec_golay2412_print(fec _q);
+int fec_golay2412_encode(fec _q,
+                         unsigned int _dec_msg_len,
+                         unsigned char * _msg_dec,
+                         unsigned char * _msg_enc);
+int fec_golay2412_decode(fec _q,
+                         unsigned int _dec_msg_len,
+                         unsigned char * _msg_enc,
+                         unsigned char * _msg_dec);
+
+// SEC-DED (22,16)
+
+// compute parity on 16-bit input
+unsigned char fec_secded2216_compute_parity(unsigned char * _m);
+
+// compute syndrome on 22-bit input
+unsigned char fec_secded2216_compute_syndrome(unsigned char * _v);
+
+// encode symbol
+//  _sym_dec    :   decoded symbol [size: 2 x 1]
+//  _sym_enc    :   encoded symbol [size: 3 x 1], _sym_enc[0] has only 6 bits
+int fec_secded2216_encode_symbol(unsigned char * _sym_dec,
+                                 unsigned char * _sym_enc);
+
+// decode symbol, returning 0/1/2 for zero/one/multiple errors detected
+//  _sym_enc    :   encoded symbol [size: 3 x 1], _sym_enc[0] has only 6 bits
+//  _sym_dec    :   decoded symbol [size: 2 x 1]
+int  fec_secded2216_decode_symbol(unsigned char * _sym_enc,
+                                  unsigned char * _sym_dec);
+
+// estimate error vector, returning 0/1/2 for zero/one/multiple errors detected
+//  _sym_enc    :   encoded symbol [size: 3 x 1], _sym_enc[0] has only 6 bits
+//  _e_hat      :   estimated error vector [size: 3 x 1]
+int  fec_secded2216_estimate_ehat(unsigned char * _sym_enc,
+                                  unsigned char * _e_hat);
+
+// parity matrix [6 x 16 bits], [6 x 2 bytes]
+extern unsigned char secded2216_P[12];
+
+// syndrome vectors of errors with weight exactly equal to 1
+extern unsigned char secded2216_syndrome_w1[22];
+
+fec fec_secded2216_create(void *_opts);
+int fec_secded2216_destroy(fec _q);
+int fec_secded2216_print(fec _q);
+int fec_secded2216_encode(fec _q,
+                          unsigned int _dec_msg_len,
+                          unsigned char * _msg_dec,
+                          unsigned char * _msg_enc);
+int fec_secded2216_decode(fec _q,
+                          unsigned int _dec_msg_len,
+                          unsigned char * _msg_enc,
+                          unsigned char * _msg_dec);
+
+// SEC-DED (39,32)
+
+// compute parity on 32-bit input
+unsigned char fec_secded3932_compute_parity(unsigned char * _m);
+
+// compute syndrome on 39-bit input
+unsigned char fec_secded3932_compute_syndrome(unsigned char * _v);
+
+// encode symbol
+//  _sym_dec    :   decoded symbol [size: 4 x 1]
+//  _sym_enc    :   encoded symbol [size: 5 x 1], _sym_enc[0] has only 7 bits
+int fec_secded3932_encode_symbol(unsigned char * _sym_dec,
+                                 unsigned char * _sym_enc);
+
+// estimate error vector, returning 0/1/2 for zero/one/multiple errors detected
+//  _sym_enc    :   encoded symbol [size: 5 x 1], _sym_enc[0] has only 7 bits
+//  _e_hat      :   estimated error vector [size: 5 x 1]
+int  fec_secded3932_estimate_ehat(unsigned char * _sym_enc,
+                                  unsigned char * _e_hat);
+
+// decode symbol, returning 0/1/2 for zero/one/multiple errors detected
+//  _sym_enc    :   encoded symbol [size: 5 x 1], _sym_enc[0] has only 7 bits
+//  _sym_dec    :   decoded symbol [size: 4 x 1]
+int fec_secded3932_decode_symbol(unsigned char * _sym_enc,
+                                unsigned char * _sym_dec);
+
+// parity matrix [7 x 32 bits], [7 x 4 bytes]
+extern unsigned char secded3932_P[28];
+
+// syndrome vectors of errors with weight exactly equal to 1
+extern unsigned char secded3932_syndrome_w1[39];
+
+fec fec_secded3932_create(void *_opts);
+int fec_secded3932_destroy(fec _q);
+int fec_secded3932_print(fec _q);
+int fec_secded3932_encode(fec _q,
+                          unsigned int _dec_msg_len,
+                          unsigned char * _msg_dec,
+                          unsigned char * _msg_enc);
+int fec_secded3932_decode(fec _q,
+                          unsigned int _dec_msg_len,
+                          unsigned char * _msg_enc,
+                          unsigned char * _msg_dec);
+
+// SEC-DED (72,64)
+
+// compute parity byte on 64-byte input
+unsigned char fec_secded7264_compute_parity(unsigned char * _v);
+
+// compute syndrome on 72-bit input
+unsigned char fec_secded7264_compute_syndrome(unsigned char * _v);
+
+// encode symbol
+//  _sym_dec    :   input symbol [size: 8 x 1]
+//  _sym_enc    :   input symbol [size: 9 x 1]
+int fec_secded7264_encode_symbol(unsigned char * _sym_dec,
+                                 unsigned char * _sym_enc);
+
+// estimate error vector, returning 0/1/2 for zero/one/multiple errors detected
+//  _sym_enc    :   encoded symbol [size: 9 x 1]
+//  _e_hat      :   estimated error vector [size: 9 x 1]
+int fec_secded7264_estimate_ehat(unsigned char * _sym_enc,
+                                 unsigned char * _e_hat);
+
+// decode symbol, returning 0/1/2 for zero/one/multiple errors detected
+//  _sym_enc    :   input symbol [size: 8 x 1]
+//  _sym_dec    :   input symbol [size: 9 x 1]
+int fec_secded7264_decode_symbol(unsigned char * _sym_enc,
+                                 unsigned char * _sym_dec);
+
+extern unsigned char secded7264_P[64];
+extern unsigned char secded7264_syndrome_w1[72];
+
+fec fec_secded7264_create(void *_opts);
+int fec_secded7264_destroy(fec _q);
+int fec_secded7264_print(fec _q);
+int fec_secded7264_encode(fec _q,
+                          unsigned int _dec_msg_len,
+                          unsigned char * _msg_dec,
+                          unsigned char * _msg_enc);
+int fec_secded7264_decode(fec _q,
+                          unsigned int _dec_msg_len,
+                          unsigned char * _msg_enc,
+                          unsigned char * _msg_dec);
+
+
+// Convolutional: r1/2 K=7
+//                r1/2 K=9
+//                r1/3 K=9
+//                r1/6 K=15
+
+// compute encoded message length for block codes
+//  _dec_msg_len    :   decoded message length (bytes)
+//  _m              :   input block size (bits)
+//  _k              :   output block size (bits)
+unsigned int fec_block_get_enc_msg_len(unsigned int _dec_msg_len,
+                                       unsigned int _m,
+                                       unsigned int _k);
+
+// compute encoded message length for convolutional codes
+//  _dec_msg_len    :   decoded message length
+//  _K              :   constraint length
+//  _p              :   puncturing rate, r = _p / (_p+1)
+unsigned int fec_conv_get_enc_msg_len(unsigned int _dec_msg_len,
+                                      unsigned int _K,
+                                      unsigned int _p);
+
+// convolutional code polynomials
+extern int fec_conv27_poly[2];
+extern int fec_conv29_poly[2];
+extern int fec_conv39_poly[3];
+extern int fec_conv615_poly[6];
+
+// convolutional code puncturing matrices  [R x P]
+extern int fec_conv27p23_matrix[4];     // [2 x 2]
+extern int fec_conv27p34_matrix[6];     // [2 x 3]
+extern int fec_conv27p45_matrix[8];     // [2 x 4]
+extern int fec_conv27p56_matrix[10];    // [2 x 5]
+extern int fec_conv27p67_matrix[12];    // [2 x 6]
+extern int fec_conv27p78_matrix[14];    // [2 x 7]
+
+extern int fec_conv29p23_matrix[4];     // [2 x 2]
+extern int fec_conv29p34_matrix[6];     // [2 x 3]
+extern int fec_conv29p45_matrix[8];     // [2 x 4]
+extern int fec_conv29p56_matrix[10];    // [2 x 5]
+extern int fec_conv29p67_matrix[12];    // [2 x 6]
+extern int fec_conv29p78_matrix[14];    // [2 x 7]
+
+fec fec_conv_create(fec_scheme _fs);
+int fec_conv_destroy(fec _q);
+int fec_conv_print(fec _q);
+int fec_conv_encode(fec _q,
+                    unsigned int _dec_msg_len,
+                    unsigned char * _msg_dec,
+                    unsigned char * _msg_enc);
+int fec_conv_decode_hard(fec _q,
+                         unsigned int _dec_msg_len,
+                         unsigned char * _msg_enc,
+                         unsigned char * _msg_dec);
+int fec_conv_decode_soft(fec _q,
+                         unsigned int _dec_msg_len,
+                         unsigned char * _msg_enc,
+                         unsigned char * _msg_dec);
+int fec_conv_decode(fec _q, unsigned char * _msg_dec);
+int fec_conv_setlength(fec _q, unsigned int _dec_msg_len);
+
+// internal initialization methods (sets r, K, viterbi methods)
+int fec_conv_init_v27(fec _q);
+int fec_conv_init_v29(fec _q);
+int fec_conv_init_v39(fec _q);
+int fec_conv_init_v615(fec _q);
+
+// punctured convolutional codes
+fec fec_conv_punctured_create(fec_scheme _fs);
+int fec_conv_punctured_destroy(fec _q);
+int fec_conv_punctured_print(fec _q);
+int fec_conv_punctured_encode(fec _q,
+                               unsigned int _dec_msg_len,
+                               unsigned char * _msg_dec,
+                               unsigned char * _msg_enc);
+int fec_conv_punctured_decode_hard(fec _q,
+                                   unsigned int _dec_msg_len,
+                                   unsigned char * _msg_enc,
+                                   unsigned char * _msg_dec);
+int fec_conv_punctured_decode_soft(fec _q,
+                                   unsigned int _dec_msg_len,
+                                   unsigned char * _msg_enc,
+                                   unsigned char * _msg_dec);
+int fec_conv_punctured_setlength(fec _q, unsigned int _dec_msg_len);
+
+// internal initialization methods (sets r, K, viterbi methods,
+// and puncturing matrix)
+int fec_conv_init_v27p23(fec _q);
+int fec_conv_init_v27p34(fec _q);
+int fec_conv_init_v27p45(fec _q);
+int fec_conv_init_v27p56(fec _q);
+int fec_conv_init_v27p67(fec _q);
+int fec_conv_init_v27p78(fec _q);
+
+int fec_conv_init_v29p23(fec _q);
+int fec_conv_init_v29p34(fec _q);
+int fec_conv_init_v29p45(fec _q);
+int fec_conv_init_v29p56(fec _q);
+int fec_conv_init_v29p67(fec _q);
+int fec_conv_init_v29p78(fec _q);
+
+// Reed-Solomon
+
+// compute encoded message length for Reed-Solomon codes
+//  _dec_msg_len    :   decoded message length
+//  _nroots         :   number of roots in polynomial
+//  _nn             :   
+//  _kk             :   
+unsigned int fec_rs_get_enc_msg_len(unsigned int _dec_msg_len,
+                                    unsigned int _nroots,
+                                    unsigned int _nn,
+                                    unsigned int _kk);
+
+
+fec fec_rs_create(fec_scheme _fs);
+int fec_rs_destroy(fec _q);
+int fec_rs_init_p8(fec _q);
+int fec_rs_setlength(fec _q,
+                     unsigned int _dec_msg_len);
+int fec_rs_encode(fec _q,
+                  unsigned int _dec_msg_len,
+                  unsigned char * _msg_dec,
+                  unsigned char * _msg_enc);
+int fec_rs_decode(fec _q,
+                  unsigned int _dec_msg_len,
+                  unsigned char * _msg_enc,
+                  unsigned char * _msg_dec);
+
+// phi(x) = -logf( tanhf( x/2 ) )
+float sumproduct_phi(float _x);
+
+// iterate over the sum-product algorithm:
+// returns 1 if parity checks, 0 otherwise
+//  _m          :   rows
+//  _n          :   cols
+//  _H          :   sparse binary parity check matrix [size: _m x _n]
+//  _LLR        :   received signal (soft bits, LLR) [size: _n x 1]
+//  _c_hat      :   estimated transmitted signal [size: _n x 1]
+//  _max_steps  :   maximum number of steps before bailing
 //int fec_sumproduct(unsigned int    _m,
 //                   unsigned int    _n,
 //                   smatrixb        _H,
@@ -638,7 +637,7 @@ unsigned int crc32_generate_key(unsigned char * _msg, unsigned int _msg_len);
 //                        float *         _Lc,
 //                        float *         _LQ,
 //                        unsigned char * _parity);
-//
+
 ////
 //// packetizer
 ////

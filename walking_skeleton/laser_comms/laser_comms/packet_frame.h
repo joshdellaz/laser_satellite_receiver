@@ -4,13 +4,17 @@
 
 //Macros indicating size of various packet fields. Framing and packetizing code should be able to handle
 //different field lengths without any issues
-#define PACKET_DATA_LENGTH_BYTES 256
+
 #define NUM_PACKETS_LENGTH_BYTES 2
 #define CRC_DATA_LENGTH_BYTES 4
 #define FRAME_LENGTH_BYTES //TODO determine proper value
-#define FEC_TYPE //TODO dermine proper value
+#define FEC_TYPE LIQUID_FEC_HAMMING74 //Other options = 
+#define PACKET_DATA_LENGTH_NO_FEC 1000
+
+extern int packet_data_length_with_fec;
 
 //Enum type to avoid magic numbers
+//TODO evaluate if needed for design
 typedef enum fec_scheme_type {
 
 	LDPC = 1,
@@ -32,8 +36,8 @@ typedef struct packet_t {
 
 } packet_t;
 
-bool applyFEC(void);
-bool removeFEC(void);
+bool applyFEC(uint8_t* input);
+bool removeFEC(uint8_t* input);
 bool checkCRC(packet_t* received_packet);
 bool getCRC(packet_t* packet);
 bool applyScrambling(uint8_t* input, unsigned int input_length);

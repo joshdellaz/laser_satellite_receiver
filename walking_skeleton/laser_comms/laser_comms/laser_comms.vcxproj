@@ -192,6 +192,7 @@
     <ClInclude Include="liquid-dsp-relevant\src\liquid.internal.h" />
     <ClInclude Include="liquid_condensed.h" />
     <ClInclude Include="packet_frame.h" />
+    <ClInclude Include="samples_to_bits.h" />
     <ClInclude Include="tavildarLDPC\LdpcC\Constellation.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>

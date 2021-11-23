@@ -155,5 +155,8 @@
     <ClInclude Include="tavildarLDPC\LdpcC\WiFiLDPC.h">
       <Filter>Source Files\LDPC</Filter>
     </ClInclude>
+    <ClInclude Include="samples_to_bits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

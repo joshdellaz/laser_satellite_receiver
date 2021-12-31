@@ -1,0 +1,218 @@
+% This script creates a certain number of randomly generated bits and then  
+% adds 2 types of signal deterioration encountered in Free-Space Optical 
+% channels: white Gaussian noise and burst erasures 
+% The burst erasures are made using a 4-state markov model based on the 
+% paper from https://ieeexplore.ieee.org/document/5683891 
+
+% For faster simulation we can scale down the parameters of our hardware
+% together: 25 Mbps, 105 Msps, 50 us bursts => (250 bps, 1050 sps, 5 s)
+
+% when entering parameters, please ensure the time between samples is
+% greater than the min burst length by an integer factor
+
+% run WiFi LDPC
+clear all;
+%  close all;
+max_runs = 100;
+max_decode_iterations = 20;
+ldpc_code = LDPCCode(0, 0);
+min_sum = 1;
+n_0 = 1/2;
+snr_db = 10;
+
+UseFEC = 0;
+maxBitLength = 10000; % max number of bits per packet before sych issues
+numBlocks = 5;
+block_length = 1944; % Should be one of 648, 1296, and 1944
+rate = 1/2; % Should be one of 1/2, 2/3, 3/4, 5/6
+ldpc_code = LDPCCode(0, 0);
+ldpc_code.load_wifi_ldpc(block_length, rate);
+
+intrlving_ind = [1:block_length;
+    1+block_length:2*block_length;
+    1+(2*block_length):3*block_length;
+    1+(3*block_length):4*block_length;
+    1+(4*block_length):5*block_length;];
+
+%info_data_len = fix(maxBitLength/block_length)*block_length*rate;
+%num_runs = 2; % # 0f runs with the above values
+
+% for interleaving we could use the linear indexing of matrices in matlab
+
+% with these parameters we can construct the interleaving scheme as follows
+% Every intrlv_frq bits are interleaved as a separate set
+% For example: starting from index of 1:
+% The interleaved bits: 1, 1+int_d, 1+(2*int_d), ..., 1+(int_d*(li-1)),
+% 2, 2+int_d, 2+(2*int_d), ..., 2+(int_d*(li-1)), .......,
+% int_d+(int_d*(li-1)) {which is equal to int_d*li}
+
+%% Data generation
+info_data = double(rand(numBlocks,rate*block_length) < 0.5); % randomly generated input data
+
+%% LDPC encoding
+coded_bits = zeros(numBlocks, block_length);
+for i = 1 : numBlocks
+    coded_bits(i,:) = ldpc_code.encode_bits(info_data(i,:));
+end
+
+%% testing
+% max_decode_iterations = 20;
+% min_sum = 1;
+% cod_out_data = ones(numBlocks,block_length);
+% p0 = (-1*coded_bits + 1)*0.8 + 0.1; % 90% proability of of 0 for 0 bits
+% p1 = 1 - p0;
+% llr = log(p0./p1);
+% for i = 1 : numBlocks
+%     llr(i,486:800) = 0;
+%     llr(i,1458:1944) = 0;
+%     [decoded_codeword, ~] = ldpc_code.decode_llr(llr(i,:), max_decode_iterations, min_sum);
+%     cod_out_data(i,:) = decoded_codeword;
+% end
+% 
+% result = sum(sum(abs(cod_out_data - coded_bits)))
+
+%% interleave
+% Block interleaving:
+intrlvd = reshape(coded_bits, [], 1);
+
+% RECEIVED = RS_CODE.x;
+% bitArr = dec2bin(reshape(RECEIVED.', [], 1).', m) - '0';
+% bitStrm_in = reshape(bitArr.', m*numel(RECEIVED), 1).';
+% interlvd = zeros(1, m*numel(RECEIVED));
+% for i = 1 : numel(bitStrm_in)/int_f % each iteration corresponds to a separate set of interleaved bits
+%     for j = 1 : int_d
+%         interlvd(1, (i-1)*int_f + (j-1)*li + [1:li], 1) = bitStrm_in(1, ((i-1)*int_f)+(j+int_d*[0:li-1]));
+%     end
+% end
+
+
+%% DAC and Channel model
+
+% as long as the units of the channel cycle correspond to the inverse of
+% the bit rate (which is bit period) the function works: like if bit rate = 25e6 bps and channel
+% cycle is 50e-6 seconds, we can enter bit_rate=25 and chnl_cyc=50
+chnl_cyc = 1;
+bit_rate = 25; % the smallest burst wipes chnl_cyc*bit_rate bits
+sample_rate = 5*bit_rate; 
+SNR = 40;
+
+% TODO need to figure out how to deal with non-integer samples/bit
+
+[outSig,burstEr,burstsHist,timeP] = channel_sim(intrlvd,bit_rate,sample_rate,chnl_cyc,SNR); % choosing high SNR for now
+% The channel_sim function simulates the power seen by the APD, so during
+% the bursts the value of the signal is 5
+
+
+%% Analog to Digital Conversion and demodulation
+% The demodulation done here only "looks" at the value of the analog signal
+% in the middle of the bit, which probably introduces more erros than 
+% Dealing with erased bits:
+%   - discarding bit erasure information (not flagging the erased bits) and
+%   recording the bits in a burst as 1's or 0's, which leads to about 50%
+%   of them being correct
+%   - flagging the erased bits and passing the information to the FEC
+%   decoding
+
+% For RS scheme, the 2 approaches above lead to the same (n,k) requirements
+% so we'll go with the former, recording lost bits as zeros
+
+mid_bit = fix((sample_rate/bit_rate)/2)+1;
+bitStrm_out = zeros(1, length(outSig)*bit_rate/sample_rate);
+erased_bits = 0;
+fliped_bits = 0;
+rawBERcnt = 0;
+for ii = mid_bit : (sample_rate/bit_rate) : length(outSig)
+    if (outSig(ii,1) == 5)
+        bitStrm_out(1+fix((ii-mid_bit)*bit_rate/sample_rate)) = 0; % burst erasure
+        erased_bits = erased_bits + 1;
+    elseif (outSig(ii,1) > 0.5)
+        bitStrm_out(1+fix((ii-mid_bit)*bit_rate/sample_rate)) = 1;
+        if interlvd(1+fix((ii-mid_bit)*bit_rate/sample_rate)) ~= 1
+            fliped_bits = fliped_bits + 1;
+        end
+    else
+        bitStrm_out(1+fix((ii-mid_bit)*bit_rate/sample_rate)) = 0;
+        if interlvd(1+fix((ii-mid_bit)*bit_rate/sample_rate)) ~= 0
+            fliped_bits = fliped_bits + 1;
+        end
+    end
+    % for BER calc
+    if interlvd(1+fix((ii-mid_bit)*bit_rate/sample_rate)) ~= bitStrm_out(1+fix((ii-mid_bit)*bit_rate/sample_rate)) % counting unsuccessful transmission
+        rawBERcnt = rawBERcnt + 1;
+    end
+end
+
+disp('Total raw BER (awgn errors + all erased):')
+rawBER = (fliped_bits+erased_bits)/length(interlvd)
+disp('The effective raw BER (with erased bit registered as 0):')
+rawBEReff = rawBERcnt/length(interlvd)
+
+%% deinterleave
+
+de_intrlvd = reshape(intrlvd, numBlocks, block_length);
+
+% uninterlvd = zeros(numel(bitStrm_out),1);
+% for i = 1 : numel(bitStrm_out)/int_f % each iteration corresponds to a separate set of interleaved bits
+%     for j = 1 : int_d
+%         for q = 1 : li
+%             uninterlvd((i-1)*int_f + j + int_d*(q-1)) = bitStrm_out((i-1)*int_f + (j-1)*li + q);
+%         end
+%     end
+% end
+% intOutData = zeros(1, length(bitStrm_out)/m);
+% for i = 1 : length(bitStrm_out)/m
+%     intOutData(1,i) = bin2dec(num2str(uninterlvd((1+(i-1)*m) : i*m).')); % TODO verify
+% end
+
+%% decode
+max_decode_iterations = 20;
+min_sum = 1;
+cod_out_data = ones(numBlocks,block_length);
+p0 = (-1*coded_bits + 1)*0.8 + 0.1; % 90% proability of of 0 for 0 bits
+p1 = 1 - p0;
+llr = log(p0./p1);
+for i = 1 : numBlocks
+    llr(i,486:800) = 0;
+    llr(i,1458:1944) = 0;
+    [decoded_codeword, ~] = ldpc_code.decode_llr(llr(i,:), max_decode_iterations, min_sum);
+    cod_out_data(i,:) = decoded_codeword;
+end
+
+result = sum(sum(abs(cod_out_data - coded_bits)))
+
+% intOutData = reshape(intOutData.', n , numel(intOutData)/n).';
+% decoded_data = zeros(numel(intOutData),1);
+% MSGchckr = zeros(numel(intOutData)/n,1);
+% DECODED = rsdec(gf(intOutData, m), n, k);
+% DECODED = DECODED.x;
+% bitArr = dec2bin(reshape(DECODED.', [], 1).', m) - '0';
+% dataOut = reshape(bitArr.', numel(bitArr), 1);
+% 
+% transmission = dataOut-data;
+% disp('Sum of difference between the received bits and the transmitted ones:');
+% sum(abs(transmission))
+% % for i = 1 : numel(intOutData)/n
+% %     DECODED(i,:) = rsdec(intOutData(i,:),[],n,k,t,h,g,field);
+% %     if DECODED(i,:) == RS_CODE(i,:)
+% %         MSGchckr(i,1) = 1; % the codeword was recovered successfully
+% %     end
+% %     decoded_data((k*(i-1) + 1) : k*i , 1) = DECODED(i,(n-k+1):n).';
+% % end
+
+%% plots
+% TODO BER ratio before and after FEC decoding, throughput (k/n), against
+% different sets of (n,k), a few different int_d's with a fixed int_f and
+% fixed channel_sim parameters
+%then repeat for other FEC schemes
+
+figure();
+h = histogram(burstsHist,1*[0.5:1:40.5],'Normalization','probability');
+
+cleanSig = repelem(interlvd.',5);
+figure();
+plot(timeP,[cleanSig outSig])
+%axis([(numBits/2)/bitRate, (80 + numBits/2)/bitRate, -1.0, 2.0])
+legend('Original Signal','Received Signal')
+
+figure();
+plot(1:length(data),[dataOut data])

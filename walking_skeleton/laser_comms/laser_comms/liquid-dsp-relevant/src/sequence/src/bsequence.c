@@ -32,9 +32,15 @@
 #include <math.h>
 
 #include "liquid.internal.h"
-#include "liquid.h"
 
-
+// 
+struct bsequence_s {
+    unsigned int * s;           // sequence array, memory pointer
+    unsigned int num_bits;      // number of bits in sequence
+    unsigned int num_bits_msb;  // number of bits in most-significant block
+    unsigned int bit_mask_msb;  // bit mask for most-significant block
+    unsigned int s_len;         // length of array, number of allocated blocks
+};
 
 // Create a binary sequence of a specific length
 bsequence bsequence_create(unsigned int _num_bits)
@@ -280,54 +286,54 @@ unsigned int bsequence_index(bsequence _bs,
 
 // intialize two sequences to complementary codes.  sequences must
 // be of length at least 8 and a power of 2 (e.g. 8, 16, 32, 64,...)
-//int bsequence_create_ccodes(bsequence _qa, bsequence _qb)
-//{
-//    // make sure sequences are the same length
-//    if (_qa->num_bits != _qb->num_bits)
-//        return liquid_error(LIQUID_EICONFIG,"bsequence_create_ccodes(), sequence lengths must match");
-//    if (_qa->num_bits < 8)
-//        return liquid_error(LIQUID_EICONFIG,"bsequence_create_ccodes(), sequence too short");
-//    if ( (_qa->num_bits)%8 != 0 )
-//        return liquid_error(LIQUID_EICONFIG,"bsequence_create_ccodes(), sequence must be multiple of 8");
-//
-//    // generate two temporary arrays
-//    unsigned int num_bytes = _qa->num_bits / 8;
-//    unsigned char a[num_bytes];
-//    unsigned char b[num_bytes];
-//
-//    memset(a, 0x00, num_bytes);
-//    memset(b, 0x00, num_bytes);
-//
-//    // initialize
-//    a[num_bytes-1] = 0xb8;  // 1011 1000
-//    b[num_bytes-1] = 0xb7;  // 1011 0111
-//
-//    unsigned int i;
-//    unsigned int n=1;
-//    unsigned int i_n1;
-//    unsigned int i_n0;
-//    while (n < num_bytes) {
-//        i_n1 = num_bytes - n;
-//        i_n0 = num_bytes - 2*n;
-//
-//        // a -> [a  b]
-//        // b -> [a ~b]
-//        memmove(&a[i_n0], &a[i_n1], n*sizeof(unsigned char));
-//        memmove(&b[i_n0], &a[i_n1], n*sizeof(unsigned char));
-//
-//        memmove(&a[i_n1], &b[i_n1], n*sizeof(unsigned char));
-//        memmove(&b[i_n1], &b[i_n1], n*sizeof(unsigned char));
-//
-//        // complement lower half
-//        for (i=0; i<n; i++)
-//            b[num_bytes-i-1] ^= 0xff;
-//
-//        n += n;
-//    }
-//
-//    // initialize on generated sequences
-//    bsequence_init(_qa, a);
-//    bsequence_init(_qb, b);
-//    return LIQUID_OK;
-//}
+int bsequence_create_ccodes(bsequence _qa, bsequence _qb)
+{
+    // make sure sequences are the same length
+    if (_qa->num_bits != _qb->num_bits)
+        return liquid_error(LIQUID_EICONFIG,"bsequence_create_ccodes(), sequence lengths must match");
+    if (_qa->num_bits < 8)
+        return liquid_error(LIQUID_EICONFIG,"bsequence_create_ccodes(), sequence too short");
+    if ( (_qa->num_bits)%8 != 0 )
+        return liquid_error(LIQUID_EICONFIG,"bsequence_create_ccodes(), sequence must be multiple of 8");
+
+    // generate two temporary arrays
+    unsigned int num_bytes = _qa->num_bits / 8;
+    unsigned char a[num_bytes];
+    unsigned char b[num_bytes];
+
+    memset(a, 0x00, num_bytes);
+    memset(b, 0x00, num_bytes);
+
+    // initialize
+    a[num_bytes-1] = 0xb8;  // 1011 1000
+    b[num_bytes-1] = 0xb7;  // 1011 0111
+
+    unsigned int i;
+    unsigned int n=1;
+    unsigned int i_n1;
+    unsigned int i_n0;
+    while (n < num_bytes) {
+        i_n1 = num_bytes - n;
+        i_n0 = num_bytes - 2*n;
+
+        // a -> [a  b]
+        // b -> [a ~b]
+        memmove(&a[i_n0], &a[i_n1], n*sizeof(unsigned char));
+        memmove(&b[i_n0], &a[i_n1], n*sizeof(unsigned char));
+
+        memmove(&a[i_n1], &b[i_n1], n*sizeof(unsigned char));
+        memmove(&b[i_n1], &b[i_n1], n*sizeof(unsigned char));
+
+        // complement lower half
+        for (i=0; i<n; i++)
+            b[num_bytes-i-1] ^= 0xff;
+
+        n += n;
+    }
+
+    // initialize on generated sequences
+    bsequence_init(_qa, a);
+    bsequence_init(_qb, b);
+    return LIQUID_OK;
+}
 

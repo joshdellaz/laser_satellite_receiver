@@ -29,7 +29,7 @@
 #include <string.h>
 #include <math.h>
 
-#include <liquid.internal.h>
+#include "liquid.internal.h"
 
 #define LIQUID_MIN_MSEQUENCE_M  2
 #define LIQUID_MAX_MSEQUENCE_M  15

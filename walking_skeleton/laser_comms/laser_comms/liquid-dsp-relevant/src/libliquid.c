@@ -26,17 +26,17 @@
 #include <stdio.h>
 #include "liquid.internal.h"
 
-//const char liquid_version[] = LIQUID_VERSION;
-//
-//const char * liquid_libversion(void)
-//{
-//    return LIQUID_VERSION;
-//}
-//
-//int liquid_libversion_number(void)
-//{
-//    return LIQUID_VERSION_NUMBER;
-//}
+const char liquid_version[] = LIQUID_VERSION;
+
+const char * liquid_libversion(void)
+{
+    return LIQUID_VERSION;
+}
+
+int liquid_libversion_number(void)
+{
+    return LIQUID_VERSION_NUMBER;
+}
 
 // report error
 int liquid_error_fl(int          _code,

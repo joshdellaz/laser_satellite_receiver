@@ -113,9 +113,9 @@ unsigned int crc_generate_key(crc_scheme      _scheme,
         return 0;
     case LIQUID_CRC_NONE:      return 0;
     case LIQUID_CRC_CHECKSUM:  return checksum_generate_key(_msg, _n);
-    //case LIQUID_CRC_8:         return crc8_generate_key(_msg, _n);
-    //case LIQUID_CRC_16:        return crc16_generate_key(_msg, _n);
-    //case LIQUID_CRC_24:        return crc24_generate_key(_msg, _n);
+    case LIQUID_CRC_8:         return crc8_generate_key(_msg, _n);
+    case LIQUID_CRC_16:        return crc16_generate_key(_msg, _n);
+    case LIQUID_CRC_24:        return crc24_generate_key(_msg, _n);
     case LIQUID_CRC_32:        return crc32_generate_key(_msg, _n);
     default:
         liquid_error(LIQUID_EICONFIG,"crc_generate_key(), unknown/unsupported scheme: %d", _scheme);
@@ -237,84 +237,84 @@ unsigned int checksum_generate_key(unsigned char *_data,
 // CRC-8
 //
 
-//// generate 8-bit cyclic redundancy check key.
-////
-//// slow method, operates one bit at a time
-//// algorithm from: http://www.hackersdelight.org/crc.pdf
-////
-////  _msg    :   input data message [size: _n x 1]
-////  _n      :   input data message size
-//unsigned int crc8_generate_key(unsigned char *_msg,
-//                               unsigned int _n)
-//{
-//    unsigned int i, j, b, mask, key8=~0;
-//    unsigned int poly = liquid_reverse_byte_gentab[CRC8_POLY];
-//    for (i=0; i<_n; i++) {
-//        b = _msg[i];
-//        key8 ^= b;
-//        for (j=0; j<8; j++) {
-//            mask = -(key8 & 1);
-//            key8 = (key8>>1) ^ (poly & mask);
-//        }
-//    }
-//    return (~key8) & 0xff;
-//}
+// generate 8-bit cyclic redundancy check key.
 //
+// slow method, operates one bit at a time
+// algorithm from: http://www.hackersdelight.org/crc.pdf
 //
-//// 
-//// CRC-16
-////
+//  _msg    :   input data message [size: _n x 1]
+//  _n      :   input data message size
+unsigned int crc8_generate_key(unsigned char *_msg,
+                               unsigned int _n)
+{
+    unsigned int i, j, b, mask, key8=~0;
+    unsigned int poly = liquid_reverse_byte_gentab[CRC8_POLY];
+    for (i=0; i<_n; i++) {
+        b = _msg[i];
+        key8 ^= b;
+        for (j=0; j<8; j++) {
+            mask = -(key8 & 1);
+            key8 = (key8>>1) ^ (poly & mask);
+        }
+    }
+    return (~key8) & 0xff;
+}
+
+
+// 
+// CRC-16
 //
-//// generate 16-bit cyclic redundancy check key.
-////
-//// slow method, operates one bit at a time
-//// algorithm from: http://www.hackersdelight.org/crc.pdf
-////
-////  _msg    :   input data message [size: _n x 1]
-////  _n      :   input data message size
-//unsigned int crc16_generate_key(unsigned char *_msg,
-//                                unsigned int _n)
-//{
-//    unsigned int i, j, b, mask, key16=~0;
-//    unsigned int poly = liquid_reverse_uint16(CRC16_POLY);
-//    for (i=0; i<_n; i++) {
-//        b = _msg[i];
-//        key16 ^= b;
-//        for (j=0; j<8; j++) {
-//            mask = -(key16 & 1);
-//            key16 = (key16>>1) ^ (poly & mask);
-//        }
-//    }
-//    return (~key16) & 0xffff;
-//}
+
+// generate 16-bit cyclic redundancy check key.
 //
+// slow method, operates one bit at a time
+// algorithm from: http://www.hackersdelight.org/crc.pdf
 //
-//// 
-//// CRC-24
-////
+//  _msg    :   input data message [size: _n x 1]
+//  _n      :   input data message size
+unsigned int crc16_generate_key(unsigned char *_msg,
+                                unsigned int _n)
+{
+    unsigned int i, j, b, mask, key16=~0;
+    unsigned int poly = liquid_reverse_uint16(CRC16_POLY);
+    for (i=0; i<_n; i++) {
+        b = _msg[i];
+        key16 ^= b;
+        for (j=0; j<8; j++) {
+            mask = -(key16 & 1);
+            key16 = (key16>>1) ^ (poly & mask);
+        }
+    }
+    return (~key16) & 0xffff;
+}
+
+
+// 
+// CRC-24
 //
-//// generate 24-bit cyclic redundancy check key.
-////
-//// slow method, operates one bit at a time
-//// algorithm from: http://www.hackersdelight.org/crc.pdf
-////
-////  _msg    :   input data message [size: _n x 1]
-////  _n      :   input data message size
-//unsigned int crc24_generate_key(unsigned char *_msg,
-//                                unsigned int _n)
-//{
-//    unsigned int i, j, b, mask, key24=~0;
-//    unsigned int poly = liquid_reverse_uint24(CRC24_POLY);
-//    for (i=0; i<_n; i++) {
-//        b = _msg[i];
-//        key24 ^= b;
-//        for (j=0; j<8; j++) {
-//            mask = -(key24 & 1);
-//            key24 = (key24>>1) ^ (poly & mask);
-//        }
-//    }
-//    return (~key24) & 0xffffff;
-//}
+
+// generate 24-bit cyclic redundancy check key.
+//
+// slow method, operates one bit at a time
+// algorithm from: http://www.hackersdelight.org/crc.pdf
+//
+//  _msg    :   input data message [size: _n x 1]
+//  _n      :   input data message size
+unsigned int crc24_generate_key(unsigned char *_msg,
+                                unsigned int _n)
+{
+    unsigned int i, j, b, mask, key24=~0;
+    unsigned int poly = liquid_reverse_uint24(CRC24_POLY);
+    for (i=0; i<_n; i++) {
+        b = _msg[i];
+        key24 ^= b;
+        for (j=0; j<8; j++) {
+            mask = -(key24 & 1);
+            key24 = (key24>>1) ^ (poly & mask);
+        }
+    }
+    return (~key24) & 0xffffff;
+}
 
 
 // 
@@ -332,14 +332,12 @@ unsigned int crc32_generate_key(unsigned char *_msg,
                                 unsigned int _n)
 {
     unsigned int i, j, b, mask, key32=~0;
-    int temp;
     unsigned int poly = liquid_reverse_uint32(CRC32_POLY);
     for (i=0; i<_n; i++) {
         b = _msg[i];
         key32 ^= b;
         for (j=0; j<8; j++) {
-            temp = (key32 & 1);//changed syntax to avoid doing minus on unsigned
-            mask = -(temp);//changed syntax to avoid doing minus on unsigned
+            mask = -(key32 & 1);
             key32 = (key32>>1) ^ (poly & mask);
         }
     }

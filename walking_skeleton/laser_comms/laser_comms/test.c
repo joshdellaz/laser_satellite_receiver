@@ -1,10 +1,10 @@
 #include "packet_frame.h"
+#include "channel.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "liquid.internal.h"
 
 
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec
@@ -18,13 +18,13 @@ uint8_t * generateRandPacket(void) {
 
 
 //1 (maybe) lsb bit error every 8 bytes
-applyChannel(uint8_t * input_data, unsigned int input_data_length) {
-	for (unsigned int i = 0; i < input_data_length; i++) {
-		if (i % 8 == 0) {
-			input_data[i] = (input_data[i] >> 1) << 1;//only flips bit if lsb was a 1
-		}
-	}
-}
+// void applyChannel(uint8_t * input_data, unsigned int input_data_length) {
+// 	for (unsigned int i = 0; i < input_data_length; i++) {
+// 		if (i % 8 == 0) {
+// 			input_data[i] = (input_data[i] >> 1) << 1;//only flips bit if lsb was a 1
+// 		}
+// 	}
+// }
 
 //
 void getFECDataLengths(void) {

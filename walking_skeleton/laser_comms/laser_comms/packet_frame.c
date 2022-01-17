@@ -5,8 +5,8 @@
 #include <stdbool.h>
 
 #include "packet_frame.h"
-#include "liquid.internal.h"
-#include <liquid.h>
+//#include <complex>
+#include <liquid/liquid.h>
 
 
 //Move these into separate file? Considering having "utils" file containing smaller functions, and keeping the higher-level stuff here
@@ -156,13 +156,13 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 
 
 	//Repeat specified number of times and move to new array
-	*mls_preamble = (uint8_t*)malloc(((mls->s_len))* repititions);
-	for (unsigned int i = 0; i < repititions; i++) {
-		for (unsigned int j = 0; j < (mls->s_len); j++) {
-			(*mls_preamble)[i*(mls->s_len) + j] = (uint8_t)((mls->s)[j]);
-		}
-	}
-	*mls_preamble_length = repititions*(mls->s_len);
+	// *mls_preamble = (uint8_t*)malloc(((mls->s_len))* repititions);
+	// for (unsigned int i = 0; i < repititions; i++) {
+	// 	for (unsigned int j = 0; j < (mls->s_len); j++) {
+	// 		(*mls_preamble)[i*(mls->s_len) + j] = (uint8_t)((mls->s)[j]);
+	// 	}
+	// }
+	// *mls_preamble_length = repititions*(mls->s_len);
 
 	// clean up memory
 	bsequence_destroy(mls);

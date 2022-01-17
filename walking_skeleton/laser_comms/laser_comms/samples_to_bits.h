@@ -1,6 +1,6 @@
-#pragma once
-#include <stdbool.h>
 #include <stdint.h>
+#include <stdbool.h>
+
 
 //perform in chunks?
 bool resample(float* samples);

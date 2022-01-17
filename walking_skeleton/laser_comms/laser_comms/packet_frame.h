@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <liquid/liquid.h>
 
 
 //Macros indicating size of various packet fields. Framing and packetizing code should be able to handle

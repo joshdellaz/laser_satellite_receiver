@@ -1,10 +1,19 @@
 # laser_satellite_receiver
 
-/matlab_files
+## matlab_files
 ---contains a range of matlab and associated files used for basic testing
 ---/pole_filter_phasesync_test.m is a working example of a polyphase filterbank used for phase syncronization of oversampled square wave
 
-/walking_skeleton
----Visual Studio 2019 project containing a basic 
----/liquid-dsp-relevant relevant liquid-dsp code that is likely to be used in out project
----/openfec-relevant relevant openfec code that is likely to be used in out project
+## walking_skeleton
+Contains all project code for C/C++ implementation
+
+**Development instructions:**
+* Install linux (preferably latest ubuntu LTS release) on a PC or in a VM
+* install git, gcc, and make via command line
+* Install [liquid-dsp]. Follow all instructions on readme
+* Install VS Code and its C/C++ extension
+* File -> Open Folder -> select "c_project"
+* To build, open main.c and either press F5 or click Run -> Start Debugging
+* To test changes to code, it is recommend to implement the functionality in fullSendTest() and debug the program. This way, the new functionality is tested in an end-to-end (transmit to receive) manner.
+
+[liquid-dsp]: https://github.com/jgaeddert/liquid-dsp

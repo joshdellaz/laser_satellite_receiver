@@ -1,11 +1,13 @@
 #include <stdbool.h>
 #include <math.h>
-#include <liquid.h>
+#include <liquid/liquid.h>
 #include <stdio.h>
+
+#define PI 3.142857
 
 
 //For now, only works on fixed-length chunks (128 B * 4 = 512 samples in, cuz stack)
-bool resample(float* samples) {
+bool resampleInput(float* samples) {
 
     float        r = 4;   // resampling rate (output/input) [TODO eliminate magic number]
     float        bw = 0.45f;  // resampling filter bandwidth (HMM)
@@ -23,38 +25,83 @@ bool resample(float* samples) {
     // ... initialize input ...
 
     // execute resampler, storing result in output buffer
-    resamp_crcf_execute(q, samples, y, &num_written);
+    resamp_crcf_execute(q, *samples, y, &num_written);
     if (num_written != 512 * 4) {
         printf("Filter not executed properly");
     }
 
     // clean up allocated objects
     resamp_crcf_destroy(q);
-
-
 }
-
-bool determinePhaseOffset(float* samples, float phase_offset)//design such that it can be done on 101010... stream OR w/ MLS sync
+//TODO: design such that it can be done on 101010... stream OR w/ MLS sync
+//ASSUME INPUT SAMPLES ARRAY IS OF LENGTH 4 samples or more
+//INPUT SAMPLES ARRAY MUST HAVE UNDERGONE UPSAMPLING
+float determinePhaseOffset(float* samples)
 {
-    
     /* parameter definitions */
-    /* clear */
-    /* in rads */
-    /* Can't have more than 1 decimal!!! Number of samples per bit */
+    int num_banks = 4;
+    int N = 4;
+    int initial_n_offset = num_banks*round(N) + 1;
+
     /* num of symbols of filter */
     /* num of samples in symbol period */
-    /* generate square wave w/ 20 bit alternation and then random sequence */
-    
-    /* Apply appropriate sample rate */
-
-    /* if shift > half of sample, first sample is shifted by one */
-
-
    
     /* Create and apply polyphase filterbank */
+    //Values generated via matlab
+    unsigned int h_len = 49;  // filter order
+    float fircoefs[49] = {
+       -1.154575593983648E-17, -0.012730960239875706, -0.025712250513688212,
+       -0.038094166414430156,  -0.048988416693311589, -0.057515241064219715,
+       -0.062852167922348892,  -0.064281740012951435, -0.061235520866639484,
+       -0.053331832980202207,  -0.040404965092938588, -0.022524006578241607,
+       1.154575593983648E-17,  0.026619280501558328,  0.056566951130114,
+       0.08888638830033703,    0.12247104173327902,   0.15611279717431065,
+       0.18855650376704669,    0.21855791604403488,   0.244942083466558,
+       0.266659164901011,      0.28283475565057009,   0.29281208551714133,
+       0.29618386351056508,    0.29281208551714133,   0.28283475565057009,
+       0.266659164901011,      0.244942083466558,     0.21855791604403488,
+       0.18855650376704669,    0.15611279717431065,   0.12247104173327902,
+       0.08888638830033703,    0.056566951130114,     0.026619280501558328,
+       1.154575593983648E-17,  -0.022524006578241607, -0.040404965092938588,
+       -0.053331832980202207,  -0.061235520866639484, -0.064281740012951435,
+       -0.062852167922348892,  -0.057515241064219715, -0.048988416693311589,
+       -0.038094166414430156,  -0.025712250513688212, -0.012730960239875706,
+       -1.154575593983648E-17 };
+
+    // create filter object
+    firfilt_crcf q = firfilt_crcf_create(fircoefs,h_len);
+
+    float buffer = 0;    // filter output buffer
+    double banksum[36] = {0};
+
+    //execute filter over 2 symbols?
+    //TODO: somehow execute over larger area and do averaging?
+    //TODO eliminate magic numbers
+    for (int i = 0; i< 2*N; i++){
+        for(int j = 0; j<num_banks; j++){
+            for(int k = 0; k<49; k++){
+                firfilt_crcf_push(q, samples[i*num_banks + j + initial_n_offset + k]); // push input sample
+                firfilt_crcf_execute(q,&buffer); // compute output
+                banksum[i*num_banks + j] += buffer;
+            }
+        }
+    }
+
+
+    // destroy filter object
+    firfilt_crcf_destroy(q);
+
     
     /* find phase offset */
-   
+    int maxval_location = 0;
+    for (int i = 0; i < 36; i++){
+        if (banksum[0] < banksum[maxval_location])
+            maxval_location = i;
+    }
+    int best_sample = (int)round((float)maxval_location/(float)num_banks);
+    int best_bank = mod(maxval_location, num_banks);
+    int n_offset = best_sample*N + best_bank;
+    return ((float)n_offset/(float)(N*num_banks))*PI - PI/2;//assuming 1 symbol = pi phase
 }
 
 

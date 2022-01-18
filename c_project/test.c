@@ -33,6 +33,15 @@ void getFECDataLengths(void) {
 	packet_data_length_with_fec = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
 }
 
+void softwareDACandADC(void){
+	//TOODOOOOOOO
+	float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_samples);
+	bool shiftDownAndNormalizeSamples(float ** samples, int length_samples);
+	uint8_t * samplesToBytes(float* samples, int length_samples, float phase_offset);
+	bool resampleInput(float* samplesin, float ** samplesout);
+	float determinePhaseOffset(float* samples);
+}
+
 //Current full-data-pipeline test
 bool fullSendTest(void) {
 	

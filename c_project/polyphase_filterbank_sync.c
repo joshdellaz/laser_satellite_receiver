@@ -7,7 +7,9 @@
 
 
 //For now, only works on fixed-length chunks (128 B * 4 = 512 samples in, cuz stack)
-bool resampleInput(float* samples) {
+//Samples out is 512*4 in length
+//ENSURE shiftDownAndNormalizeSamples IS RUN ON SAMPLES BEFORE THIS FUNCTION
+bool resampleInput(float* samplesin, float ** samplesout) {
 
     float        r = 4;   // resampling rate (output/input) [TODO eliminate magic number]
     float        bw = 0.45f;  // resampling filter bandwidth (HMM)
@@ -19,13 +21,13 @@ bool resampleInput(float* samples) {
     // create resampler
     resamp_crcf q = resamp_crcf_create(r, h_len, bw, slsl, npfb);
 
-    float y[512*4];         // output buffer
+    //float y[512*4];         // output buffer
     unsigned int num_written;   // number of values written to buffer
 
     // ... initialize input ...
 
     // execute resampler, storing result in output buffer
-    resamp_crcf_execute(q, *samples, y, &num_written);
+    resamp_crcf_execute(q, *samplesin, *samplesout, &num_written);//NOTE POINTERS MIGHT BE WRONG
     if (num_written != 512 * 4) {
         printf("Filter not executed properly");
     }
@@ -33,6 +35,7 @@ bool resampleInput(float* samples) {
     // clean up allocated objects
     resamp_crcf_destroy(q);
 }
+
 //TODO: design such that it can be done on 101010... stream OR w/ MLS sync
 //ASSUME INPUT SAMPLES ARRAY IS OF LENGTH 4 samples or more
 //INPUT SAMPLES ARRAY MUST HAVE UNDERGONE UPSAMPLING
@@ -69,9 +72,9 @@ float determinePhaseOffset(float* samples)
        -1.154575593983648E-17 };
 
     // create filter object
-    firfilt_crcf q = firfilt_crcf_create(fircoefs,h_len);
+    // firfilt_crcf q = firfilt_crcf_create(fircoefs,h_len);
 
-    float buffer = 0;    // filter output buffer
+    double buffer = 0;    // filter output buffer
     double banksum[36] = {0};
 
     //execute filter over 2 symbols?
@@ -80,8 +83,9 @@ float determinePhaseOffset(float* samples)
     for (int i = 0; i< 2*N; i++){
         for(int j = 0; j<num_banks; j++){
             for(int k = 0; k<49; k++){
-                firfilt_crcf_push(q, samples[i*num_banks + j + initial_n_offset + k]); // push input sample
-                firfilt_crcf_execute(q,&buffer); // compute output
+                // firfilt_crcf_push(q, samples[i*num_banks + j + initial_n_offset + k]); // push input sample
+                // firfilt_crcf_execute(q,&buffer); // compute output
+                buffer = samples[i*num_banks + j + initial_n_offset + k]*fircoefs[k];
                 banksum[i*num_banks + j] += buffer;
             }
         }
@@ -89,7 +93,7 @@ float determinePhaseOffset(float* samples)
 
 
     // destroy filter object
-    firfilt_crcf_destroy(q);
+    // firfilt_crcf_destroy(q);
 
     
     /* find phase offset */

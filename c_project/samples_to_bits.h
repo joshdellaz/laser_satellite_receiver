@@ -3,7 +3,8 @@
 
 
 //perform in chunks?
-bool bytestreamToSamplestream(float* samples);
-bool resampleInput(float* samples);
+float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_samples);
+bool shiftDownAndNormalizeSamples(float ** samples, int length_samples);
+uint8_t * samplesToBytes(float* samples, int length_samples, float phase_offset);
+bool resampleInput(float* samplesin, float ** samplesout);
 float determinePhaseOffset(float* samples);//design such that it can be done on 101010... stream OR w/ MLS sync
-bool samplesToBytes(float * samples, int * num_bytes_to_convert, uint8_t * data, float phase_offset);

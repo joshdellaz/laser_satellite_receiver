@@ -8,6 +8,7 @@
 #define PI 3.142857
 
 //ENSURE shiftDownAndNormalizeSamples IS RUN ON SAMPLES BEFORE THIS FUNCTION
+//TODO eliminate extra buffer?
 float * resampleInput(float* samplesin, int length_samples_in, int * length_samples_out) {
 
     float        r = 4;   // resampling rate (output/input) [TODO eliminate magic number]
@@ -15,11 +16,13 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
     unsigned int npfb = 64;     // number of filters in bank (timing resolution)
     float slsl = 60;          // resampling filter sidelobe suppression level
     unsigned int h_len = 16;  // filter semi-length (filter delay)
+    int filter_delay = 122;
 
     // create resampler
     resamp_crcf q = resamp_crcf_create(r, h_len, bw, slsl, npfb);
 
-	float complex* samplesout = (float complex*)malloc(length_samples_in*r);        // output buffer
+    float complex* complexbuffer = (float complex*)malloc(length_samples_in*r*sizeof(float complex)); 
+
     //unsigned int num_written = 0;   // number of values written to buffer this iteration
     unsigned int num_written_total = 0;
 
@@ -28,8 +31,9 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
     //     resamp_crcf_execute(q, *samplesin, &(samplesout[i*(int)r]), &num_written);
     //     num_written_total += num_written;
     // }
-    resamp_crcf_execute_block(q, samplesin, length_samples_in, samplesout, &num_written_total);
 
+    //TODO test on large size blocks?
+    resamp_crcf_execute_block(q, samplesin, length_samples_in, complexbuffer, &num_written_total);
 
     *length_samples_out = length_samples_in*r;
     if (num_written_total != *length_samples_out) {
@@ -38,7 +42,7 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
 
     // clean up allocated objects
     resamp_crcf_destroy(q);
-    return (float *)samplesout;
+    return (float *)complexbuffer;
 }
 
 //TODO: design such that it can be done on 101010... stream OR w/ MLS sync

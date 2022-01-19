@@ -36,13 +36,15 @@ void getFECDataLengths(void) {
 
 void softwareDACandADC(void){
 	//TOODOOOOOOO
-	int originaldatalength = 2;
+	int originaldatalength = 3;
 	uint8_t* originaldata = (uint8_t*)malloc(originaldatalength);
 	for (int i = 0; i < originaldatalength; i++) {
 		originaldata[i] = rand() & 0xff;
 	}
 	originaldata[0] = 0b01010101;
 	originaldata[1] = 0b01010101;
+	originaldata[2] = 0b01010101;
+
 
 	printf("Original Data:\n");
 	for (unsigned int i = 0; i < originaldatalength; i++) {
@@ -73,13 +75,28 @@ void softwareDACandADC(void){
 	}
 	printf("\n\n");
 
-	float phase = determinePhaseOffset(samples_upsampled);
+	//shift samples
+	//TODO eliminate this extreme jankiness
+	int filterdelay = 121;
+	int numsamples_shifted = numsamples_upsampled-filterdelay;
+	float *samples_shifted = (float *)malloc(numsamples_shifted*sizeof(float)); 
+	for(int i = 0; i<numsamples_shifted; i++){
+		samples_shifted[i] = samples_upsampled[filterdelay+i];
+	}
+	printf("Shifted Samples:\n");
+	for (unsigned int i = 0; i < numsamples_shifted; i++) {
+		printf("%.2f  ", samples_shifted[i]);
+	}
+	printf("\n\n");
+
+	float phase = determinePhaseOffset(samples_shifted);
 	printf("Phase Offset:\n");
 	printf("%f\n\n", phase);
 
-	uint8_t *converteddata = samplesToBytes(samples_upsampled, numsamples_upsampled, phase);
+	uint8_t *converteddata = samplesToBytes(samples_shifted, numsamples_shifted, phase);
+	int finaldatalength = originaldatalength - 1;
 	printf("Converted data:\n");
-	for (unsigned int i = 0; i < originaldatalength; i++) {
+	for (unsigned int i = 0; i < finaldatalength; i++) {//-1 to account for filter delay
 		printf("%d", converteddata[i]);
 	}
 	printf("\n\n");

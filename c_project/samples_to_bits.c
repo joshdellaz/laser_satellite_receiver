@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <math.h>
+#include <stdlib.h>
 #define PI 3.142857
 
 
@@ -46,16 +47,16 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
     int samples_per_bit = 4;
     float phase_offset_fraction_of_symbol = 0;
     float *samples = (float*)malloc((8*length_bytes*samples_per_bit) * sizeof(float));
-    length_samples = length_bytes*8*samples_per_bit;
+    *length_samples = length_bytes*8*samples_per_bit;
 
     //repeat each input element
     for(int i = 0; i<length_bytes; i++){
         for (int j = 0; j <8; j++){
             for(int k = 0; k<samples_per_bit; k++){
                 if((data[i] & (1 << (7-j))) == 0){
-                    samples[i*samples_per_bit + k] = 0;
+                    samples[i*8*samples_per_bit + j*samples_per_bit + k] = 0;
                 } else {
-                    samples[i*samples_per_bit + k] = 1;
+                    samples[i*8*samples_per_bit + j*samples_per_bit + k] = 1;
                 }
             }
         }
@@ -70,8 +71,8 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
 //Converts input stream from 0 to 1 range (OOK) to a -1 to 1 range, centered at y = zero
 bool shiftDownAndNormalizeSamples(float ** samples, int length_samples){
     for(int i = 0; i < length_samples; i++){
-        *samples[i] -= 0.5;
-        *samples[i] *= 2;
+        (*samples)[i] -= 0.5;
+        (*samples)[i] *= 2;
     }
 }
 

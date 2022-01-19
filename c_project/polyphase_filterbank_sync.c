@@ -1,39 +1,42 @@
 #include <stdbool.h>
 #include <math.h>
+#include <complex.h>
 #include <liquid/liquid.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define PI 3.142857
 
-
-//For now, only works on fixed-length chunks (128 B * 4 = 512 samples in, cuz stack)
-//Samples out is 512*4 in length
 //ENSURE shiftDownAndNormalizeSamples IS RUN ON SAMPLES BEFORE THIS FUNCTION
-bool resampleInput(float* samplesin, float ** samplesout) {
+float * resampleInput(float* samplesin, int length_samples_in, int * length_samples_out) {
 
     float        r = 4;   // resampling rate (output/input) [TODO eliminate magic number]
     float        bw = 0.45f;  // resampling filter bandwidth (HMM)
     unsigned int npfb = 64;     // number of filters in bank (timing resolution)
-    float slsl = -60.0f;          // resampling filter sidelobe suppression level
-    unsigned int n = 512;    // number of input samples
+    float slsl = 1;          // resampling filter sidelobe suppression level
     unsigned int h_len = 16;  // filter semi-length (filter delay)
 
     // create resampler
     resamp_crcf q = resamp_crcf_create(r, h_len, bw, slsl, npfb);
 
-    //float y[512*4];         // output buffer
-    unsigned int num_written;   // number of values written to buffer
-
-    // ... initialize input ...
+	float complex* samplesout = (float complex*)malloc(length_samples_in*r);        // output buffer
+    unsigned int num_written = 0;   // number of values written to buffer this iteration
+    unsigned int num_written_total = 0;
 
     // execute resampler, storing result in output buffer
-    resamp_crcf_execute(q, *samplesin, *samplesout, &num_written);//NOTE POINTERS MIGHT BE WRONG
-    if (num_written != 512 * 4) {
+    for(int i = 0; i<length_samples_in; i++){
+        resamp_crcf_execute(q, *samplesin, &(samplesout[i*(int)r]), &num_written);
+        num_written_total += num_written;
+    }
+
+    *length_samples_out = length_samples_in*r;
+    if (num_written_total != *length_samples_out) {
         printf("Filter not executed properly");
     }
 
     // clean up allocated objects
     resamp_crcf_destroy(q);
+    return (float *)samplesout;
 }
 
 //TODO: design such that it can be done on 101010... stream OR w/ MLS sync
@@ -103,7 +106,7 @@ float determinePhaseOffset(float* samples)
             maxval_location = i;
     }
     int best_sample = (int)round((float)maxval_location/(float)num_banks);
-    int best_bank = mod(maxval_location, num_banks);
+    int best_bank = maxval_location % num_banks;
     int n_offset = best_sample*N + best_bank;
     return ((float)n_offset/(float)(N*num_banks))*PI - PI/2;//assuming 1 symbol = pi phase
 }

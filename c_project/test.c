@@ -1,5 +1,6 @@
 #include "packet_frame.h"
 #include "channel.h"
+#include "samples_to_bits.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -35,11 +36,58 @@ void getFECDataLengths(void) {
 
 void softwareDACandADC(void){
 	//TOODOOOOOOO
-	float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_samples);
-	bool shiftDownAndNormalizeSamples(float ** samples, int length_samples);
-	uint8_t * samplesToBytes(float* samples, int length_samples, float phase_offset);
-	bool resampleInput(float* samplesin, float ** samplesout);
-	float determinePhaseOffset(float* samples);
+	int originaldatalength = 2;
+	uint8_t* originaldata = (uint8_t*)malloc(originaldatalength);
+	for (int i = 0; i < originaldatalength; i++) {
+		originaldata[i] = rand() & 0xff;
+	}
+	originaldata[0] = 0b01010101;
+	originaldata[1] = 0b01010101;
+
+	printf("Original Data:\n");
+	for (unsigned int i = 0; i < originaldatalength; i++) {
+		printf("%d", originaldata[i]);
+	}
+	printf("\n\n");
+
+	int numsamples = 0;
+	float *samples = bytestreamToSamplestream(originaldata, originaldatalength, &numsamples);
+	printf("ADC OUTPUT:\n");
+	for (unsigned int i = 0; i < numsamples; i++) {
+		printf("%.2f  ", samples[i]);
+	}
+	printf("\n\n");
+
+	shiftDownAndNormalizeSamples(&samples, numsamples);
+	printf("Processed Samples:\n");
+	for (unsigned int i = 0; i < numsamples; i++) {
+		printf("%.2f  ", samples[i]);
+	}
+	printf("\n\n");
+
+	int numsamples_upsampled = 0;
+	float * samples_upsampled = resampleInput(samples, numsamples, &numsamples_upsampled);
+	printf("Upsampled Samples:\n");
+	for (unsigned int i = 0; i < numsamples_upsampled; i++) {
+		printf("%.2f  ", samples_upsampled[i]);
+	}
+	printf("\n\n");
+
+	float phase = determinePhaseOffset(samples_upsampled);
+	printf("Phase Offset:\n");
+	printf("%f\n\n", phase);
+
+	uint8_t *converteddata = samplesToBytes(samples_upsampled, numsamples_upsampled, phase);
+	printf("Converted data:\n");
+	for (unsigned int i = 0; i < numsamples_upsampled; i++) {
+		printf("%d", converteddata[i]);
+	}
+	printf("\n\n");
+
+	free(originaldata);
+	free(samples);
+	free(samples_upsampled);
+	free(converteddata);
 }
 
 //Current full-data-pipeline test

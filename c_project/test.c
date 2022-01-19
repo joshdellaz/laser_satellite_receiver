@@ -36,7 +36,7 @@ void getFECDataLengths(void) {
 
 void softwareDACandADC(void){
 	//TOODOOOOOOO
-	int originaldatalength = 3;
+	int originaldatalength = 100;
 	uint8_t* originaldata = (uint8_t*)malloc(originaldatalength);
 	for (int i = 0; i < originaldatalength; i++) {
 		originaldata[i] = rand() & 0xff;
@@ -54,26 +54,26 @@ void softwareDACandADC(void){
 
 	int numsamples = 0;
 	float *samples = bytestreamToSamplestream(originaldata, originaldatalength, &numsamples);
-	printf("ADC OUTPUT:\n");
-	for (unsigned int i = 0; i < numsamples; i++) {
-		printf("%.2f  ", samples[i]);
-	}
-	printf("\n\n");
+	// printf("ADC OUTPUT:\n");
+	// for (unsigned int i = 0; i < numsamples; i++) {
+	// 	printf("%.2f  ", samples[i]);
+	// }
+	// printf("\n\n");
 
 	shiftDownAndNormalizeSamples(&samples, numsamples);
-	printf("Processed Samples:\n");
-	for (unsigned int i = 0; i < numsamples; i++) {
-		printf("%.2f  ", samples[i]);
-	}
-	printf("\n\n");
+	// printf("Processed Samples:\n");
+	// for (unsigned int i = 0; i < numsamples; i++) {
+	// 	printf("%.2f  ", samples[i]);
+	// }
+	// printf("\n\n");
 
 	int numsamples_upsampled = 0;
 	float * samples_upsampled = resampleInput(samples, numsamples, &numsamples_upsampled);
-	printf("Upsampled Samples:\n");
-	for (unsigned int i = 0; i < numsamples_upsampled; i++) {
-		printf("%.2f  ", samples_upsampled[i]);
-	}
-	printf("\n\n");
+	// printf("Upsampled Samples:\n");
+	// for (unsigned int i = 0; i < numsamples_upsampled; i++) {
+	// 	printf("%.2f  ", samples_upsampled[i]);
+	// }
+	// printf("\n\n");
 
 	//shift samples
 	//TODO eliminate this extreme jankiness
@@ -83,14 +83,14 @@ void softwareDACandADC(void){
 	for(int i = 0; i<numsamples_shifted; i++){
 		samples_shifted[i] = samples_upsampled[filterdelay+i];
 	}
-	printf("Shifted Samples:\n");
-	for (unsigned int i = 0; i < numsamples_shifted; i++) {
-		printf("%.2f  ", samples_shifted[i]);
-	}
-	printf("\n\n");
+	// printf("Shifted Samples:\n");
+	// for (unsigned int i = 0; i < numsamples_shifted; i++) {
+	// 	printf("%.2f  ", samples_shifted[i]);
+	// }
+	// printf("\n\n");
 
 	float phase = determinePhaseOffset(samples_shifted);
-	printf("Phase Offset:\n");
+	printf("Phase Offset(rads):\n");
 	printf("%f\n\n", phase);
 
 	uint8_t *converteddata = samplesToBytes(samples_shifted, numsamples_shifted, phase);
@@ -100,6 +100,19 @@ void softwareDACandADC(void){
 		printf("%d", converteddata[i]);
 	}
 	printf("\n\n");
+
+	int counter = 0;
+	for(int i = 0; i<finaldatalength; i++){
+		if(originaldata[i] == converteddata[i]){
+			counter++;
+		}
+	}
+	if(counter == finaldatalength){
+		printf("Successful demodulation!\n\n");
+	} else {
+		printf("Unuccessful demodulation!\n\n");
+	}
+
 
 	free(originaldata);
 	free(samples);

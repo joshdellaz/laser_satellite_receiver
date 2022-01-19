@@ -79,7 +79,7 @@ void softwareDACandADC(void){
 
 	uint8_t *converteddata = samplesToBytes(samples_upsampled, numsamples_upsampled, phase);
 	printf("Converted data:\n");
-	for (unsigned int i = 0; i < numsamples_upsampled; i++) {
+	for (unsigned int i = 0; i < originaldatalength; i++) {
 		printf("%d", converteddata[i]);
 	}
 	printf("\n\n");

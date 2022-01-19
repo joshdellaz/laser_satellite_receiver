@@ -13,21 +13,23 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
     float        r = 4;   // resampling rate (output/input) [TODO eliminate magic number]
     float        bw = 0.45f;  // resampling filter bandwidth (HMM)
     unsigned int npfb = 64;     // number of filters in bank (timing resolution)
-    float slsl = 1;          // resampling filter sidelobe suppression level
+    float slsl = 60;          // resampling filter sidelobe suppression level
     unsigned int h_len = 16;  // filter semi-length (filter delay)
 
     // create resampler
     resamp_crcf q = resamp_crcf_create(r, h_len, bw, slsl, npfb);
 
 	float complex* samplesout = (float complex*)malloc(length_samples_in*r);        // output buffer
-    unsigned int num_written = 0;   // number of values written to buffer this iteration
+    //unsigned int num_written = 0;   // number of values written to buffer this iteration
     unsigned int num_written_total = 0;
 
     // execute resampler, storing result in output buffer
-    for(int i = 0; i<length_samples_in; i++){
-        resamp_crcf_execute(q, *samplesin, &(samplesout[i*(int)r]), &num_written);
-        num_written_total += num_written;
-    }
+    // for(int i = 0; i<length_samples_in; i++){
+    //     resamp_crcf_execute(q, *samplesin, &(samplesout[i*(int)r]), &num_written);
+    //     num_written_total += num_written;
+    // }
+    resamp_crcf_execute_block(q, samplesin, length_samples_in, samplesout, &num_written_total);
+
 
     *length_samples_out = length_samples_in*r;
     if (num_written_total != *length_samples_out) {

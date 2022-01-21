@@ -39,15 +39,19 @@ bool applyChannel(uint8_t* input_data, unsigned int input_data_length) { // chan
 			case GOOD_S:
 				if (randF() < P_a2) { chnl_st = BAD_UNS; }
 				else { chnl_st = GOOD_S; }
+				break;
 			case BAD_S:
 				if (randF() < P_b2) { chnl_st = GOOD_UNS; }
 				else { chnl_st = BAD_S; }
+				break;
 			case BAD_UNS:
 				if (randF() < P_b1) { chnl_st = GOOD_UNS; }
 				else { chnl_st = BAD_S; }
+				break;
 			case GOOD_UNS:
 				if (randF() < P_a1) { chnl_st = BAD_UNS; }
 				else { chnl_st = GOOD_S; }
+				break;
 			}
 		}
 		if ((chnl_st == BAD_S) || (chnl_st == BAD_UNS)) {
@@ -70,8 +74,9 @@ void applyBursts(bool *Bursts, uint8_t *input_data, unsigned int input_data_leng
 		if (randF() < ((float)(i) / (float)(BIT_FLIP_CRTL*input_data_length))) { // kinda random, more probable near the end of the frame
 			input_data[i] = (rand() & 0xff) & input_data[i];
 		} // flipping can be overwritten by a burst if there is one
-		bytePar = 0;
+		bytePar = (uint8_t) 0;
 		for (int bit = 0; bit < 8; bit++) {
+			printf("%d", Bursts[(8 * i) + bit]);
 			if (Bursts[(8 * i) + bit]) {
 				if (bit == 0) {
 					bytePar = bytePar | 0x80;
@@ -100,7 +105,6 @@ void applyBursts(bool *Bursts, uint8_t *input_data, unsigned int input_data_leng
 			}
 			if (bit == 7) {
 				input_data[i] = input_data[i] | bytePar;
-				bytePar = 0;
 			}
 		}
 	}

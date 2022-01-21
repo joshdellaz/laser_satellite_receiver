@@ -1,5 +1,6 @@
 #include "packet_frame.h"
 #include "channel.h"
+#include "laser_comms.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -37,6 +38,7 @@ void getFECDataLengths(void) {
 bool fullSendTest(void) {
 	
 	printf("test");
+	say_hello();
 	//Init all the things. 
 	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions
 	packet_t packet_data;//malloc this?

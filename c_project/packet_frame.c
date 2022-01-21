@@ -88,16 +88,20 @@ bool getCRC(packet_t * packet) {//Note that deviating from crc32 size would requ
 	return 0;
 }
 
-//TODO
 //Applies LiquidDSP's scrambling to input buffer of input_length
-bool applyScrambling(uint8_t * input, unsigned int input_length) {
+bool applyScrambling(uint8_t ** input, unsigned int input_length, unsigned int preamble_length) {
+	//not necessary
+	//*frame = (uint8_t*)malloc((*frame_length) * sizeof(uint8_t));
+
+    scramble_data((*input) + preamble_length, (input_length-preamble_length));
 
 	return 0;
 }
 
-//TODO
 //Removes LiquidDSP's scrambling to input buffer of input_length
-bool removeScrambling(uint8_t* input, unsigned int input_length) {
+bool removeScrambling(uint8_t ** input, unsigned int input_length, unsigned int preamble_length) {
+
+    unscramble_data((*input) + preamble_length, (input_length-preamble_length));
 
 	return 0;
 }

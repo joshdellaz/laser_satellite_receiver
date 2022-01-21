@@ -63,20 +63,27 @@ bool fullSendTest(void) {
 
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
 	applyInterleaving(packet_vector, packet_length);
-	//applyScrambling()
-
+	
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
+	unsigned int preamble_length = frame_length - packet_length;
 
 	printf("Orignal frame:\n");
 	for (unsigned int i = 0; i < frame_length; i++) {
 		printf("%d", frame_vector[i]);
 	}
 	printf("\n\n");
-	
+
+	applyScrambling(&frame_vector, frame_length, preamble_length);
+
+	printf("Post-scramble:\n");
+	for (unsigned int i = 0; i < frame_length; i++) {
+		printf("%d", frame_vector[i]);
+	}
+	printf("\n\n");
 
 	//Comment or un-comment, depending on the test you are trying to run
 	//TODO consider turning into macro functionality in future
-	applyChannel(frame_vector, frame_length);
+	//applyChannel(frame_vector, frame_length);
 
 	//printf("New frame (after going through channel):\n");
 	//for (unsigned int i = 0; i < frame_length; i++) {
@@ -89,6 +96,8 @@ bool fullSendTest(void) {
 	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec);
 	uint8_t* rxpacket_vector = NULL;
 	unsigned int rxpacket_length = 0;
+
+	removeScrambling(&frame_vector, frame_length, preamble_length);
 
 	disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
 	removeInterleaving(rxpacket_vector, packet_length);

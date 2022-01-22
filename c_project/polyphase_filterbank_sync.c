@@ -7,6 +7,11 @@
 
 #define PI 3.142857
 
+int num_banks = 4;
+int mls_total_preamble_length_bits;
+int number_of_mls_repititions;
+int N = 4;
+
 //ENSURE shiftDownAndNormalizeSamples IS RUN ON SAMPLES BEFORE THIS FUNCTION
 //TODO eliminate extra buffer?
 float * resampleInput(float* samplesin, int length_samples_in, int * length_samples_out) {
@@ -44,8 +49,7 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
 float determinePhaseOffset(float* samples)
 {
     /* parameter definitions */
-    int num_banks = 4;
-    int N = 4;
+    
     int initial_n_offset = num_banks*round(N) + 1;
 
     /* num of symbols of filter */
@@ -98,4 +102,67 @@ float determinePhaseOffset(float* samples)
     int best_bank = maxval_location % num_banks;
     int n_offset = best_sample*N + best_bank;
     return ((float)n_offset/(float)(N*num_banks))*PI - PI/2;//assuming 1 symbol = pi phase
+}
+
+void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
+
+    int length_samples_new = length_samples - num_samples_to_chop_off;
+    float * buffer = (float *)malloc(length_samples_new*sizeof(float)); 
+    for (int i = 0; i<length_samples_new; i++){
+        buffer[i] = *data[i+num_samples_to_chop_off];
+    }
+    free(*data);
+
+    *data = buffer;
+}
+
+//Currently assumes fixed-length preamble
+//TODO eliminate above assumption
+float findAutocorrelation(float * samples, int delay){
+    //Move erik code here
+}
+
+//syncFrame() changes "samples" array to start with the first sample after the MLS preamble
+//NOTE Please run upsample before passing samples into here
+//Current design assumes entire preamble is intact
+//TODO: eliminate above assumption
+//Consider divying up into smaller functions. Lots of functionality here
+//Frees samples pointer
+uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_out){
+
+    *length_bytes_out = length_samples_in/(8*N*num_banks) - mls_total_preamble_length_bits/8;//requires mls total length to be multiple of 8 bits
+
+    float * buffer = (float *)malloc((length_samples_in/(N*num_banks))*sizeof(float)); 
+    float new_autocorr = 0;
+    float max_autocorr = 0;
+    int best_bank = 0;
+    int best_delay = 0;
+    int max_delay_bits = 20;//TODO: determine best number, given burst erasure length and mls length
+
+    for(int i = 0; i<num_banks*N; i++){
+        for(int k = 0; k < mls_total_preamble_length_bits; k++){
+            buffer[k] = samples[i + k*N*num_banks];
+        }
+        for (int j = -max_delay_bits; j<max_delay_bits; j++){
+            new_autocorr = findAutocorrelation(buffer, j);
+            if(new_autocorr > max_autocorr){
+                max_autocorr = new_autocorr;
+                best_bank = i;
+                best_delay = j;
+            }
+        }
+    }
+
+    //TODO determine amount to chop based on best_bank and best_delay
+    //Assume 2 MLS repititions
+    chopFront(samples, mls_total_preamble_length_bits*N*num_banks, length_samples_in);
+
+    //TODO pick only previously selected samples and figure out where to store them before passing to samplesToBytes()
+
+    uint8_t * output = samplesToBytes(samples, (*length_bytes_out)*8*N*num_banks, 0);
+
+    free(samples);
+    free(buffer);
+
+    return output;
 }

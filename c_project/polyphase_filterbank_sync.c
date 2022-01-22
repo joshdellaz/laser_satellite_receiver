@@ -4,6 +4,7 @@
 #include <liquid/liquid.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "samples_to_bits.h"
 
 #define PI 3.142857
 
@@ -11,6 +12,7 @@ int num_banks = 4;
 int mls_total_preamble_length_bits;
 int number_of_mls_repititions;
 int N = 4;
+extern int packet_data_length_with_fec;
 
 //ENSURE shiftDownAndNormalizeSamples IS RUN ON SAMPLES BEFORE THIS FUNCTION
 //TODO eliminate extra buffer?
@@ -104,6 +106,10 @@ float determinePhaseOffset(float* samples)
     return ((float)n_offset/(float)(N*num_banks))*PI - PI/2;//assuming 1 symbol = pi phase
 }
 
+
+//CODE ABOVE HERE IS FOR STRICTLY POLYPHASE FILTERBANK IMPLEMENTATION
+//CODE BELOW HERE IS FOR AUTOCORRELATOR IMPLEMENTATION
+
 void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
 
     int length_samples_new = length_samples - num_samples_to_chop_off;
@@ -118,17 +124,17 @@ void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
 
 //Currently assumes fixed-length preamble
 //TODO eliminate above assumption
-float findAutocorrelation(float * samples, int delay){
+float findAutocorrelation(float * samples, int shift){
     //Move erik code here
+    //Shifting code needs to be written here
+    //Use constant above values for MLS lengths
 }
 
 //syncFrame() changes "samples" array to start with the first sample after the MLS preamble
 //NOTE Please run upsample before passing samples into here
-//Current design assumes entire preamble is intact
-//TODO: eliminate above assumption
 //Consider divying up into smaller functions. Lots of functionality here
-//Frees samples pointer
-uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_out){
+//Frees samples pointer input
+uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_out, int frame_start_index_guess){
 
     *length_bytes_out = length_samples_in/(8*N*num_banks) - mls_total_preamble_length_bits/8;//requires mls total length to be multiple of 8 bits
 
@@ -136,33 +142,95 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     float new_autocorr = 0;
     float max_autocorr = 0;
     int best_bank = 0;
-    int best_delay = 0;
-    int max_delay_bits = 20;//TODO: determine best number, given burst erasure length and mls length
+    int best_shift_bits = 0;
+    int max_shift_bits = (mls_total_preamble_length_bits/number_of_mls_repititions)/2;//Half of one MLS
 
     for(int i = 0; i<num_banks*N; i++){
-        for(int k = 0; k < mls_total_preamble_length_bits; k++){
-            buffer[k] = samples[i + k*N*num_banks];
+        for(int k = 0; k < mls_total_preamble_length_bits; k++){//Does length need to be longer to account for pre-preamble samples?
+            buffer[k] = samples[frame_start_index_guess + i + k*N*num_banks];
         }
-        for (int j = -max_delay_bits; j<max_delay_bits; j++){
+        for (int j = -max_shift_bits; j<max_shift_bits; j++){
             new_autocorr = findAutocorrelation(buffer, j);
             if(new_autocorr > max_autocorr){
                 max_autocorr = new_autocorr;
                 best_bank = i;
-                best_delay = j;
+                best_shift_bits = j;
             }
         }
     }
 
-    //TODO determine amount to chop based on best_bank and best_delay
-    //Assume 2 MLS repititions
-    chopFront(samples, mls_total_preamble_length_bits*N*num_banks, length_samples_in);
+    //Pick samples from selected bank and delay
+    for (int i = 0; i<*length_bytes_out*8; i++){
+        //Assign each element of buffer to be the selected sample for each bit (including preamble)
+        buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];//best_delay_bits usage might be wrong... run tests
+    }
 
-    //TODO pick only previously selected samples and figure out where to store them before passing to samplesToBytes()
+    chopFront(samples, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
+    //length of samples should now be = length_bits_out
 
-    uint8_t * output = samplesToBytes(samples, (*length_bytes_out)*8*N*num_banks, 0);
+    uint8_t * output = samplesToBytes(samples, (*length_bytes_out)*8, 0);
 
     free(samples);
     free(buffer);
 
     return output;
+}
+
+//Returns signal power value
+float calcSignalPower(float * signal, int len){
+    //Find formula and put here
+}
+
+/*
+Work in progress below...
+Todo:
+--check power of recently written 1/4th of buffer imediately after receiving it
+--write output data appropriately when power threshold is detected
+--check if infinite loop can receive immediate next frame?
+*/
+
+//Constantly running function waiting for incoming data (from ADC) to pass signal threshold
+//Current implementation is for single frame
+//TODO expand for sequential frames
+//Do we have to worry about execution speed here? Might miss samples right after if statement evals true. Or might miss upon frame repitition
+//ENSURE frame_start_index_guess is scaled according to upsample rate
+float * getIncomingSignalData(int * frame_start_index_guess){
+    
+    float power_calcd = 0;
+    float power_threshold;//Find proper value (such that passed if buffer > half filled w/ data)
+    int buffersize = mls_total_preamble_length_bits*N/2;//could be optimized?
+    int testsize = buffersize/4;//Consider optimizing size
+    float * buffer = (float *)malloc(buffersize*sizeof(float)); 
+    int currentindex;
+
+    int data_array_size = (packet_data_length_with_fec + mls_total_preamble_length_bits + 2*buffersize)*N;
+    float * data = (float *)malloc(data_array_size*sizeof(float));
+
+    while(1){
+        currentindex = 0;
+        //succ data from ADC Interface to fill whole buffer here:
+        //(here)
+            currentindex++;
+            if(currentindex % testsize == 0){
+                if()
+            }
+
+        if(calcSignalPower(buffer, testsize) > power_threshold){
+            //write new data first so samples aren't missed
+            for (int i = 0; i < data_array_size; i++){
+                data[buffersize+ i] = succData();//fill in with actual function for ADC data succ
+            }
+
+            //then copy buffer data to front
+            for (int i = 0; i < buffersize; i++){
+                data[i] = buffer[i];
+            }
+
+            *frame_start_index_guess = ;
+
+            break;
+        }
+    }
+    free(buffer);
+    return data;
 }

@@ -174,7 +174,7 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 //Checks the autocorrelation of frame input buffer and determines the indices of the first bit of the packet field.
 //Note: byte_ and bit_index are indexed from zero (0).
 bool syncFrameUsingMLSPreamble(uint8_t *input, unsigned int * byte_index, unsigned int * bit_index) {
-
+	
 	return 0;
 }
 

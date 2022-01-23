@@ -1,0 +1,86 @@
+[
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   phasesync_data.c /Fobuild\\win64\\phasesync_data.obj",
+    "file": "phasesync_data.c",
+    "output": "build/win64/phasesync_data.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   rt_nonfinite.c /Fobuild\\win64\\rt_nonfinite.obj",
+    "file": "rt_nonfinite.c",
+    "output": "build/win64/rt_nonfinite.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   phasesync_initialize.c /Fobuild\\win64\\phasesync_initialize.obj",
+    "file": "phasesync_initialize.c",
+    "output": "build/win64/phasesync_initialize.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   phasesync_terminate.c /Fobuild\\win64\\phasesync_terminate.obj",
+    "file": "phasesync_terminate.c",
+    "output": "build/win64/phasesync_terminate.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   phasesync.c /Fobuild\\win64\\phasesync.obj",
+    "file": "phasesync.c",
+    "output": "build/win64/phasesync.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   rand.c /Fobuild\\win64\\rand.obj",
+    "file": "rand.c",
+    "output": "build/win64/rand.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   resample.c /Fobuild\\win64\\resample.obj",
+    "file": "resample.c",
+    "output": "build/win64/resample.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   sumMatrixIncludeNaN.c /Fobuild\\win64\\sumMatrixIncludeNaN.obj",
+    "file": "sumMatrixIncludeNaN.c",
+    "output": "build/win64/sumMatrixIncludeNaN.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   string1.c /Fobuild\\win64\\string1.obj",
+    "file": "string1.c",
+    "output": "build/win64/string1.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   interface\\_coder_phasesync_api.c /Fobuild\\win64\\_coder_phasesync_api.obj",
+    "file": "interface/_coder_phasesync_api.c",
+    "output": "build/win64/_coder_phasesync_api.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   interface\\_coder_phasesync_mex.c /Fobuild\\win64\\_coder_phasesync_mex.obj",
+    "file": "interface/_coder_phasesync_mex.c",
+    "output": "build/win64/_coder_phasesync_mex.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   phasesync_mexutil.c /Fobuild\\win64\\phasesync_mexutil.obj",
+    "file": "phasesync_mexutil.c",
+    "output": "build/win64/phasesync_mexutil.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   interface\\_coder_phasesync_info.c /Fobuild\\win64\\_coder_phasesync_info.obj",
+    "file": "interface/_coder_phasesync_info.c",
+    "output": "build/win64/_coder_phasesync_info.obj"
+  },
+  {
+    "directory": "D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\\codegen\\mex\\phasesync",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /source-charset:utf-8 /I \".\" /I \"D:\\Documents\\GitHub\\laser_satellite_receiver\\matlab_files\" /I \".\\interface\" /I \"D:\\MATLAB_2021\\extern\\include\" /I \".\" -DMODEL=phasesync_mex   D:\\MATLAB_2021\\extern\\version\\c_mexapi_version.c /Fobuild\\win64\\c_mexapi_version.obj",
+    "file": "D:/MATLAB_2021/extern/version/c_mexapi_version.c",
+    "output": "build/win64/c_mexapi_version.obj"
+  }
+]

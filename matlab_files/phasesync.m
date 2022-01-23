@@ -1,14 +1,12 @@
-%NOTE: THIS FILE IS OUTDATED. SEE LDPCCODE.m FOR UP-TO-DATE FUNCTION FOR
-%PHASE SYNC
+%#codegen
 
+function [] = phasesync()
 %TODO define/know actual meaning of phase offset
 %TODO implement bitrate shift as parameter
 
-
-
 %parameter definitions
-clear
-phase = 5*pi()/8;%in rads
+%clear
+phase = 0;%in rads
 num_banks = 4;
 rolloff = 0;
 N = 4.2;%Can't have more than 1 decimal!!! Number of samples per bit
@@ -37,20 +35,20 @@ end
 % %Print some useful stuff
 disp("Input Phase offset (rads) = ");
 disp(phase);
-figure
-tiledlayout(3,1)
-nexttile
-stem(input_samples(2:51));
-title(["Output of ADC w/ Phase offset = " phase]);
+% figure
+% tiledlayout(3,1)
+% nexttile
+% stem(input_samples(2:51));
+% title(["Output of ADC w/ Phase offset = " phase]);
 
 %correct waveform for proper processing
 input_signal = (input_samples - 0.5).*2;
 input_signal = resample(input_signal, 4, 1, 2, 9);
 
-%Print some useful stuff
-nexttile
-stem(input_signal(1:200));
-title('Upsampled Signal');
+% %Print some useful stuff
+% nexttile
+% stem(input_signal(1:200));
+% title('Upsampled Signal');
 
 %Create and apply polyphase filterbank
 banksum = zeros(1, 2*round(N)*num_banks + num_banks);
@@ -86,22 +84,22 @@ for i = 0:(size - 1)
     end
 end
 
-%plot selected sample point & print phase offset
-nexttile
-hold on 
-stem(input_signal(1:200));
-stem(selected_points_x(1:12), (output(1:12)-0.5).*2, 'LineWidth',2);
-legend('Input signal (Oversampled)', 'Selected data sample points');
-title('Optimal Sampling Points');
-hold off
+% %plot selected sample point & print phase offset
+% nexttile
+% hold on 
+% stem(input_signal(1:200));
+% stem(selected_points_x(1:12), (output(1:12)-0.5).*2, 'LineWidth',2);
+% legend('Input signal (Oversampled)', 'Selected data sample points');
+% title('Optimal Sampling Points');
+% hold off
 disp("Calculated Phase offset (rads) = ");
 disp(abs(phase));
 
 %print decoded sequence
 disp("Generated Input Data = ");
-disp(num2str(input_data));
+% disp(num2str(input_data));
 disp("Decoded sequence = ");
-disp(num2str(output));
+% disp(num2str(output));
 
 %compare decoded sequence
 if(isequal(input_data, output))
@@ -109,3 +107,5 @@ if(isequal(input_data, output))
 else
     disp("Unsuccessful sampling");
 end
+end
+

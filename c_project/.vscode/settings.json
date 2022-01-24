@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "liquid.internal.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "cmath": "cpp"
     }
 }

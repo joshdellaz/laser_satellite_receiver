@@ -37,8 +37,8 @@ void getFECDataLengths(void) {
 //Current full-data-pipeline test
 bool fullSendTest(void) {
 	
-	printf("test");
-	say_hello();
+	printf("test\n");
+	
 	//Init all the things. 
 	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions
 	packet_t packet_data;//malloc this?
@@ -59,6 +59,7 @@ bool fullSendTest(void) {
 	getCRC(&packet_data);
 
 	//Commented out functions are not yet implemented, so cannot be tested
+	applyLDPC();
 	applyFEC(packet_data.data);
 
 	assemblePacket(&packet_data, &packet_vector, &packet_length);

@@ -9,10 +9,13 @@
                 "-g",
                 "${fileDirname}/*.c",
                 "${fileDirname}/*.cpp",
+                //"${fileDirname}/tavildarLDPC/LdpcC/*.cpp",
                 "${fileDirname}/*.h",
+                //"${fileDirname}/tavildarLDPC/LdpcC/*.h",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lstdc++",
+                "-lsupc++",
                 "-lliquid"
             ],
             "options": {

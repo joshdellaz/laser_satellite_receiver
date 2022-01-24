@@ -10,7 +10,7 @@
 #define CRC_DATA_LENGTH_BYTES 4
 #define FRAME_LENGTH_BYTES //TODO determine proper value
 #define FEC_TYPE LIQUID_FEC_HAMMING74 //Other options = 
-#define PACKET_DATA_LENGTH_NO_FEC 1000
+#define PACKET_DATA_LENGTH_NO_FEC 81 // need to consider LDPC params (this is based on 1296 and 1/2 rate)
 
 extern int packet_data_length_with_fec;
 

@@ -5,9 +5,10 @@
 #include <random>
 #include <iomanip> 
 
+
 using namespace std;
 
-extern "C" void applyLDPC() {
+extern "C" void applyLDPC(uint8_t* input) {
     std::cout << "Hello, from laser_comms!\n";
 
     unsigned max_err = 250;
@@ -47,19 +48,21 @@ extern "C" void applyLDPC() {
     unsigned info_len = ldpc_code.get_info_length(); //load_wifi_ldpc(block_length, rate_index);
     cout << "Checking info length: " << info_len << endl;
     
+    uint8_t input_bit;
     std::vector<uint8_t> info_bits(info_len, 0);
-    for (unsigned i_bit = 0; i_bit < info_len; ++i_bit)
-        info_bits.at(i_bit) = (uint8_t) (rand() % 2);
-
-    cout << "Here's the info bits: " << endl;
-    for (uint8_t i: info_bits) {
-        cout << i << ",";
+    for (unsigned i_bit = 0; i_bit < info_len; ++i_bit) {
+        input_bit = input[(int) i_bit/8];
+        input_bit >>= (7 - (i_bit % 8));
+        info_bits.at(i_bit) = (uint8_t) (input_bit & 0X01);
+        printf("%i", info_bits.at(i_bit));
     }
+    printf("\n");
 
     std::vector<uint8_t> coded_bits = ldpc_code.encode(info_bits);
 
-    cout << "Here's the coded bits: " << endl;
-    for (uint8_t i: coded_bits) {
-        cout << i << ",";
+    cout << "\n Here's the coded bits: " << endl;
+    for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) {
+        printf("%i", coded_bits.at(i_bit));
     }
+    printf("\n");
 }

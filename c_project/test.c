@@ -59,7 +59,7 @@ bool fullSendTest(void) {
 	getCRC(&packet_data);
 
 	//Commented out functions are not yet implemented, so cannot be tested
-	applyLDPC();
+	applyLDPC(packet_data.data);
 	applyFEC(packet_data.data);
 
 	assemblePacket(&packet_data, &packet_vector, &packet_length);

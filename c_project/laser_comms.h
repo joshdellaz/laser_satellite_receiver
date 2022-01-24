@@ -1,10 +1,12 @@
-//#include <cstdint>
+//#include <cstdlib>
 //#include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C"
 #endif
-void applyLDPC();
+void applyLDPC(uint8_t *);
+
 
 #define CODEWRD_L 1296
 #define CODEWRD_R 0.5

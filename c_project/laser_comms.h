@@ -1,12 +1,16 @@
 //#include <cstdlib>
 //#include <stdbool.h>
 #include <stdint.h>
+//#include "packet_frame.h"
 
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif
 void applyLDPC(uint8_t *);
-
+void decodeLDPC(uint8_t *);
+#ifdef __cplusplus
+}
+#endif
 
 #define CODEWRD_L 1296
 #define CODEWRD_R 0.5

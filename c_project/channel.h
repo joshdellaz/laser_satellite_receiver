@@ -22,3 +22,4 @@ typedef enum chnl_state {
 } chnl_state;
 
 bool applyChannel(uint8_t* input, unsigned int input_length);
+bool applyBitFlips(uint8_t* input, unsigned int input_length);

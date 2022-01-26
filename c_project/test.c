@@ -31,7 +31,10 @@ uint8_t * generateRandPacket(void) {
 void getFECDataLengths(void) {
 
 	// create arrays
-	packet_data_length_with_fec = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
+	packet_data_length_with_fec = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC); // need to make this include different LDPCs
+
+	// for now
+	packet_data_length_with_fec = (int) CODEWRD_L / 8;
 }
 
 //Current full-data-pipeline test
@@ -52,7 +55,7 @@ bool fullSendTest(void) {
 
 	printf("Original Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-		printf("%d", packet_data.data[i]);
+		printf("%d,", packet_data.data[i]);
 	}
 	printf("\n\n");
 
@@ -60,7 +63,12 @@ bool fullSendTest(void) {
 
 	//Commented out functions are not yet implemented, so cannot be tested
 	applyLDPC(packet_data.data);
-	applyFEC(packet_data.data);
+	//applyFEC(packet_data.data);
+	printf("Encoded Data:\n");
+	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
+		printf("%d,", packet_data.data[i]);
+	}
+	printf("\n\n");
 
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
 	applyInterleaving(packet_vector, packet_length);
@@ -85,6 +93,7 @@ bool fullSendTest(void) {
 	//Comment or un-comment, depending on the test you are trying to run
 	//TODO consider turning into macro functionality in future
 	//applyChannel(frame_vector, frame_length);
+	applyBitFlips(frame_vector, frame_length);
 
 	//printf("New frame (after going through channel):\n");
 	//for (unsigned int i = 0; i < frame_length; i++) {
@@ -104,11 +113,21 @@ bool fullSendTest(void) {
 	removeInterleaving(rxpacket_vector, packet_length);
 
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
-	removeFEC(rxpacket_data.data);
+	printf("Pre decoding:\n");
+	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
+		printf("%d,", rxpacket_data.data[i]);
+	}
+	printf("\n\n");
+	//removeFEC(rxpacket_data.data);
+	
+	
+	decodeLDPC(rxpacket_data.data);
+
+
 
 	printf("Received Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-		printf("%d", rxpacket_data.data[i]);
+		printf("%d,", rxpacket_data.data[i]);
 	}
 	printf("\n\n");
 

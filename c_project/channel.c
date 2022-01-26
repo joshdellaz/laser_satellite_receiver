@@ -8,6 +8,16 @@
 float randF(void); // rand float between 0 and 1
 void applyBursts(bool*, uint8_t*, unsigned int);
 
+bool applyBitFlips(uint8_t* input_data, unsigned int input_data_length) {
+	for (unsigned int i = 0; i < input_data_length; i++) {
+		if (i % 50 == 0) {
+			input_data[i] = (rand() & 0xff) & input_data[i];
+			input_data[i] = (input_data[i] >> 1) << 1;//only flips bit if lsb was a 1
+		}
+	}
+	return true;
+}
+
 bool applyChannel(uint8_t* input_data, unsigned int input_data_length) { // change description to return array of bools
 	unsigned int bits_per_cyc = BIT_RATE * CHNL_CYC; // non-zero integer
 	chnl_state chnl_st; // current state of the channel

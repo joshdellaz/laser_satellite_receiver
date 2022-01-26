@@ -16,7 +16,8 @@
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lstdc++",
                 "-lsupc++",
-                "-lliquid"
+                "-lliquid",
+                "-lm"
             ],
             "options": {
                 "cwd": "${fileDirname}"

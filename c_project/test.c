@@ -60,6 +60,7 @@ bool fullSendTest(void) {
 	printf("\n\n");
 
 	getCRC(&packet_data);
+	printf("Tx CRC: %d \n", packet_data.crc);
 
 	//Commented out functions are not yet implemented, so cannot be tested
 	applyLDPC(packet_data.data);
@@ -76,24 +77,24 @@ bool fullSendTest(void) {
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
 	unsigned int preamble_length = frame_length - packet_length;
 
-	printf("Orignal frame:\n");
-	for (unsigned int i = 0; i < frame_length; i++) {
-		printf("%d", frame_vector[i]);
-	}
-	printf("\n\n");
+	// printf("Orignal frame:\n");
+	// for (unsigned int i = 0; i < frame_length; i++) {
+	// 	printf("%d", frame_vector[i]);
+	// }
+	// printf("\n\n");
 
 	applyScrambling(&frame_vector, frame_length, preamble_length);
 
-	printf("Post-scramble:\n");
-	for (unsigned int i = 0; i < frame_length; i++) {
-		printf("%d", frame_vector[i]);
-	}
-	printf("\n\n");
+	// printf("Post-scramble:\n");
+	// for (unsigned int i = 0; i < frame_length; i++) {
+	// 	printf("%d", frame_vector[i]);
+	// }
+	// printf("\n\n");
 
 	//Comment or un-comment, depending on the test you are trying to run
 	//TODO consider turning into macro functionality in future
 	//applyChannel(frame_vector, frame_length);
-	applyBitFlips(frame_vector, frame_length);
+	applyBitFlips(frame_vector, frame_length); // fucks up the CRC unless CRC is also encoded and decoded
 
 	//printf("New frame (after going through channel):\n");
 	//for (unsigned int i = 0; i < frame_length; i++) {
@@ -113,31 +114,39 @@ bool fullSendTest(void) {
 	removeInterleaving(rxpacket_vector, packet_length);
 
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
-	printf("Pre decoding:\n");
-	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
-		printf("%d,", rxpacket_data.data[i]);
+	// printf("Pre decoding:\n");
+	// for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
+	// 	printf("%d,", rxpacket_data.data[i]);
+	// }
+	// printf("\n\n");
+	//removeFEC(rxpacket_data.data);
+	printf("Difference between Received Data and Original Data:\n");
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+		//printf("%d,", rxpacket_data.data[i]);
+		printf("%d,", (rxpacket_data.data[i] - packet_data.data[i]));
 	}
 	printf("\n\n");
-	//removeFEC(rxpacket_data.data);
-	
+
 	
 	decodeLDPC(rxpacket_data.data);
 
 
 
-	printf("Received Data:\n");
+	printf("Difference between Received Corrected Data and Original Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-		printf("%d,", rxpacket_data.data[i]);
+		//printf("%d,", rxpacket_data.data[i]);
+		printf("%d,", (rxpacket_data.data[i] - packet_data.data[i]));
 	}
 	printf("\n\n");
 
+	
 	if (checkCRC(&rxpacket_data)) {
-		printf("CRC Doesn't Match!\n\n");
+		printf("CRC Doesn't Match! (need to fix)\n");
 	}
 	else {
 		printf("CRC Matches!\n\n");
 	}
-
+	printf("Rx (the corrupted one) CRC: %d \n", rxpacket_data.crc);
 
 	//Must free everything malloc'd
 	free(packet_data.data);

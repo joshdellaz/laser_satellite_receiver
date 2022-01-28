@@ -32,8 +32,8 @@ extern "C" void applyLDPC(uint8_t* input) {
     ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
 
     unsigned info_len = ldpc_code.get_info_length();
-    cout << "Checking info length \nLDPC info length: " << info_len/8 << endl;
-    cout << "Macro defined length: " << PACKET_DATA_LENGTH_NO_FEC << endl;
+    // cout << "Checking info length \nLDPC info length: " << info_len/8 << endl;
+    // cout << "Macro defined length: " << PACKET_DATA_LENGTH_NO_FEC << endl;
     
 
     std::vector<uint8_t> info_bits(info_len, 0); // converting the packet_data.data array to usable format for enbcoding
@@ -42,17 +42,17 @@ extern "C" void applyLDPC(uint8_t* input) {
         input_bit = input[(int) i_bit/8];
         input_bit >>= (7 - (i_bit % 8));
         info_bits.at(i_bit) = (uint8_t) (input_bit & 0X01);
-        printf("%i", info_bits.at(i_bit));
+        //printf("%i", info_bits.at(i_bit));
     }
-    printf("\n");
+    //printf("\n");
 
     std::vector<uint8_t> coded_bits = ldpc_code.encode(info_bits);
 
-    cout << "\n The coded bits: " << endl;
-    for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) {
-        printf("%i", coded_bits.at(i_bit));
-    }
-    printf("\n");
+    // cout << "\n The coded bits: " << endl;
+    // for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) {
+    //     printf("%i", coded_bits.at(i_bit));
+    // }
+    // printf("\n");
 
     uint8_t output_byte = 0;
     for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) { // converting bit stream to uint8_t array
@@ -114,7 +114,7 @@ extern "C" void decodeLDPC(uint8_t* rxinput) {
     // cout << "Checking info length \nLDPC info length: " << info_len/8 << endl;
     // cout << "Macro defined length: " << PACKET_DATA_LENGTH_NO_FEC << endl;
     
-    cout << "\n The llr vector: " << endl;
+    //cout << "\n The llr vector: " << endl;
     std::vector<double> llr(CODEWRD_L, 0);
     uint8_t out_bit; // used for extracting each bit from the packet data array
     for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) { // bit extraction
@@ -132,11 +132,11 @@ extern "C" void decodeLDPC(uint8_t* rxinput) {
     
     std::vector<uint8_t> decoded_cw = ldpc_code.decode(llr, 25, min_sum);
 
-    cout << "\n The received coded bits: " << endl;
-    for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) {
-        printf("%i", decoded_cw.at(i_bit));
-    }
-    printf("\n");
+    // cout << "\n The received coded bits: " << endl;
+    // for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) {
+    //     printf("%i", decoded_cw.at(i_bit));
+    // }
+    // printf("\n");
 
     uint8_t out_byte = 0;
     for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) { // converting bit stream to uint8_t array
@@ -170,5 +170,5 @@ extern "C" void decodeLDPC(uint8_t* rxinput) {
             out_byte = (uint8_t) 0;
         }
     }
-    printf("\n");
+    //printf("\n");
 }

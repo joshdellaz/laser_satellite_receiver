@@ -124,9 +124,9 @@ void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
 
 //http://www.kempacoustics.com/thesis/node84.html
 //Unclear exactly how liquid code works. Needs testing and analysis
-float findAutocorrelation(float * samples, int shift){
+float findAutocorrelation(float * samples){
 
-    unsigned int n = 2*mls_total_preamble_length_bits;        // autocorr window length
+    unsigned int n = mls_total_preamble_length_bits;        // autocorr window length
     unsigned int delay = n/2;    // autocorr overlap delay
 
     // create autocorrelator object
@@ -169,14 +169,18 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     float max_autocorr = 0;
     int best_bank = 0;
     int best_shift_bits = 0;
-    int max_shift_bits = (mls_total_preamble_length_bits/number_of_mls_repititions)/2;//Half of one MLS
+    int max_shiftleft_bits = 1305;
+    int max_shiftright_bits = 10;
 
     for(int i = 0; i<num_banks*N; i++){
-        for(int k = 0; k < mls_total_preamble_length_bits; k++){//Does length need to be longer to account for pre-preamble samples?
-            buffer[k] = samples[frame_start_index_guess + i + k*N*num_banks];
-        }
-        for (int j = -max_shift_bits; j<max_shift_bits; j++){
-            new_autocorr = findAutocorrelation(buffer, j);
+        for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){
+
+            for(int k = 0; k < mls_total_preamble_length_bits; k++){
+                buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];
+            }
+
+            new_autocorr = findAutocorrelation(buffer);
+
             if(new_autocorr > max_autocorr){
                 max_autocorr = new_autocorr;
                 best_bank = i;
@@ -188,10 +192,10 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     //Pick samples from selected bank and delay
     for (int i = 0; i<*length_bytes_out*8; i++){
         //Assign each element of buffer to be the selected sample for each bit (including preamble)
-        buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];//best_delay_bits usage might be wrong... run tests
+        buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
     }
 
-    chopFront(samples, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
+    chopFront(&samples, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out
 
     uint8_t * output = samplesToBytes(samples, (*length_bytes_out)*8, 0);

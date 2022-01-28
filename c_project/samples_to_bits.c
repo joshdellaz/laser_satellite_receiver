@@ -48,7 +48,7 @@ uint8_t * samplesToBytes(float* samples, int length_samples, float phase_offset)
     float phase_offset_fraction_of_symbol = 0;
     int init_offset = num_banks*samples_per_bit;
     int length_bytes = length_samples/(8*samples_per_bit*num_banks);
-    uint8_t *bytes = (uint8_t*)malloc(length_bytes * sizeof(uint8_t));//Does this need to be set to {0}?
+    uint8_t *bytes = (uint8_t*)malloc(length_bytes * sizeof(uint8_t));
     int n_offset = round(((float)(samples_per_bit*num_banks))*(phase_offset/PI + 1/2));//Derived via formula manipulation
     //int n_offset = 0;
 

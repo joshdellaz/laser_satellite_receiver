@@ -138,6 +138,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
 
     *length_bytes_out = length_samples_in/(8*N*num_banks) - mls_total_preamble_length_bits/8;//requires mls total length to be multiple of 8 bits
 
+
     float * buffer = (float *)malloc((length_samples_in/(N*num_banks))*sizeof(float)); 
     float new_autocorr = 0;
     float max_autocorr = 0;
@@ -179,55 +180,50 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
 //Returns signal power value
 float calcSignalPower(float * signal, int len){
     //Find formula and put here
+    float totalpower;
+    for(int i = 0; i<len; i++){
+        totalpower += signal[i]/(float)len;
+    }
+    return totalpower;
 }
 
-/*
-Work in progress below...
-Todo:
---check power of recently written 1/4th of buffer imediately after receiving it
---write output data appropriately when power threshold is detected
---check if infinite loop can receive immediate next frame?
-*/
 
 //Constantly running function waiting for incoming data (from ADC) to pass signal threshold
-//Current implementation is for single frame
-//TODO expand for sequential frames
-//Do we have to worry about execution speed here? Might miss samples right after if statement evals true. Or might miss upon frame repitition
-//ENSURE frame_start_index_guess is scaled according to upsample rate
+//This will have to be called repeatedly so that successive frames can be received
+//Return value is pointer to float array with length (packet_data_length_with_fec + mls_total_preamble_length_bits)*N + buffersize + stuffing_len
+//ENSURE frame_start_index_guess is scaled according to upsample rate in future function calls
 float * getIncomingSignalData(int * frame_start_index_guess){
     
     float power_calcd = 0;
-    float power_threshold;//Find proper value (such that passed if buffer > half filled w/ data)
-    int buffersize = mls_total_preamble_length_bits*N/2;//could be optimized?
-    int testsize = buffersize/4;//Consider optimizing size
+    float power_threshold = 0.1;//asuming input signal normalized to 1, avg of buffer signal values must be >power_threshold
+    int buffersize = 10*N;//10 bits worth
     float * buffer = (float *)malloc(buffersize*sizeof(float)); 
-    int currentindex;
+    int stuffing_len = 1300*N;
 
-    int data_array_size = (packet_data_length_with_fec + mls_total_preamble_length_bits + 2*buffersize)*N;
+    int data_array_size = (packet_data_length_with_fec + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;//TODO
     float * data = (float *)malloc(data_array_size*sizeof(float));
 
     while(1){
-        currentindex = 0;
         //succ data from ADC Interface to fill whole buffer here:
+        for (int i = 0; i < buffersize; i++){
+            data[i] = succDataSample();
+        }
         //(here)
-            currentindex++;
-            if(currentindex % testsize == 0){
-                if()
-            }
-
-        if(calcSignalPower(buffer, testsize) > power_threshold){
+        if(calcSignalPower(buffer, buffersize) > power_threshold){
             //write new data first so samples aren't missed
             for (int i = 0; i < data_array_size; i++){
-                data[buffersize+ i] = succData();//fill in with actual function for ADC data succ
+                data[buffersize + stuffing_len+ i] = succDataSample();//fill in with actual function for ADC data succ
             }
-
             //then copy buffer data to front
             for (int i = 0; i < buffersize; i++){
-                data[i] = buffer[i];
+                data[stuffing_len + i] = buffer[i];
+            }
+            //then prepend a bunch of 0s in case we had a fade erasure at the start
+            for (int i = 0; i < stuffing_len; i++){
+                data[i] = 0;//should these be zeroes for best autocorrelation isolation?
             }
 
-            *frame_start_index_guess = ;
-
+            *frame_start_index_guess = stuffing_len + buffersize/2;
             break;
         }
     }

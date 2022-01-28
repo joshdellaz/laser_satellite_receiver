@@ -10,7 +10,7 @@ void applyBursts(bool*, uint8_t*, unsigned int);
 
 bool applyBitFlips(uint8_t* input_data, unsigned int input_data_length) {
 	for (unsigned int i = 0; i < input_data_length; i++) {
-		if (i % 50 == 0) {
+		if (i % BIT_FLIP_FREQ == 0) {
 			input_data[i] = (rand() & 0xff) & input_data[i];
 			input_data[i] = (input_data[i] >> 1) << 1;//only flips bit if lsb was a 1
 		}
@@ -80,10 +80,6 @@ float randF(void) {
 void applyBursts(bool *Bursts, uint8_t *input_data, unsigned int input_data_length) {
 	uint8_t bytePar; // bursts array parsed to byte size to be or'ed with input data
 	for (unsigned int i = 0; i < input_data_length; i++) {
-		// temporary way of flipping bits, will be done differently (using AWGN) once the channel can output oversampled signal
-		if (randF() < ((float)(i) / (float)(BIT_FLIP_CRTL*input_data_length))) { // kinda random, more probable near the end of the frame
-			input_data[i] = (rand() & 0xff) & input_data[i];
-		} // flipping can be overwritten by a burst if there is one
 		bytePar = (uint8_t) 0;
 		for (int bit = 0; bit < 8; bit++) {
 			printf("%d", Bursts[(8 * i) + bit]);

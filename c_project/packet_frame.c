@@ -69,7 +69,7 @@ bool checkCRC(packet_t* received_packet) {
 
 	crc_scheme   check = LIQUID_CRC_32; // error-detection scheme
 	uint32_t calcd_crc = (uint32_t)crc_generate_key(check, received_packet->data, PACKET_DATA_LENGTH_NO_FEC);
-	printf("Rx calcd CRC: %d \n", calcd_crc);
+	//printf("Rx calcd CRC: %d \n", calcd_crc);
 
 	if (received_packet->crc != calcd_crc) {
 		return 1;

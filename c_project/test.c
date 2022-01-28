@@ -146,7 +146,6 @@ bool fullSendTest(void) {
 	else {
 		printf("CRC Matches!\n\n");
 	}
-	printf("Rx (the corrupted one) CRC: %d \n", rxpacket_data.crc);
 
 	//Must free everything malloc'd
 	free(packet_data.data);

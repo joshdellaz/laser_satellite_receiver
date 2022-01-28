@@ -10,7 +10,14 @@
 #define CRC_DATA_LENGTH_BYTES 4
 #define FRAME_LENGTH_BYTES //TODO determine proper value
 #define FEC_TYPE LIQUID_FEC_HAMMING74 //Other options = 
-#define PACKET_DATA_LENGTH_NO_FEC 81 // need to consider LDPC params (this is based on 1296 and 1/2 rate)
+#define PACKET_DATA_LENGTH_NO_FEC 77 // need to consider LDPC params (this is based on 1296 and 1/2 rate)
+
+//LDPC params
+#define CODEWRD_L 1296
+#define CODEWRD_R 0.5
+#define MAX_DECODE_ITERS 25
+#define MIN_SUM false
+
 
 extern int packet_data_length_with_fec;
 
@@ -33,7 +40,7 @@ typedef struct packet_t {
 	uint16_t total_num_packets;
 	uint16_t current_packet_num;
 	uint8_t *data; //Consider indicating data length within packet instead of macro?
-	uint32_t crc;
+	uint32_t crc; // is being encoded with LDPC so need to consider its length in defining PACKET_DATA_LENGTH_NO_FEC
 
 } packet_t;
 

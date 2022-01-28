@@ -5,7 +5,7 @@
 #define BIT_RATE 1 // in Mbps
 #define ANAL_SAMPLING // (for awgn noise) [not necessary for now, could just flip some bits randomly]
 #define SNR // (for AWGN noise) 
-#define BIT_FLIP_CRTL 4 // increase to reduce probability of the bit flippage
+#define BIT_FLIP_FREQ 5 // increase to reduce probability of the bit flippage
 
 // Parameters which are based on the paper
 #define P_a1 0.270

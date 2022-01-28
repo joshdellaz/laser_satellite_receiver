@@ -10,12 +10,13 @@
 
 using namespace std;
 
+// extern "C" void initLDPC(LdpcCode * ldpc_scheme) {
+
+// }
+
 extern "C" void applyLDPC(uint8_t* input) {
     std::cout << "Starting LDPC encoding...\n";
-    unsigned max_err = 250;
-    unsigned max_runs = 10000;
-    bool min_sum = false;
-
+    
     LdpcCode ldpc_code(0, 0);
 
     unsigned block_length = CODEWRD_L; // parametarize this
@@ -27,11 +28,18 @@ extern "C" void applyLDPC(uint8_t* input) {
     else if (CODEWRD_R == (double) (4/5)) { rate_index = 3; }
     else {
         cout << "The chosen code rate (" << CODEWRD_R << ") is not supported." << endl;
+        return;
     }
     
     ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
 
     unsigned info_len = ldpc_code.get_info_length();
+    if (info_len/8 != (PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES)) {
+        cout << "The chosen data length is not compatible with the picked LDPC scheme ..." << endl;
+        cout << "Length of data to be encoded (with CRC): " << PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES << endl;
+        cout << "LDPC input length: " << (CODEWRD_L * CODEWRD_R)/8 << endl;
+        return;
+    }
     // cout << "Checking info length \nLDPC info length: " << info_len/8 << endl;
     // cout << "Macro defined length: " << PACKET_DATA_LENGTH_NO_FEC << endl;
     
@@ -91,9 +99,6 @@ extern "C" void applyLDPC(uint8_t* input) {
 
 extern "C" void decodeLDPC(uint8_t* rxinput) {
     std::cout << "Starting LDPC decoding...\n";
-    unsigned max_err = 250;
-    unsigned max_runs = 10000;
-    bool min_sum = false;
 
     LdpcCode ldpc_code(0, 0);
 
@@ -130,7 +135,7 @@ extern "C" void decodeLDPC(uint8_t* rxinput) {
     }
     printf("\n");
     
-    std::vector<uint8_t> decoded_cw = ldpc_code.decode(llr, 25, min_sum);
+    std::vector<uint8_t> decoded_cw = ldpc_code.decode(llr, MAX_DECODE_ITERS, MIN_SUM);
 
     // cout << "\n The received coded bits: " << endl;
     // for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) {

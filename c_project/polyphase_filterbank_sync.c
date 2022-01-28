@@ -122,12 +122,37 @@ void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
     *data = buffer;
 }
 
-//Currently assumes fixed-length preamble
-//TODO eliminate above assumption
+//http://www.kempacoustics.com/thesis/node84.html
+//Unclear exactly how liquid code works. Needs testing and analysis
 float findAutocorrelation(float * samples, int shift){
-    //Move erik code here
-    //Shifting code needs to be written here
-    //Use constant above values for MLS lengths
+
+    unsigned int n = 2*mls_total_preamble_length_bits;        // autocorr window length
+    unsigned int delay = n/2;    // autocorr overlap delay
+
+    // create autocorrelator object
+    autocorr_cccf q = autocorr_cccf_create(n,delay);//Does this need to be done every time?
+
+    float complex rxx[n];          // output auto-correlation
+
+    // compute auto-correlation
+    for (int i=0; i<n; i++) {
+        autocorr_cccf_push(q,samples[i]);
+        autocorr_cccf_execute(q,&rxx[i]);
+
+        // normalize by energy (not sure if necessary)
+        rxx[i] /= autocorr_cccf_get_energy(q);
+    }
+
+    // find peak
+    float complex rxx_peak = 0;
+    for (int i=0; i<n; i++) {
+        if (i==0 || cabsf(rxx[i]) > cabsf(rxx_peak))
+            rxx_peak = rxx[i];
+    }
+
+    // destroy autocorrelator object
+    autocorr_cccf_destroy(q);
+    return (float)rxx_peak;
 }
 
 //syncFrame() changes "samples" array to start with the first sample after the MLS preamble

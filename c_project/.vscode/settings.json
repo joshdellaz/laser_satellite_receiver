@@ -3,6 +3,7 @@
         "liquid.internal.h": "c",
         "stdint.h": "c",
         "test.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "liquid.h": "c"
     }
 }

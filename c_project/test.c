@@ -6,6 +6,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
+
+extern int mls_total_preamble_length_bits;
+extern int number_of_mls_repititions;
+#define PI 3.142857
 
 
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec
@@ -34,6 +39,146 @@ void getFECDataLengths(void) {
 	packet_data_length_with_fec = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
 }
 
+void simulatedAutocorSyncTest(void){
+    //full MLS & randomly generated payload data.
+	int originaldatalength = round((float)mls_total_preamble_length_bits/8.0) + packet_data_length_with_fec;
+	uint8_t* originalframe = (uint8_t*)malloc(originaldatalength);
+	for (int i = 0; i < packet_data_length_with_fec; i++) {
+		originalframe[mls_total_preamble_length_bits + i] = rand() & 0xff;
+	}
+
+	printf("Original Data:\n");
+	for (unsigned int i = 0; i < originaldatalength; i++) {
+		printf("%d", originalframe[i]);
+	}
+	printf("\n\n");
+
+	//SET MLS PREAMBLE HERE
+
+	int numsamples = 0;
+	float phase;
+	
+	// printf("ADC OUTPUT:\n");
+	// for (unsigned int i = 0; i < numsamples; i++) {
+	// 	printf("%.2f  ", samples[i]);
+	// }
+	// printf("\n\n");
+
+	for(int i = 0; i<11; i++){
+		printf("TEST ROUND %d:\n\n", i);
+
+		switch (i){
+			case 0://Basic test
+				phase = 0;
+				//done
+				break;
+			case 1://Next tests: same as above, but with phase offset of pi/4, pi/2, 3pi/4, pi, 5pi/4, 3pi/2, 7pi/4, and 2pi.
+				phase = PI/4.0;				
+				break;
+			case 2:
+				phase = PI/2.0;
+				break;
+			case 3:
+				phase = 3.0*PI/4.0;
+				break;
+			case 4:
+				phase = PI;				
+				break;
+			case 5:
+				phase = 5.0*PI/4.0;				
+				break;			
+			case 6:
+				phase = 3.0*PI/2.0;				
+				break;
+			case 7:
+				phase = 7.0*PI/4.0;				
+				break;
+			case 8:
+				phase = 2.0*PI;
+				break;
+			case 9: //Next test: Original data but with 1250 bit burst erasure at front of preamble. pi/2 phase offset
+				phase = PI/2.0;
+				for(int i = 0; i<1250; i++){
+					originalframe[i] = 0;
+				}
+				
+				break;
+			case 10: //Next test: Original data but with 1250 bit burst erasure in middle of one MLS. pi/2 phase offset
+				phase = PI/2.0;
+				for(int i = 0; i<1250; i++){
+					originalframe[2*(mls_total_preamble_length_bits/8)/10 + i] = 0;
+				}		
+				break;
+			case 11: //Next test: Original data but with 1250 bit burst erasure in middle of whole preamble. pi/2 phase offset
+				phase = PI/2.0;
+				for(int i = 0; i<1250; i++){
+					originalframe[4*(mls_total_preamble_length_bits/8)/10 + i] = 0;
+				}		
+				break;
+		}
+
+		float *samples = bytestreamToSamplestream(originalframe, originaldatalength, &numsamples, phase);
+
+		//Prepend a buncha zero samples (randomly generated amount between 4 and 1000)
+		int stuffing_len = (rand() % (10000 - 4 + 1)) + 4;
+		int j = numsamples;
+		numsamples += stuffing_len;
+		samples = realloc(samples, numsamples);//Assuming this appends extra size allocated
+		for(j; j > 0; j--){
+			samples[stuffing_len -1 + j] = samples[j];
+		}
+		for(j = 0; j < stuffing_len; j++){
+			samples[j] = 0;
+		}
+		printf("Original Samples:\n");
+		for (unsigned int i = 0; i < numsamples; i++) {
+			printf("%.2f  ", samples[i]);
+		}
+		printf("\n\n");
+
+		//Test it!
+		int frame_start_index_guess = 0;
+		int samples_shifted_length = 0;
+		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, samples_shifted_length);
+		printf("Samples after power detector:\n");
+		for (unsigned int i = 0; i < samples_shifted_length; i++) {
+			printf("%.2f  ", samples_shifted[i]);
+		}
+		printf("\n\n");
+
+
+		int numsamples_upsampled = 0;
+		float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);//will this break if shift&normalize isn't run beforehand? Find out
+		printf("Samples after upsampler:\n");
+		for (unsigned int i = 0; i < numsamples_upsampled; i++) {
+			printf("%.2f  ", samples_upsampled[i]);
+		}
+		printf("\n\n");
+		
+		int finaldatalength = 0;
+		uint8_t * converteddata = syncFrame(samples_upsampled, numsamples_upsampled, &finaldatalength, frame_start_index_guess);
+
+		printf("Converted(demodulated) data:\n");
+		for (unsigned int i = 0; i < finaldatalength; i++) {
+			printf("%d", converteddata[i]);
+		}
+		printf("\n\n");
+
+		int counter = 0;
+		for(int i = 0; i<finaldatalength; i++){
+			if(originalframe[i] == converteddata[i]){
+				counter++;
+			}
+		}
+		if(counter == finaldatalength){
+			printf("Successful demodulation!\n\n");
+		} else {
+			printf("Unuccessful demodulation!\n\n");
+		}
+
+	}
+}
+
 void softwareDACandADC(void){
 	//TOODOOOOOOO
 	int originaldatalength = 100;
@@ -53,7 +198,7 @@ void softwareDACandADC(void){
 	printf("\n\n");
 
 	int numsamples = 0;
-	float *samples = bytestreamToSamplestream(originaldata, originaldatalength, &numsamples);
+	float *samples = bytestreamToSamplestream(originaldata, originaldatalength, &numsamples, 0);
 	// printf("ADC OUTPUT:\n");
 	// for (unsigned int i = 0; i < numsamples; i++) {
 	// 	printf("%.2f  ", samples[i]);

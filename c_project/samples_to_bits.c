@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #define PI 3.142857
-#define PHASESHIFT 0.00 //must be float type with value between 0 and 2*pi. Only phase shifts to the right (cuts off MSB)
 
 //Samples out (returned by pointer) are straight up 1s and zeroes
 //Must be un-malloc'd
 //Big endian: high bit transfered first
-float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_samples){
+//phaseshift must be float type with value between 0 and 2*pi. Only phase shifts to the right (cuts off MSB)
+float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_samples, float phaseshift){
     int samples_per_bit = 4;
     float phase_offset_fraction_of_symbol = 0;
     int output_length = 8*length_bytes*samples_per_bit;
@@ -41,7 +41,7 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
     }
 
     //shift and downsample
-    int phaseshift_number = round(PHASESHIFT/(PI*(float)2)*(float)(num_repititons*samples_per_bit));//Not certain about this
+    int phaseshift_number = round(phaseshift/(PI*(float)2)*(float)(num_repititons*samples_per_bit));//Not certain about this
     for (int i = 0; i<output_length; i++){
         samples[i] = temp[i*num_repititons + phaseshift_number];
     }

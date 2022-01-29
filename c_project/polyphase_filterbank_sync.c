@@ -7,10 +7,11 @@
 #include "samples_to_bits.h"
 
 #define PI 3.142857
+#define IS_SIMULATION
 
 int num_banks = 4;
-int mls_total_preamble_length_bits;
-int number_of_mls_repititions;
+int mls_total_preamble_length_bits = 4095*2;
+int number_of_mls_repititions = 2;
 int N = 4;
 extern int packet_data_length_with_fec;
 
@@ -198,6 +199,14 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     chopFront(&samples, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out
 
+    printf("Samples before conversion to bits:\n");
+    for (unsigned int i = 0; i < (*length_bytes_out)*8; i++) {
+        printf("%.2f  ", samples[i]);
+    }
+    printf("\n\n");
+
+    shiftDownAndNormalizeSamples(&samples, (*length_bytes_out)*8);
+
     uint8_t * output = samplesToBytes(samples, (*length_bytes_out)*8, 0);
 
     free(samples);
@@ -217,12 +226,19 @@ float calcSignalPower(float * signal, int len){
 }
 
 
+int nextsample_counter;
+
+float getNextSample(float * input){
+    return input[nextsample_counter];
+    nextsample_counter++;
+}
 //Constantly running function waiting for incoming data (from ADC) to pass signal threshold
 //This will have to be called repeatedly so that successive frames can be received
 //Return value is pointer to float array with length (packet_data_length_with_fec + mls_total_preamble_length_bits)*N + buffersize + stuffing_len
 //ENSURE frame_start_index_guess is scaled according to upsample rate in future function calls
-float * getIncomingSignalData(int * frame_start_index_guess){
-    
+float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_guess, int output_length){
+
+    nextsample_counter = 0;  
     float power_calcd = 0;
     float power_threshold = 0.1;//asuming input signal normalized to 1, avg of buffer signal values must be >power_threshold
     int buffersize = 10*N;//10 bits worth
@@ -235,13 +251,13 @@ float * getIncomingSignalData(int * frame_start_index_guess){
     while(1){
         //succ data from ADC Interface to fill whole buffer here:
         for (int i = 0; i < buffersize; i++){
-            data[i] = succDataSample();
+            data[i] = getNextSample(ADC_output_float);
         }
         //(here)
         if(calcSignalPower(buffer, buffersize) > power_threshold){
             //write new data first so samples aren't missed
             for (int i = 0; i < data_array_size; i++){
-                data[buffersize + stuffing_len+ i] = succDataSample();//fill in with actual function for ADC data succ
+                data[buffersize + stuffing_len+ i] = getNextSample(ADC_output_float);//fill in with actual function for ADC data succ
             }
             //then copy buffer data to front
             for (int i = 0; i < buffersize; i++){
@@ -257,5 +273,7 @@ float * getIncomingSignalData(int * frame_start_index_guess){
         }
     }
     free(buffer);
+
+    output_length = (packet_data_length_with_fec + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;
     return data;
 }

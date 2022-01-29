@@ -218,7 +218,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
 //Returns signal power value
 float calcSignalPower(float * signal, int len){
     //Find formula and put here
-    float totalpower;
+    float totalpower = 0;
     for(int i = 0; i<len; i++){
         totalpower += signal[i]/(float)len;
     }
@@ -226,20 +226,20 @@ float calcSignalPower(float * signal, int len){
 }
 
 
-int nextsample_counter;
 
-float getNextSample(float * input){
-    return input[nextsample_counter];
-    nextsample_counter++;
-}
+
+// float getNextSample(float * input){
+//     return input[nextsample_counter];
+//     nextsample_counter++;
+// }
 //Constantly running function waiting for incoming data (from ADC) to pass signal threshold
 //This will have to be called repeatedly so that successive frames can be received
 //Return value is pointer to float array with length (packet_data_length_with_fec + mls_total_preamble_length_bits)*N + buffersize + stuffing_len
 //ENSURE frame_start_index_guess is scaled according to upsample rate in future function calls
-float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_guess, int output_length){
+//Todo get current_index to reset and not go infinite
+float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_guess, int * output_length){
 
-    nextsample_counter = 0;  
-    float power_calcd = 0;
+    int current_index = 0;
     float power_threshold = 0.1;//asuming input signal normalized to 1, avg of buffer signal values must be >power_threshold
     int buffersize = 10*N;//10 bits worth
     float * buffer = (float *)malloc(buffersize*sizeof(float)); 
@@ -251,13 +251,15 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     while(1){
         //succ data from ADC Interface to fill whole buffer here:
         for (int i = 0; i < buffersize; i++){
-            data[i] = getNextSample(ADC_output_float);
+            buffer[i] = ADC_output_float[current_index];
+            current_index++;
         }
         //(here)
         if(calcSignalPower(buffer, buffersize) > power_threshold){
             //write new data first so samples aren't missed
             for (int i = 0; i < data_array_size; i++){
-                data[buffersize + stuffing_len+ i] = getNextSample(ADC_output_float);//fill in with actual function for ADC data succ
+                data[buffersize + stuffing_len+ i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
+                current_index++;
             }
             //then copy buffer data to front
             for (int i = 0; i < buffersize; i++){
@@ -272,8 +274,15 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
             break;
         }
     }
+    *output_length = (packet_data_length_with_fec + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;
+
     free(buffer);
 
-    output_length = (packet_data_length_with_fec + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;
+    printf("Samples after power detector (excluding stuffing):\n");
+    for (unsigned int i = 0; i < (*output_length - stuffing_len); i++) {
+        printf("%.0f", data[stuffing_len + i]);
+    }
+    printf("\n\n");
+
     return data;
 }

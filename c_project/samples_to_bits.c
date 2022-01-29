@@ -29,7 +29,12 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
         }
     }
 
-    //TODO: add shift by phase (upsample to higher rate, add shift, then downsample)
+    // printf("Samples before phase shift:\n");
+    // for (unsigned int i = 0; i < output_length; i++) {
+    //     printf("%.0f", samples[i]);
+    // }
+    // printf("\n\n");
+
     int num_repititons = 10;//Phase shift resolution = 2*pi/(N*num_repititions)
     float *temp = (float*)malloc(output_length*num_repititons * sizeof(float));
 
@@ -46,6 +51,11 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
         samples[i] = temp[i*num_repititons + phaseshift_number];
     }
 
+    printf("Samples after phase shift:\n");
+    for (unsigned int i = 0; i < output_length; i++) {
+        printf("%.0f", samples[i]);
+    }
+    printf("\n\n");
 
     free(temp);
     return samples;

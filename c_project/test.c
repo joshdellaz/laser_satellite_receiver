@@ -44,7 +44,7 @@ void simulatedAutocorSyncTest(void){
 	int originaldatalength = round((float)mls_total_preamble_length_bits/8.0) + packet_data_length_with_fec;
 	uint8_t* originalframe = (uint8_t*)malloc(originaldatalength);
 	for (int i = 0; i < packet_data_length_with_fec; i++) {
-		originalframe[mls_total_preamble_length_bits + i] = rand() & 0xff;
+		originalframe[mls_total_preamble_length_bits/8 + i] = rand() & 0xff;
 	}
 
 	printf("Original Data:\n");
@@ -57,12 +57,6 @@ void simulatedAutocorSyncTest(void){
 
 	int numsamples = 0;
 	float phase;
-	
-	// printf("ADC OUTPUT:\n");
-	// for (unsigned int i = 0; i < numsamples; i++) {
-	// 	printf("%.2f  ", samples[i]);
-	// }
-	// printf("\n\n");
 
 	for(int i = 0; i<11; i++){
 		printf("TEST ROUND %d:\n\n", i);
@@ -120,38 +114,34 @@ void simulatedAutocorSyncTest(void){
 		float *samples = bytestreamToSamplestream(originalframe, originaldatalength, &numsamples, phase);
 
 		//Prepend a buncha zero samples (randomly generated amount between 4 and 1000)
-		int stuffing_len = (rand() % (10000 - 4 + 1)) + 4;
+		int stuffing_len = (rand() % (1000 - 4 + 1)) + 4;
 		int j = numsamples;
+		float buffer;
 		numsamples += stuffing_len;
-		samples = realloc(samples, numsamples);//Assuming this appends extra size allocated
-		for(j; j > 0; j--){
-			samples[stuffing_len -1 + j] = samples[j];
+		samples = realloc(samples, numsamples*sizeof(float));//Assuming this appends extra size allocated
+		for(j; j >= 0; j--){
+			buffer = samples[j];
+			samples[stuffing_len -1 + j] = buffer;
 		}
 		for(j = 0; j < stuffing_len; j++){
 			samples[j] = 0;
 		}
-		printf("Original Samples:\n");
+		printf("ADC output Samples:\n");
 		for (unsigned int i = 0; i < numsamples; i++) {
-			printf("%.2f  ", samples[i]);
+			printf("%.0f", samples[i]);
 		}
 		printf("\n\n");
 
 		//Test it!
 		int frame_start_index_guess = 0;
 		int samples_shifted_length = 0;
-		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, samples_shifted_length);
-		printf("Samples after power detector:\n");
-		for (unsigned int i = 0; i < samples_shifted_length; i++) {
-			printf("%.2f  ", samples_shifted[i]);
-		}
-		printf("\n\n");
-
+		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);
 
 		int numsamples_upsampled = 0;
 		float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);//will this break if shift&normalize isn't run beforehand? Find out
 		printf("Samples after upsampler:\n");
 		for (unsigned int i = 0; i < numsamples_upsampled; i++) {
-			printf("%.2f  ", samples_upsampled[i]);
+			printf("%.2f ", samples_upsampled[i]);
 		}
 		printf("\n\n");
 		

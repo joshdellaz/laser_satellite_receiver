@@ -1,10 +1,10 @@
 #include <stdbool.h>
 #include <math.h>
-#include <complex.h>
-#include <liquid/liquid.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "samples_to_bits.h"
+#include <complex.h>
+#include <liquid/liquid.h>
 
 #define PI 3.142857
 #define IS_SIMULATION

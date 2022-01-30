@@ -13,9 +13,9 @@ extern int number_of_mls_repititions;
 #define PI 3.142857
 
 
-//Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec
+//Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec_bytes
 uint8_t * generateRandPacket(void) {
-	uint8_t* data = (uint8_t*)malloc(packet_data_length_with_fec);
+	uint8_t* data = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
 	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
 		data[i] = rand() & 0xff;
 	}
@@ -36,14 +36,19 @@ uint8_t * generateRandPacket(void) {
 void getFECDataLengths(void) {
 
 	// create arrays
-	packet_data_length_with_fec = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
+	packet_data_length_with_fec_bytes = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
 }
 
 void simulatedAutocorSyncTest(void){
     //full MLS & randomly generated payload data.
-	int originaldatalength = round((float)mls_total_preamble_length_bits/8.0) + packet_data_length_with_fec;
+	int originaldatalength = round((float)mls_total_preamble_length_bits/8.0) + packet_data_length_with_fec_bytes;//change 100 back to packet_data_length_with_fec_bytes
 	uint8_t* originalframe = (uint8_t*)malloc(originaldatalength);
-	for (int i = 0; i < packet_data_length_with_fec; i++) {
+	
+	for (int i = 0; i < mls_total_preamble_length_bits/8; i++) {
+		originalframe[i] = rand() & 0xff;//SET MLS PREAMBLE HERE
+	}
+
+	for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
 		originalframe[mls_total_preamble_length_bits/8 + i] = rand() & 0xff;
 	}
 
@@ -53,7 +58,7 @@ void simulatedAutocorSyncTest(void){
 	}
 	printf("\n\n");
 
-	//SET MLS PREAMBLE HERE
+	
 
 	int numsamples = 0;
 	float phase;
@@ -135,10 +140,11 @@ void simulatedAutocorSyncTest(void){
 		//Test it!
 		int frame_start_index_guess = 0;
 		int samples_shifted_length = 0;
-		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);
+		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);//SEG FAULT SOMETIMES?
 
 		int numsamples_upsampled = 0;
-		float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);//will this break if shift&normalize isn't run beforehand? Find out
+		float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);
+		
 		printf("Samples after upsampler:\n");
 		for (unsigned int i = 0; i < numsamples_upsampled; i++) {
 			printf("%.2f ", samples_upsampled[i]);
@@ -165,13 +171,13 @@ void simulatedAutocorSyncTest(void){
 		} else {
 			printf("Unuccessful demodulation!\n\n");
 		}
-
+		free(converteddata);
 	}
 }
 
 void softwareDACandADC(void){
 	//TOODOOOOOOO
-	int originaldatalength = 100;
+	int originaldatalength = 10000;
 	uint8_t* originaldata = (uint8_t*)malloc(originaldatalength);
 	for (int i = 0; i < originaldatalength; i++) {
 		originaldata[i] = rand() & 0xff;
@@ -306,7 +312,7 @@ bool fullSendTest(void) {
 
 	//Init "rx" stuff
 	packet_t rxpacket_data;//malloc this?
-	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec);
+	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
 	uint8_t* rxpacket_vector = NULL;
 	unsigned int rxpacket_length = 0;
 

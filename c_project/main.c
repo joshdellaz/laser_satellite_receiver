@@ -1,6 +1,6 @@
 #include "test.h"
 
-int packet_data_length_with_fec = 0;
+int packet_data_length_with_fec_bytes = 0;
 
 int main(void) {
 	getFECDataLengths();

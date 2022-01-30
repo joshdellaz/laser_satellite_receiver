@@ -13,10 +13,10 @@ int num_banks = 4;
 int mls_total_preamble_length_bits = 4095*2;
 int number_of_mls_repititions = 2;
 int N = 4;
-extern int packet_data_length_with_fec;
+extern int packet_data_length_with_fec_bytes;
 
-//ENSURE shiftDownAndNormalizeSamples IS RUN ON SAMPLES BEFORE THIS FUNCTION
-//TODO eliminate extra buffer?
+//ENSURE shiftDownAndNormalizeSamples IS RUN ON SAMPLES BEFORE THIS FUNCTION - not sure about this Jan 29
+//Frees input pointer
 float * resampleInput(float* samplesin, int length_samples_in, int * length_samples_out) {
 
     float        r = 4;   // resampling rate (output/input) [TODO eliminate magic number]
@@ -26,10 +26,12 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
     unsigned int h_len = 16;  // filter semi-length (filter delay)
     int filter_delay = 122;
 
+    float complex* complexbuffer = (float complex*)malloc(length_samples_in*r*sizeof(float complex)); 
+
+
     // create resampler
     resamp_crcf q = resamp_crcf_create(r, h_len, bw, slsl, npfb);
 
-    float complex* complexbuffer = (float complex*)malloc(length_samples_in*r*sizeof(float complex)); 
 
     //unsigned int num_written = 0;   // number of values written to buffer this iteration
     unsigned int num_written_total = 0;
@@ -43,6 +45,7 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
 
     // clean up allocated objects
     resamp_crcf_destroy(q);
+    free(samplesin);
     return (float *)complexbuffer;
 }
 
@@ -234,7 +237,6 @@ float calcSignalPower(float * signal, int len){
 // }
 //Constantly running function waiting for incoming data (from ADC) to pass signal threshold
 //This will have to be called repeatedly so that successive frames can be received
-//Return value is pointer to float array with length (packet_data_length_with_fec + mls_total_preamble_length_bits)*N + buffersize + stuffing_len
 //ENSURE frame_start_index_guess is scaled according to upsample rate in future function calls
 //Todo get current_index to reset and not go infinite
 float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_guess, int * output_length){
@@ -245,7 +247,7 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     float * buffer = (float *)malloc(buffersize*sizeof(float)); 
     int stuffing_len = 1300*N;
 
-    int data_array_size = (packet_data_length_with_fec + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;//TODO
+    int data_array_size = (packet_data_length_with_fec_bytes*8 + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;//FIX THIS?
     float * data = (float *)malloc(data_array_size*sizeof(float));
 
     while(1){
@@ -257,9 +259,12 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
         //(here)
         if(calcSignalPower(buffer, buffersize) > power_threshold){
             //write new data first so samples aren't missed
-            for (int i = 0; i < data_array_size; i++){
-                data[buffersize + stuffing_len+ i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
+            for (int i = 0; i < (data_array_size - buffersize - stuffing_len); i++){
+                data[buffersize + stuffing_len + i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
                 current_index++;
+                // if(current_index > (data_array_size - buffersize - stuffing_len)){
+                //     break;//experimental....
+                // }
             }
             //then copy buffer data to front
             for (int i = 0; i < buffersize; i++){
@@ -274,9 +279,10 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
             break;
         }
     }
-    *output_length = (packet_data_length_with_fec + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;
+    *output_length = data_array_size;
 
     free(buffer);
+    free(ADC_output_float);
 
     printf("Samples after power detector (excluding stuffing):\n");
     for (unsigned int i = 0; i < (*output_length - stuffing_len); i++) {

@@ -7,6 +7,7 @@
 
 //Samples out (returned by pointer) are straight up 1s and zeroes
 //Must be un-malloc'd
+//Frees input data
 //Big endian: high bit transfered first
 //phaseshift must be float type with value between 0 and 2*pi. Only phase shifts to the right (cuts off MSB)
 float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_samples, float phaseshift){
@@ -57,6 +58,7 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
     }
     printf("\n\n");
 
+    free(data);
     free(temp);
     return samples;
 }

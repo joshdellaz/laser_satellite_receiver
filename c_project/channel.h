@@ -1,9 +1,13 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
+
+#define PI 3.1415926536
 
 /// Channel stuff
 #define BIT_RATE 1 // in Mbps
-#define ANAL_SAMPLING // (for awgn noise) [not necessary for now, could just flip some bits randomly]
+#define SAMP_PER_BIT 4 
+#define BURST_VALUE 69.420E20
 #define SNR // (for AWGN noise) 
 #define BIT_FLIP_FREQ 5 // increase to reduce probability of the bit flippage
 
@@ -21,5 +25,6 @@ typedef enum chnl_state {
 	GOOD_S // no erasure and stable
 } chnl_state;
 
+bool applyChannelToSamples(float* samples, unsigned smpls_len);
 bool applyChannel(uint8_t* input, unsigned int input_length);
 bool applyBitFlips(uint8_t* input, unsigned int input_length);

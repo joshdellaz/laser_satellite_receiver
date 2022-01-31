@@ -93,14 +93,14 @@ bool fullSendTest(void) {
 
 	//Comment or un-comment, depending on the test you are trying to run
 	//TODO consider turning into macro functionality in future
-	//applyChannel(frame_vector, frame_length);
-	applyBitFlips(frame_vector, frame_length); // fucks up the CRC unless CRC is also encoded and decoded
+	applyChannel(frame_vector, frame_length);
+	//applyBitFlips(frame_vector, frame_length); // fucks up the CRC unless CRC is also encoded and decoded
 
-	//printf("New frame (after going through channel):\n");
-	//for (unsigned int i = 0; i < frame_length; i++) {
-	//	printf("%d", frame_vector[i]);
-	//}
-	//printf("\n\n");
+	printf("New frame (after going through channel):\n");
+	for (unsigned int i = 0; i < frame_length; i++) {
+		printf("%d", frame_vector[i]);
+	}
+	printf("\n\n");
 
 	//Init "rx" stuff
 	packet_t rxpacket_data;//malloc this?
@@ -120,10 +120,9 @@ bool fullSendTest(void) {
 	// }
 	// printf("\n\n");
 	//removeFEC(rxpacket_data.data);
-	printf("Difference between Received Data and Original Data:\n");
+	printf("Data to be decoded:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-		//printf("%d,", rxpacket_data.data[i]);
-		printf("%d,", (rxpacket_data.data[i] - packet_data.data[i]));
+		printf("%d,", (rxpacket_data.data[i]));// - packet_data.data[i]));
 	}
 	printf("\n\n");
 

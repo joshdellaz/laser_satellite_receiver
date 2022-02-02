@@ -307,21 +307,3 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 
 	return 0;
 }
-
-
-//TODO
-//Takes "input" data buffer of length "input_length", fragments it into packets, turns those packets into frames, 
-//and assembles frames into single "output" buffer of "output_length" that can be easily transmitted
-bool fragmentDataBufferIntoFrames(uint8_t * input, unsigned int input_length, uint8_t * output, unsigned int output_length) {
-	return 0;
-}
-
-//TODO
-//Inverse of fragmentDataBufferIntoFrames.
-//Takes "input" data buffer of length "input_length", strips its frame and packet encapsulation, 
-//and assembles data fields of frames into a single "output" buffer of length "output_length" that can be easily saved
-bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length) {
-	
-
-	return 0;
-}

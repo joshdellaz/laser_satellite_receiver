@@ -41,7 +41,8 @@ void getFECDataLengths(void) {
 
 void simulatedAutocorSyncTest(void){
     //full MLS & randomly generated payload data.
-	int originaldatalength = round((float)mls_total_preamble_length_bits/8.0) + packet_data_length_with_fec_bytes;//change 100 back to packet_data_length_with_fec_bytes
+
+	int originaldatalength = ceil((float)mls_total_preamble_length_bits/8.0) + packet_data_length_with_fec_bytes;
 	uint8_t* originalframe = (uint8_t*)malloc(originaldatalength);
 	
 	for (int i = 0; i < mls_total_preamble_length_bits/8; i++) {
@@ -95,22 +96,22 @@ void simulatedAutocorSyncTest(void){
 			case 8:
 				phase = 2.0*PI;
 				break;
-			case 9: //Next test: Original data but with 1250 bit burst erasure at front of preamble. pi/2 phase offset
+			case 9: //Next test: Original data but with 1250 bit fade erasure at front of preamble. pi/2 phase offset
 				phase = PI/2.0;
-				for(int i = 0; i<1250; i++){
+				for(int i = 0; i<(1250/8); i++){
 					originalframe[i] = 0;
 				}
 				
 				break;
 			case 10: //Next test: Original data but with 1250 bit burst erasure in middle of one MLS. pi/2 phase offset
 				phase = PI/2.0;
-				for(int i = 0; i<1250; i++){
+				for(int i = 0; i<(1250/8); i++){
 					originalframe[2*(mls_total_preamble_length_bits/8)/10 + i] = 0;
 				}		
 				break;
 			case 11: //Next test: Original data but with 1250 bit burst erasure in middle of whole preamble. pi/2 phase offset
 				phase = PI/2.0;
-				for(int i = 0; i<1250; i++){
+				for(int i = 0; i<(1250/8); i++){
 					originalframe[4*(mls_total_preamble_length_bits/8)/10 + i] = 0;
 				}		
 				break;
@@ -137,10 +138,13 @@ void simulatedAutocorSyncTest(void){
 		}
 		printf("\n\n");
 
+
+		//Channel would be applied here if implemented
+
 		//Test it!
 		int frame_start_index_guess = 0;
 		int samples_shifted_length = 0;
-		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);//SEG FAULT SOMETIMES?
+		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);//Dooes this still throw a seg fault sometimes?
 
 		int numsamples_upsampled = 0;
 		float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);

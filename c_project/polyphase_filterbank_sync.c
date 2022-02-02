@@ -10,7 +10,7 @@
 #define IS_SIMULATION
 
 int num_banks = 4;
-int mls_total_preamble_length_bits = 4095*2;
+int mls_total_preamble_length_bits = 4095*2;//Make dependent on MLS order
 int number_of_mls_repititions = 2;
 int N = 4;
 extern int packet_data_length_with_fec_bytes;
@@ -177,17 +177,18 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     int max_shiftright_bits = 10;
 
     for(int i = 0; i<num_banks*N; i++){
-        for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){
+        for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){//MAKE START ON POSITIVE SIDE THEN GO NEGATIVE.
+            //ADD THRESHOLD SO THAT ENTIRE RANGE DOESN'T NEED TO BE SEARCHED?
 
             for(int k = 0; k < mls_total_preamble_length_bits; k++){
-                buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];
+                buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];//MIGHT NEED TO APPLY FILTER HERE. CAN'T WORK ON SQUARE WAVE
             }
 
             new_autocorr = findAutocorrelation(buffer);
 
             if(new_autocorr > max_autocorr){
                 max_autocorr = new_autocorr;
-                best_bank = i;
+                best_bank = i;//best_sample_in_bit?
                 best_shift_bits = j;
             }
         }
@@ -199,7 +200,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
         buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
     }
 
-    chopFront(&samples, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
+    chopFront(&samples, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));//CHOP BUFFER, NOT SAMPLES
     //length of samples should now be = length_bits_out
 
     printf("Samples before conversion to bits:\n");
@@ -245,26 +246,27 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     float power_threshold = 0.1;//asuming input signal normalized to 1, avg of buffer signal values must be >power_threshold
     int buffersize = 10*N;//10 bits worth
     float * buffer = (float *)malloc(buffersize*sizeof(float)); 
-    int stuffing_len = 1300*N;
+    int stuffing_len = 1300*N;//Make dependent variable based on bitrate and fade erasure length, eventually
 
-    int data_array_size = (packet_data_length_with_fec_bytes*8 + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;//FIX THIS?
-    float * data = (float *)malloc(data_array_size*sizeof(float));
+    int * output_length = (packet_data_length_with_fec_bytes*8 + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;//This is maybe throwing seg fault
+    float * data = (float *)malloc((* output_length)*sizeof(float));
 
     while(1){
-        //succ data from ADC Interface to fill whole buffer here:
+
+        if(current_index > output_length){//might need tweak in future to be right length
+            current_index = 0;
+        }
         for (int i = 0; i < buffersize; i++){
-            buffer[i] = ADC_output_float[current_index];
+            buffer[i] = ADC_output_float[current_index];//succ data from ADC Interface to fill whole buffer here:
             current_index++;
         }
-        //(here)
+
         if(calcSignalPower(buffer, buffersize) > power_threshold){
+
             //write new data first so samples aren't missed
-            for (int i = 0; i < (data_array_size - buffersize - stuffing_len); i++){
+            for (int i = 0; i < (*output_length - buffersize - stuffing_len); i++){
                 data[buffersize + stuffing_len + i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
                 current_index++;
-                // if(current_index > (data_array_size - buffersize - stuffing_len)){
-                //     break;//experimental....
-                // }
             }
             //then copy buffer data to front
             for (int i = 0; i < buffersize; i++){
@@ -279,7 +281,6 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
             break;
         }
     }
-    *output_length = data_array_size;
 
     free(buffer);
     free(ADC_output_float);

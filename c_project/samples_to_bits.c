@@ -12,10 +12,9 @@
 //phaseshift must be float type with value between 0 and 2*pi. Only phase shifts to the right (cuts off MSB)
 float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_samples, float phaseshift){
     int samples_per_bit = 4;
-    float phase_offset_fraction_of_symbol = 0;
-    int output_length = 8*length_bytes*samples_per_bit;
-    float *samples = (float*)malloc(output_length * sizeof(float));
     *length_samples = length_bytes*8*samples_per_bit;
+    float *samples = (float*)malloc((*length_samples) * sizeof(float));
+
 
     //repeat each input element
     for(int i = 0; i<length_bytes; i++){
@@ -37,10 +36,10 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
     // printf("\n\n");
 
     int num_repititons = 10;//Phase shift resolution = 2*pi/(N*num_repititions)
-    float *temp = (float*)malloc(output_length*num_repititons * sizeof(float));
+    float *temp = (float*)malloc((*length_samples)*num_repititons * sizeof(float));
 
     //repeat elements
-    for (int i = 0; i<output_length; i++){
+    for (int i = 0; i < *length_samples; i++){
         for(int j = 0; j<num_repititons; j++){
             temp[i*num_repititons + j] = samples[i];
         }
@@ -48,12 +47,12 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
 
     //shift and downsample
     int phaseshift_number = round(phaseshift/(PI*(float)2)*(float)(num_repititons*samples_per_bit));//Not certain about this
-    for (int i = 0; i<output_length; i++){
+    for (int i = 0; i < *length_samples; i++){
         samples[i] = temp[i*num_repititons + phaseshift_number];
     }
 
     printf("Samples after phase shift:\n");
-    for (unsigned int i = 0; i < output_length; i++) {
+    for (unsigned int i = 0; i < *length_samples; i++) {
         printf("%.0f", samples[i]);
     }
     printf("\n\n");

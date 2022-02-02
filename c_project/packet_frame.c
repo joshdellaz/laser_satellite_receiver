@@ -8,6 +8,9 @@
 //#include <complex>
 #include <liquid/liquid.h>
 
+int frame_length_bytes;//TODO DETERMINE VALUE ON RUNTIME
+int packet_data_length_no_fec;//SAME HERE
+
 
 //Move these into separate file? Considering having "utils" file containing smaller functions, and keeping the higher-level stuff here
 
@@ -307,3 +310,90 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 
 	return 0;
 }
+
+
+//TODO
+//Takes "input" data buffer of length "input_length", fragments it into packets, turns those packets into frames, 
+//and assembles frames into single "output" buffer of "output_length" that can be easily transmitted
+bool fragmentDataBufferIntoFrames(uint8_t * input, unsigned int input_length, uint8_t * output, unsigned int * output_length) {
+
+	int numpackets = input_length/packet_data_length_no_fec + 1;
+	*output_length = numpackets*frame_length_bytes;
+	uint8_t * output = (uint8_t *)malloc(*output_length*sizeof(uint8_t));
+	packet_t temp_packet;
+	temp_packet.data = (uint8_t*)malloc(packet_data_length_no_fec);
+	int current_index = 0;
+
+	//for each frame:
+	for (int i = 0; i < numpackets; i++){
+		//populate all struct fields
+		temp_packet.total_num_packets = numpackets;
+		temp_packet.current_packet_num = i+1;
+
+		for(int j = 0; j < packet_data_length_no_fec; j++){
+			if(current_index > input_length){
+				temp_packet.data[j] = 0;//stuffing rear-end with zeroes
+			}
+			temp_packet.data[j] = input[current_index];
+			current_index++;
+		}
+
+		getCRC(&temp_packet);
+
+		//TODO: call all the tx stuff in fullsend testing order and put data into *output
+		//NOT COMPLETING UNTIL FULLSEND TEST HAS UNDERGONE REFACTOR
+
+	}
+
+	return 0;
+}
+
+//TODO
+//Inverse of fragmentDataBufferIntoFrames.
+//Takes "input" data buffer of length "input_length", strips its frame and packet encapsulation, 
+//and assembles data fields of frames into a single "output" buffer of length "output_length" that can be easily saved
+bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int * output_length) {
+	
+	//do reverse of above function
+
+	int numpackets = input_length/frame_length_bytes;
+	*output_length = numpackets*packet_data_length_no_fec;
+	uint8_t * output = (uint8_t *)malloc(*output_length*sizeof(uint8_t));
+	packet_t temp_packet;
+	temp_packet.data = (uint8_t*)malloc(packet_data_length_no_fec);
+	int current_index = 0;
+	int prev_frameno = 0;
+	int cur_frameno = 0;
+
+	//for each frame:
+	for (int i = 0; i < numpackets; i++){
+
+		//TODO: call all the rx stuff in fullsend testing order
+		//The todo code's output will be 
+		//NOT COMPLETING UNTIL FULLSEND TEST HAS UNDERGONE REFACTOR
+
+		prev_frameno = cur_frameno;
+		cur_frameno = temp_packet.current_packet_num;
+
+		if(cur_frameno > numpackets){
+			printf("Frame number indicator %d larger than numpackets in transmission\n", cur_frameno);
+			while(1);//TODO integrate better error handling
+		}
+		if(cur_frameno <= prev_frameno){
+			printf("Frame sequence error at frame %d\n", cur_frameno);
+			while(1);//TODO integrate better error handling
+		}
+		if(current_index > output_length){
+			printf("Output buffer overflow");
+			while(1);//TODO integrate better error handling
+		}
+		for(int j = 0; j < packet_data_length_no_fec; j++){
+			output[current_index] = temp_packet.data[j];
+			current_index++;
+		}
+	}
+
+	return 0;
+}
+
+//Create fullsendtest for file transmission?

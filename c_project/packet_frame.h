@@ -51,5 +51,5 @@ bool assembleFrame(uint8_t** frame, unsigned int* frame_length, uint8_t* packet,
 bool disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_length);
 bool assemblePacket(packet_t* packet_data, uint8_t** packet, unsigned int* packet_length);
 bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int packet_length);
-bool fragmentDataBufferIntoFrames(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length);
-bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length);
+bool fragmentDataBufferIntoFrames(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int * output_length);
+bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int * output_length);

@@ -129,4 +129,21 @@ bool fullSendTest(void) {
 }
 
 
+//Reads from file. Should write file with identical contents if everything goes well!
+//Consider adding code to check that file contents match...
+bool fullSendTest_FileIO(void){
 
+	int input_file_len = 0;
+	uint8_t * inputdata;
+	readFiletoArray("test_input.txt", inputdata, &input_file_len);
+	int tx_frames_len = 0;
+	uint8_t * tx_frames;
+	fragmentDataBufferIntoFrames(inputdata, input_file_len, tx_frames, &tx_frames_len);
+
+	//Consider adding channel and/or all analog stuff here...
+
+	int output_file_len = 0;
+	uint8_t * rxdata;
+	assembleFramesIntoDataBuffer(tx_frames, tx_frames_len, rxdata, &output_file_len);
+	writeArraytoFile("test_output.txt", rxdata, output_file_len);
+}

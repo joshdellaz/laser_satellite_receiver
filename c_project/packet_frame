@@ -1,11 +1,11 @@
-# 1 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
-# 1 "/home/josh/laser_satellite_receiver/c_project//"
+# 1 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
+# 1 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project//"
 # 1 "<built-in>"
 # 1 "<command-line>"
 # 31 "<command-line>"
 # 1 "/usr/include/stdc-predef.h" 1 3 4
 # 32 "<command-line>" 2
-# 1 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 1 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
 
 # 1 "/usr/include/stdio.h" 1 3 4
 # 27 "/usr/include/stdio.h" 3 4
@@ -724,7 +724,7 @@ extern int __uflow (FILE *);
 extern int __overflow (FILE *, int);
 # 873 "/usr/include/stdio.h" 3 4
 
-# 3 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 2
+# 3 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 2
 # 1 "/usr/include/stdlib.h" 1 3 4
 # 25 "/usr/include/stdlib.h" 3 4
 # 1 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 1 3 4
@@ -1817,7 +1817,7 @@ extern int getloadavg (double __loadavg[], int __nelem)
 # 1014 "/usr/include/stdlib.h" 2 3 4
 # 1023 "/usr/include/stdlib.h" 3 4
 
-# 4 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 2
+# 4 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 2
 # 1 "/usr/lib/gcc/x86_64-linux-gnu/9/include/stdint.h" 1 3 4
 # 9 "/usr/lib/gcc/x86_64-linux-gnu/9/include/stdint.h" 3 4
 # 1 "/usr/include/stdint.h" 1 3 4
@@ -1883,11 +1883,11 @@ typedef unsigned long int uintptr_t;
 typedef __intmax_t intmax_t;
 typedef __uintmax_t uintmax_t;
 # 10 "/usr/lib/gcc/x86_64-linux-gnu/9/include/stdint.h" 2 3 4
-# 5 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 2
+# 5 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 2
 # 1 "/usr/lib/gcc/x86_64-linux-gnu/9/include/stdbool.h" 1 3 4
-# 6 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 2
+# 6 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 2
 
-# 1 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 1
+# 1 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 1
 
 
 # 1 "/usr/local/include/liquid/liquid.h" 1 3
@@ -5441,10 +5441,10 @@ int liquid_get_scale(float _val,
 # 9240 "/usr/local/include/liquid/liquid.h" 3
 void liquid_vectorf_init(float _c, float * _x, unsigned int _n); void liquid_vectorf_add(float * _x, float * _y, unsigned int _n, float * _z); void liquid_vectorf_addscalar(float * _x, unsigned int _n, float _c, float * _y); void liquid_vectorf_mul(float * _x, float * _y, unsigned int _n, float * _z); void liquid_vectorf_mulscalar(float * _x, unsigned int _n, float _c, float * _y); void liquid_vectorf_cexpj(float * _theta, unsigned int _n, float * _x); void liquid_vectorf_carg(float * _x, unsigned int _n, float * _theta); void liquid_vectorf_abs(float * _x, unsigned int _n, float * _y); float liquid_vectorf_sumsq(float * _x, unsigned int _n); float liquid_vectorf_norm(float * _x, unsigned int _n); float liquid_vectorf_pnorm(float * _x, unsigned int _n, float _p); void liquid_vectorf_normalize(float * _x, unsigned int _n, float * _y);
 void liquid_vectorcf_init(liquid_float_complex _c, liquid_float_complex * _x, unsigned int _n); void liquid_vectorcf_add(liquid_float_complex * _x, liquid_float_complex * _y, unsigned int _n, liquid_float_complex * _z); void liquid_vectorcf_addscalar(liquid_float_complex * _x, unsigned int _n, liquid_float_complex _c, liquid_float_complex * _y); void liquid_vectorcf_mul(liquid_float_complex * _x, liquid_float_complex * _y, unsigned int _n, liquid_float_complex * _z); void liquid_vectorcf_mulscalar(liquid_float_complex * _x, unsigned int _n, liquid_float_complex _c, liquid_float_complex * _y); void liquid_vectorcf_cexpj(float * _theta, unsigned int _n, liquid_float_complex * _x); void liquid_vectorcf_carg(liquid_float_complex * _x, unsigned int _n, float * _theta); void liquid_vectorcf_abs(liquid_float_complex * _x, unsigned int _n, float * _y); float liquid_vectorcf_sumsq(liquid_float_complex * _x, unsigned int _n); float liquid_vectorcf_norm(liquid_float_complex * _x, unsigned int _n); float liquid_vectorcf_pnorm(liquid_float_complex * _x, unsigned int _n, float _p); void liquid_vectorcf_normalize(liquid_float_complex * _x, unsigned int _n, liquid_float_complex * _y);
-# 4 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 2
-# 15 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 4 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 2
+# 15 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
 
-# 15 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 15 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
 extern int packet_data_length_with_fec;
 
 
@@ -5471,91 +5471,96 @@ typedef struct packet_t {
 } packet_t;
 
 
-# 40 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 40 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 40 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 40 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     applyFEC(uint8_t* input);
 
-# 41 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 41 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 41 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 41 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     removeFEC(uint8_t* input);
 
-# 42 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 42 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 42 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 42 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     checkCRC(packet_t* received_packet);
 
-# 43 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 43 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 43 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 43 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     getCRC(packet_t* packet);
 
-# 44 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 44 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 44 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
-    applyScrambling(uint8_t ** input, unsigned int input_length);
+# 44 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
+    applyScrambling(uint8_t ** input, unsigned int input_length, unsigned int preamble_length);
 
-# 45 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 45 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 45 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
-    removeScrambling(uint8_t ** input, unsigned int input_length);
+# 45 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
+    removeScrambling(uint8_t ** input, unsigned int input_length, unsigned int preamble_length);
 
-# 46 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 46 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 46 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 46 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     applyInterleaving(uint8_t* input, unsigned int input_length);
 
-# 47 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 47 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 47 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 47 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     removeInterleaving(uint8_t* input, unsigned int input_length);
 
-# 48 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 48 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 48 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 48 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     getMaximumLengthSequencePreamble(uint8_t** mls_preamble, unsigned int* mls_preamble_length);
 
-# 49 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 49 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 49 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 49 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     syncFrameUsingMLSPreamble(uint8_t* input, unsigned int* byte_index, unsigned int* bit_index);
 
-# 50 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 50 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 50 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 50 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     assembleFrame(uint8_t** frame, unsigned int* frame_length, uint8_t* packet, unsigned int packet_length);
 
-# 51 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 51 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 51 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 51 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_length);
 
-# 52 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 52 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 52 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 52 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     assemblePacket(packet_t* packet_data, uint8_t** packet, unsigned int* packet_length);
 
-# 53 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 53 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 53 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
+# 53 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
     disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int packet_length);
 
-# 54 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 54 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 54 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
-    fragmentDataBufferIntoFrames(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length);
+# 54 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
+    fragmentDataBufferIntoFrames(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int * output_length);
 
-# 55 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h" 3 4
+# 55 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h" 3 4
 _Bool 
-# 55 "/home/josh/laser_satellite_receiver/c_project/packet_frame.h"
-    assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length);
-# 8 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 2
-# 18 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 55 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.h"
+    assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int * output_length);
+# 8 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 2
 
-# 18 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+
+
+int frame_length_bytes;
+int packet_data_length_no_fec;
+# 21 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
+
+# 21 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 18 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 21 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     applyFEC(uint8_t* input) {
 
 
@@ -5564,9 +5569,9 @@ _Bool
 
 
  fec q = fec_create(fs, 
-# 25 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 28 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
                        ((void *)0)
-# 25 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 28 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
                            );
  uint8_t* msg_enc = (uint8_t*)malloc(packet_data_length_with_fec);
 
@@ -5587,9 +5592,9 @@ _Bool
 
 
 
-# 44 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 47 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 44 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 47 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     removeFEC(uint8_t * input) {
 
  unsigned int n = 1000;
@@ -5597,9 +5602,9 @@ _Bool
 
 
  fec q = fec_create(fs, 
-# 50 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 53 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
                        ((void *)0)
-# 50 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 53 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
                            );
 
  unsigned char msg_enc[1000];
@@ -5619,9 +5624,9 @@ _Bool
 
 
 
-# 68 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 71 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 68 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 71 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     checkCRC(packet_t* received_packet) {
 
  crc_scheme check = LIQUID_CRC_32;
@@ -5638,9 +5643,9 @@ _Bool
 
 
 
-# 83 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 86 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 83 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 86 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     getCRC(packet_t * packet) {
 
  crc_scheme check = LIQUID_CRC_32;
@@ -5651,26 +5656,26 @@ _Bool
 
 
 
-# 92 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 95 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 92 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
-    applyScrambling(uint8_t ** input, unsigned int input_length) {
+# 95 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
+    applyScrambling(uint8_t ** input, unsigned int input_length, unsigned int preamble_length) {
 
 
 
-    scramble_data(*input, input_length);
+    scramble_data((*input) + preamble_length, (input_length-preamble_length));
 
  return 0;
 }
 
 
 
-# 102 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 105 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 102 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
-    removeScrambling(uint8_t ** input, unsigned int input_length) {
+# 105 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
+    removeScrambling(uint8_t ** input, unsigned int input_length, unsigned int preamble_length) {
 
-    unscramble_data(*input, input_length);
+    unscramble_data((*input) + preamble_length, (input_length-preamble_length));
 
  return 0;
 }
@@ -5678,9 +5683,9 @@ _Bool
 
 
 
-# 111 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 114 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 111 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 114 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     applyInterleaving(uint8_t* input, unsigned int input_length) {
 
 
@@ -5699,9 +5704,9 @@ _Bool
 
 
 
-# 128 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 131 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 128 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 131 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     removeInterleaving(uint8_t* input, unsigned int input_length) {
 
 
@@ -5720,9 +5725,9 @@ _Bool
 
 
 
-# 145 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 148 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 145 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 148 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls_preamble_length) {
 
 
@@ -5738,7 +5743,7 @@ _Bool
 
  bsequence mls = bsequence_create(n);
  bsequence_init_msequence(mls, ms);
-# 172 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 175 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
  bsequence_destroy(mls);
 
  return 0;
@@ -5748,9 +5753,9 @@ _Bool
 
 
 
-# 180 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 183 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 180 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 183 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     syncFrameUsingMLSPreamble(uint8_t *input, unsigned int * byte_index, unsigned int * bit_index) {
 
  return 0;
@@ -5760,18 +5765,18 @@ _Bool
 
 
 
-# 188 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 191 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 188 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 191 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * packet, unsigned int packet_length) {
 
 
  unsigned int alternating_preamble_length = 2;
  unsigned int mls_preamble_length = 0;
  uint8_t* mls_preamble = 
-# 193 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 196 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
                         ((void *)0)
-# 193 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 196 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
                             ;
 
  getMaximumLengthSequencePreamble(&mls_preamble, &mls_preamble_length);
@@ -5806,9 +5811,9 @@ _Bool
 
 
 
-# 226 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 229 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 226 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 229 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_length) {
 
  unsigned int packet_length = 1 + 4 + packet_data_length_with_fec + (2 * 2);
@@ -5826,9 +5831,9 @@ _Bool
 
 
 
-# 242 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 245 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 242 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 245 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packet_length) {
 
 
@@ -5860,9 +5865,9 @@ _Bool
 
 
 
-# 272 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 275 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 272 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
+# 275 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
     disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int packet_length) {
 
  uint32_t temp_32 = 0;
@@ -5907,10 +5912,39 @@ _Bool
 
 
 
-# 315 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 318 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 315 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
-    fragmentDataBufferIntoFrames(uint8_t * input, unsigned int input_length, uint8_t * output, unsigned int output_length) {
+# 318 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
+    fragmentDataBufferIntoFrames(uint8_t * input, unsigned int input_length, uint8_t * output, unsigned int * output_length) {
+
+ int numpackets = input_length/packet_data_length_no_fec + 1;
+ *output_length = numpackets*frame_length_bytes;
+ uint8_t * output = (uint8_t *)malloc(*output_length*sizeof(uint8_t));
+ packet_t temp_packet;
+ temp_packet.data = (uint8_t*)malloc(packet_data_length_no_fec);
+ int current_index = 0;
+
+
+ for (int i = 0; i < numpackets; i++){
+
+  temp_packet.total_num_packets = numpackets;
+  temp_packet.current_packet_num = i+1;
+
+  for(int j = 0; j < packet_data_length_no_fec; j++){
+   if(current_index > input_length){
+    temp_packet.data[j] = 0;
+   }
+   temp_packet.data[j] = input[current_index];
+   current_index++;
+  }
+
+  getCRC(&temp_packet);
+
+
+
+
+ }
+
  return 0;
 }
 
@@ -5919,11 +5953,45 @@ _Bool
 
 
 
-# 323 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c" 3 4
+# 355 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c" 3 4
 _Bool 
-# 323 "/home/josh/laser_satellite_receiver/c_project/packet_frame.c"
-    assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length) {
+# 355 "/home/josh/NEW_laser_satellite_receiver/laser_satellite_receiver/c_project/packet_frame.c"
+    assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int * output_length) {
 
+
+
+ int numpackets = input_length/frame_length_bytes;
+ *output_length = numpackets*packet_data_length_no_fec;
+ uint8_t * output = (uint8_t *)malloc(*output_length*sizeof(uint8_t));
+ packet_t temp_packet;
+ temp_packet.data = (uint8_t*)malloc(packet_data_length_no_fec);
+ int current_index = 0;
+ int prev_packetno = 0;
+ int cur_packetno = 0;
+
+
+ for (int i = 0; i < numpackets; i++){
+
+
+
+
+
+  temp_packet.total_num_packets = numpackets;
+  temp_packet.current_packet_num = i+1;
+
+  if(cur_packetno > numpackets){
+   printf("Packet number indicator %d larger than numpackets in transmission\n", cur_packetno);
+   while(1);
+  }
+
+
+  for(int j = 0; j < packet_data_length_no_fec; j++){
+
+  }
+
+
+
+ }
 
  return 0;
 }

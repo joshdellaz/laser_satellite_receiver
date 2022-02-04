@@ -1,22 +1,22 @@
 #include "packet_frame.h"
 #include "channel.h"
-#include "laser_comms.h"
+#include "laser_comms.h" // TODO: RENAME
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec
-uint8_t * generateRandPacket(void) {
-	uint8_t* data = (uint8_t*)malloc(packet_data_length_with_fec);
-	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+uint8_t *generateRandPacket(void)
+{
+	uint8_t *data = (uint8_t *)malloc(packet_data_length_with_fec);
+	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++)
+	{
 		data[i] = rand() & 0xff;
 	}
 	return data;
 }
-
 
 //1 (maybe) lsb bit error every 8 bytes
 // void applyChannel(uint8_t * input_data, unsigned int input_data_length) {
@@ -28,33 +28,36 @@ uint8_t * generateRandPacket(void) {
 // }
 
 //
-void getFECDataLengths(void) {
+void getFECDataLengths(void)
+{
 
 	// create arrays
 	packet_data_length_with_fec = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC); // need to make this include different LDPCs
 
 	// for now
-	packet_data_length_with_fec = (int) CODEWRD_L / 8;
+	packet_data_length_with_fec = (int)CODEWRD_L / 8;
 }
 
 //Current full-data-pipeline test
-bool fullSendTest(void) {
-	
+bool fullSendTest(void)
+{
+
 	printf("test\n");
-	
-	//Init all the things. 
+
+	//Init all the things.
 	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions
-	packet_t packet_data;//malloc this?
+	packet_t packet_data; //malloc this?
 	packet_data.selected_fec_scheme = LDPC;
-	uint8_t* packet_vector = NULL;
+	uint8_t *packet_vector = NULL;
 	unsigned int packet_length;
 	unsigned int frame_length;
-	uint8_t* frame_vector = NULL;//malloc? yes
+	uint8_t *frame_vector = NULL; //malloc? yes
 
 	packet_data.data = generateRandPacket();
 
 	printf("Original Data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++)
+	{
 		printf("%d,", packet_data.data[i]);
 	}
 	printf("\n\n");
@@ -64,16 +67,18 @@ bool fullSendTest(void) {
 
 	//Commented out functions are not yet implemented, so cannot be tested
 	applyLDPC(packet_data.data);
+
 	//applyFEC(packet_data.data);
 	printf("Encoded Data:\n");
-	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
+	for (unsigned int i = 0; i < packet_data_length_with_fec; i++)
+	{
 		printf("%d,", packet_data.data[i]);
 	}
 	printf("\n\n");
 
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
 	applyInterleaving(packet_vector, packet_length);
-	
+
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
 	unsigned int preamble_length = frame_length - packet_length;
 
@@ -103,9 +108,9 @@ bool fullSendTest(void) {
 	//printf("\n\n");
 
 	//Init "rx" stuff
-	packet_t rxpacket_data;//malloc this?
-	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec);
-	uint8_t* rxpacket_vector = NULL;
+	packet_t rxpacket_data; //malloc this?
+	rxpacket_data.data = (uint8_t *)malloc(packet_data_length_with_fec);
+	uint8_t *rxpacket_vector = NULL;
 	unsigned int rxpacket_length = 0;
 
 	removeScrambling(&frame_vector, frame_length, preamble_length);
@@ -121,29 +126,29 @@ bool fullSendTest(void) {
 	// printf("\n\n");
 	//removeFEC(rxpacket_data.data);
 	printf("Difference between Received Data and Original Data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++)
+	{
 		//printf("%d,", rxpacket_data.data[i]);
 		printf("%d,", (rxpacket_data.data[i] - packet_data.data[i]));
 	}
 	printf("\n\n");
 
-	
 	decodeLDPC(rxpacket_data.data);
 
-
-
 	printf("Difference between Received Corrected Data and Original Data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++)
+	{
 		//printf("%d,", rxpacket_data.data[i]);
 		printf("%d,", (rxpacket_data.data[i] - packet_data.data[i]));
 	}
 	printf("\n\n");
 
-	
-	if (checkCRC(&rxpacket_data)) {
+	if (checkCRC(&rxpacket_data))
+	{
 		printf("CRC Doesn't Match! (need to fix)\n");
 	}
-	else {
+	else
+	{
 		printf("CRC Matches!\n\n");
 	}
 
@@ -155,6 +160,3 @@ bool fullSendTest(void) {
 	free(frame_vector);
 	return 0;
 }
-
-
-

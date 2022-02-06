@@ -178,7 +178,36 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 //Checks the autocorrelation of frame input buffer and determines the indices of the first bit of the packet field.
 //Note: byte_ and bit_index are indexed from zero (0).
 bool syncFrameUsingMLSPreamble(uint8_t *input, unsigned int * byte_index, unsigned int * bit_index) {
+	/* the following is untested
 
+	
+
+	int m=2; // order
+	int n=4095 // min MLS length
+	int rxx // autocorrelation
+	msequence ms = msequence_create_default(m);
+	
+	bsequence bs1 = bsequence_create(n);
+	bsequence_init_msequence(bs1,ms);
+
+	bsequence bs2 = bsequence_create(n);
+	bsequence_init_msequence(bs2,ms);
+
+	rxx[0] = 2*bsequence_correlate(bs1,bs2) - n;
+
+	unsigned int i;
+	for (i=0; i<n; i++)
+	{
+		// compute autocorrelation
+		rxx[i] = 2*bsequence_correlate(bs1,bs2)-n;
+
+		bsequence_circshift(bs2);
+	}
+
+	bsequence_destroy(bs1);
+	bsequence_destroy(bs2);
+	msequence_destroy(ms);
+	*/ 
 	return 0;
 }
 

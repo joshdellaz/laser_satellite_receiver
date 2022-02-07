@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -7,7 +6,6 @@
 #include "packet_frame.h"
 //#include <complex>
 #include <liquid/liquid.h>
-
 
 //Move these into separate file? Considering having "utils" file containing smaller functions, and keeping the higher-level stuff here
 
@@ -146,8 +144,11 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 
 	//options
 	//TODO: Pick a good value for m
-	unsigned int m = 10;   // shift register length, n=2^m - 1
-	unsigned int repititions = 5;	//Number of MLS repititions in preamble
+	unsigned int m = 12;   // shift register length, n=2^m - 1
+	// unsigned int length = 4095; // min mls length
+	unsigned int repetitions = 5;	//Number of MLS repititions in preamble
+
+	printf("doing stuff i really hope this works \n");
 
 	// create and initialize m-sequence
 	msequence ms = msequence_create_default(m);//Fix these struct name definitions... Liquid maybe borked?
@@ -174,47 +175,11 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	return 0;
 }
 
-//TODO
-//Checks the autocorrelation of frame input buffer and determines the indices of the first bit of the packet field.
-//Note: byte_ and bit_index are indexed from zero (0).
-bool syncFrameUsingMLSPreamble(uint8_t *input, unsigned int * byte_index, unsigned int * bit_index) {
-	/* the following is untested
-
-	
-
-	int m=2; // order
-	int n=4095 // min MLS length
-	int rxx // autocorrelation
-	msequence ms = msequence_create_default(m);
-	
-	bsequence bs1 = bsequence_create(n);
-	bsequence_init_msequence(bs1,ms);
-
-	bsequence bs2 = bsequence_create(n);
-	bsequence_init_msequence(bs2,ms);
-
-	rxx[0] = 2*bsequence_correlate(bs1,bs2) - n;
-
-	unsigned int i;
-	for (i=0; i<n; i++)
-	{
-		// compute autocorrelation
-		rxx[i] = 2*bsequence_correlate(bs1,bs2)-n;
-
-		bsequence_circshift(bs2);
-	}
-
-	bsequence_destroy(bs1);
-	bsequence_destroy(bs2);
-	msequence_destroy(ms);
-	*/ 
-	return 0;
-}
-
-
 ////Assembles data from "packet" input buffer into output buffer "frame" of length "frame_length"
 //NOTE: Ensure *frame and *packet are freed after use!
 bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * packet, unsigned int packet_length) {//Basically just adds preamble
+
+	printf("starting frame assembly\n");
 
 	//Add MLS preamble 
 	unsigned int alternating_preamble_length = 2;

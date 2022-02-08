@@ -179,14 +179,16 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 //NOTE: Ensure *frame and *packet are freed after use!
 bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * packet, unsigned int packet_length) {//Basically just adds preamble
 
-	printf("starting frame assembly\n");
+	
 
 	//Add MLS preamble 
 	unsigned int alternating_preamble_length = 2;
 	unsigned int mls_preamble_length = 0;
 	uint8_t* mls_preamble = NULL;
 
+	printf("get MLS preamble \n");
 	getMaximumLengthSequencePreamble(&mls_preamble, &mls_preamble_length);
+	printf("MLS preamble received \n");
 
 	*frame_length = alternating_preamble_length + mls_preamble_length + packet_length;
 	*frame = (uint8_t*)malloc((*frame_length) * sizeof(uint8_t));

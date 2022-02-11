@@ -138,6 +138,38 @@ bool removeInterleaving(uint8_t* input, unsigned int input_length) {
 	return 0;
 }
 
+//FOR MLS TESTING PURPOSES (copied from josh's branch)
+float findAutocorrelation(uint8_t * samples){
+
+    unsigned int n = 4095*2;        // autocorr window length
+    unsigned int delay = n/2;    // autocorr overlap delay
+
+    // create autocorrelator object
+    autocorr_cccf q = autocorr_cccf_create(n,delay);//Does this need to be done every time?
+
+    float complex rxx[n];          // output auto-correlation
+
+    // compute auto-correlation
+    for (int i=0; i<n; i++) {
+        autocorr_cccf_push(q,(float)samples[i]);
+        autocorr_cccf_execute(q,&rxx[i]);
+
+        // normalize by energy (not sure if necessary)
+        rxx[i] /= autocorr_cccf_get_energy(q);
+    }
+
+    // find peak
+    float complex rxx_peak = 0;
+    for (int i=0; i<n; i++) {
+        if (i==0 || cabsf(rxx[i]) > cabsf(rxx_peak))
+            rxx_peak = rxx[i];
+    }
+
+    // destroy autocorrelator object
+    autocorr_cccf_destroy(q);
+    return (float)rxx_peak;
+}
+
 
 //Generates MLS preamble based on parameters within function and assigns it, along with its length to the arguments
 bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls_preamble_length) {
@@ -146,7 +178,7 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	//TODO: Pick a good value for m
 	unsigned int m = 12;   // shift register length, n=2^m - 1
 	// unsigned int length = 4095; // min mls length
-	unsigned int repetitions = 5;	//Number of MLS repititions in preamble
+	unsigned int repetitions = 2;	//Number of MLS repititions in preamble
 
 	printf("doing stuff i really hope this works \n");
 
@@ -159,6 +191,19 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	bsequence mls = bsequence_create(n);
 	bsequence_init_msequence(mls, ms);
 
+	printf("yarrrrrrrrrrrrrrrr \n");
+
+	// test out besequence_index (q,i) command to see what happens
+	// use msequence_example.c (lines 55-57) from liquid 
+	uint8_t sequence_arr[n*2];
+	for (int i = 0; i<n; i++){
+		sequence_arr[i] = bsequence_index(mls, i);
+		sequence_arr[i+n] = bsequence_index(mls, i);
+		//printf("%d ", sequence_arr[i]);
+	}
+
+	float autocor = findAutocorrelation(sequence_arr);
+	printf("calculated correlation = %f \n", autocor);
 
 	//Repeat specified number of times and move to new array
 	// *mls_preamble = (uint8_t*)malloc(((mls->s_len))* repititions);
@@ -178,8 +223,6 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 ////Assembles data from "packet" input buffer into output buffer "frame" of length "frame_length"
 //NOTE: Ensure *frame and *packet are freed after use!
 bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * packet, unsigned int packet_length) {//Basically just adds preamble
-
-	
 
 	//Add MLS preamble 
 	unsigned int alternating_preamble_length = 2;

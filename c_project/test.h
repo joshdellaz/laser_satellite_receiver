@@ -3,3 +3,4 @@
 
 void getFECDataLengths(void);
 bool fullSendTest(void);
+void testMLSAutoCorrelation(void);

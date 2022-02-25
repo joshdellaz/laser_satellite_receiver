@@ -140,4 +140,9 @@ bool fullSendTest(void) {
 }
 
 
+// void testMLSAutoCorrelation(void){
 
+// 	getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls_preamble_length) {
+// 	findAutocorrelation(uint8_t * samples){
+
+// }

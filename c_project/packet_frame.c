@@ -139,10 +139,10 @@ bool removeInterleaving(uint8_t* input, unsigned int input_length) {
 }
 
 //FOR MLS TESTING PURPOSES (copied from josh's branch)
-float findAutocorrelation(uint8_t * samples){
+float findAutocorrelation(uint8_t * samples, unsigned int shiftnum){
 
-    unsigned int n = 4095*2;        // autocorr window length
-    unsigned int delay = n/2;    // autocorr overlap delay
+    unsigned int n = 4095*2;        // autocorr window length (length of entire sequence). 4095 zeroes appended for testing
+    unsigned int delay = n/2;    // autocorr overlap delay (length of one MLS)
 
     // create autocorrelator object
     autocorr_cccf q = autocorr_cccf_create(n,delay);//Does this need to be done every time?
@@ -150,12 +150,17 @@ float findAutocorrelation(uint8_t * samples){
     float complex rxx[n];          // output auto-correlation
 
     // compute auto-correlation
-    for (int i=0; i<n; i++) {
-        autocorr_cccf_push(q,(float)samples[i]);
+    for (int i= shiftnum + 0; i< shiftnum + n; i++) {
+		if(i < n){
+        	autocorr_cccf_push(q,(float complex)samples[i]);
+		} else {
+        	autocorr_cccf_push(q,(float complex)0);
+		}
         autocorr_cccf_execute(q,&rxx[i]);
 
         // normalize by energy (not sure if necessary)
-        rxx[i] /= autocorr_cccf_get_energy(q);
+        //rxx[i] /= autocorr_cccf_get_energy(q);
+		//printf("%f ", cabsf(rxx[i]));
     }
 
     // find peak
@@ -164,6 +169,8 @@ float findAutocorrelation(uint8_t * samples){
         if (i==0 || cabsf(rxx[i]) > cabsf(rxx_peak))
             rxx_peak = rxx[i];
     }
+		printf("%4.1f ", cabsf(rxx_peak));
+	    //printf("peak auto-correlation : %12.8f, angle %12.8f\n", cabsf(rxx_peak), cargf(rxx_peak));
 
     // destroy autocorrelator object
     autocorr_cccf_destroy(q);
@@ -199,11 +206,14 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	for (int i = 0; i<n; i++){
 		sequence_arr[i] = bsequence_index(mls, i);
 		sequence_arr[i+n] = bsequence_index(mls, i);
-		//printf("%d ", sequence_arr[i]);
+		printf("%d ", sequence_arr[i]);
 	}
 
-	float autocor = findAutocorrelation(sequence_arr);
-	printf("calculated correlation = %f \n", autocor);
+	printf("\n\n");
+	for (int i = 0; i <2000; i += 5){
+		float autocor = findAutocorrelation(sequence_arr, i);
+	}
+	
 
 	//Repeat specified number of times and move to new array
 	// *mls_preamble = (uint8_t*)malloc(((mls->s_len))* repititions);

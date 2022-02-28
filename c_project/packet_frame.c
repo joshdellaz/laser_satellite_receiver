@@ -157,6 +157,7 @@ float findAutocorrelation(uint8_t * samples, unsigned int shiftnum){
         	autocorr_cccf_push(q,(float complex)0);
 		}
         autocorr_cccf_execute(q,&rxx[i]);
+		rxx[i] = 2*rxx[i] - (i - shiftnum);
 
         // normalize by energy (not sure if necessary)
         //rxx[i] /= autocorr_cccf_get_energy(q);
@@ -190,7 +191,7 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	printf("doing stuff i really hope this works \n");
 
 	// create and initialize m-sequence
-	msequence ms = msequence_create_default(m);//Fix these struct name definitions... Liquid maybe borked?
+	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M12);//Fix these struct name definitions... Liquid maybe borked?
 	//msequence_print(ms);
 	unsigned int n = msequence_get_length(ms);
 
@@ -199,6 +200,36 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	bsequence_init_msequence(mls, ms);
 
 	printf("yarrrrrrrrrrrrrrrr \n");
+
+//TEMPORARY TEST USING EXAMPLE CODE
+
+    // signed int rxx[n];  // auto-correlation
+
+    // // create and initialize first binary sequence on m-sequence
+    // bsequence bs1 = bsequence_create(n);
+    // bsequence_init_msequence(bs1, ms);
+
+    // // create and initialize second binary sequence on same m-sequence
+    // bsequence bs2 = bsequence_create(n);
+    // bsequence_init_msequence(bs2, ms);
+
+    // // when sequences are misaligned, autocorrelation is equal to -1
+    // unsigned int i;
+    // for (i=0; i<n; i++) {
+    //     // compute auto-correlation
+    //     rxx[i] = 2*bsequence_correlate(bs1, bs2)-n;
+
+    //     // circular shift the second sequence
+    //     bsequence_circshift(bs2);
+	// 	printf("%d ", rxx[i]);
+    // }
+
+	// signed int x[n];
+    // for (i=0; i<n; i++){
+    //     x[i] = bsequence_index(bs1, i);
+	// 	printf("%d", x[i]);
+	// }
+
 
 	// test out besequence_index (q,i) command to see what happens
 	// use msequence_example.c (lines 55-57) from liquid 
@@ -226,6 +257,7 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 
 	// clean up memory
 	bsequence_destroy(mls);
+	msequence_destroy(ms);
 
 	return 0;
 }

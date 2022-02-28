@@ -9,9 +9,6 @@
 
 using namespace std;
 
-// extern "C" void initLDPC(LdpcCode * ldpc_scheme) {
-
-// }
 
 extern "C" void applyLDPC(uint8_t *input)
 {

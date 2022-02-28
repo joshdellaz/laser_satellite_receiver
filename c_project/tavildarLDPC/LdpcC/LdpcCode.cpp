@@ -9,40 +9,40 @@
 #include <cmath>
 
 
-void LdpcCode::generate_gallagher_ldpc() {
-    int w_r = 6;
-    int w_c = 3;
-    std::vector<std::vector<uint8_t>> A_0 (_N, std::vector<uint8_t>(_M/w_c));
+// void LdpcCode::generate_gallagher_ldpc() {
+//     int w_r = 6;
+//     int w_c = 3;
+//     std::vector<std::vector<uint8_t>> A_0 (_N, std::vector<uint8_t>(_M/w_c));
 
-    // for (unsigned i_row = 0; i_row < _M/w_c; ++i_row ) {
-    //     for (unsigned i_col = 0; i_col < _N; ++i_col)
-    //         A_0.at(i_col).at(i_row) = 0;
+//     for (unsigned i_row = 0; i_row < _M/w_c; ++i_row ) {
+//         for (unsigned i_col = 0; i_col < _N; ++i_col)
+//             A_0.at(i_col).at(i_row) = 0;
 
-    //     for (unsigned i_col = i_row*w_r; i_col < (i_row + 1) * w_r; ++i_col)
-    //         A_0.at(i_col).at(i_row) = 1;
-    // }
+//         for (unsigned i_col = i_row*w_r; i_col < (i_row + 1) * w_r; ++i_col)
+//             A_0.at(i_col).at(i_row) = 1;
+//     }
 
-    // std::vector<unsigned> rand_perm;
+//     std::vector<unsigned> rand_perm;
 
-    // // set some values:
-    // for (unsigned i = 0; i < _N; ++i) rand_perm.push_back(i); // 1 2 3 4 5 6 7 8 9
+//     // set some values:
+//     for (unsigned i = 0; i < _N; ++i) rand_perm.push_back(i); // 1 2 3 4 5 6 7 8 9
 
-    // for (unsigned i_row = 0; i_row < _M; ++i_row ) {
-    //     for (unsigned i_col = 0; i_col < _N; ++i_col)
-    //         _H_mat.at(i_col).at(i_row) = 0;
-    // }
+//     for (unsigned i_row = 0; i_row < _M; ++i_row ) {
+//         for (unsigned i_col = 0; i_col < _N; ++i_col)
+//             _H_mat.at(i_col).at(i_row) = 0;
+//     }
 
 
-    // for (unsigned i_row = 0; i_row < _M; ++i_row ) {
-    //     if ( (i_row % (_N/w_r)) == 0 )
-    //         std::random_shuffle ( rand_perm.begin(), rand_perm.end() );
+//     for (unsigned i_row = 0; i_row < _M; ++i_row ) {
+//         if ( (i_row % (_N/w_r)) == 0 )
+//             std::random_shuffle ( rand_perm.begin(), rand_perm.end() );
 
-    //     for (unsigned i_col = 0; i_col < _N; ++i_col)
-    //        _H_mat.at(i_col).at(i_row) = A_0.at(rand_perm.at(i_col)).at(i_row % (_N/w_r));
-    // }
+//         for (unsigned i_col = 0; i_col < _N; ++i_col)
+//            _H_mat.at(i_col).at(i_row) = A_0.at(rand_perm.at(i_col)).at(i_row % (_N/w_r));
+//     }
 
-    // generate_compact_rep();
-}
+//     generate_compact_rep();
+// }
 
 
 // std::vector<uint8_t> LdpcCode::encode(std::vector<uint8_t> info_bits) {

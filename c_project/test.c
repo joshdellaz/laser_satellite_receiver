@@ -99,7 +99,7 @@ bool fullSendTest(void)
 	//Comment or un-comment, depending on the test you are trying to run
 	//TODO consider turning into macro functionality in future
 	//applyChannel(frame_vector, frame_length);
-	applyBitFlips(frame_vector, frame_length); // fucks up the CRC unless CRC is also encoded and decoded
+	applyBitFlips(frame_vector, frame_length); 
 
 	//printf("New frame (after going through channel):\n");
 	//for (unsigned int i = 0; i < frame_length; i++) {

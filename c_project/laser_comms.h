@@ -8,7 +8,7 @@
 extern "C"
 {
 #endif
-    void applyLDPC(uint8_t *); // TODO: rename
+    void applyLDPC(uint8_t *); 
     void decodeLDPC(uint8_t *);
 #ifdef __cplusplus
 }

@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-float _randF(void); // rand float between 0 and 1
 void _createBursts(bool *, unsigned);
 void _applyBursts(bool *, uint8_t *, unsigned);
 void _applyBurstsToSamples(bool *, float *, unsigned);
-float _AWGN_generator(void);
+
+float __AWGN_generator(void);
+float __randF(void); // rand float between 0 and 1
 
 bool applyBitFlips(uint8_t *input_data, unsigned int input_data_length)
 {
@@ -41,42 +42,11 @@ bool applyChannel(uint8_t *input_data, unsigned int input_data_length)
 	return true;
 }
 
-float _randF(void)
-{
-	return (float)rand() / (float)RAND_MAX;
-}
-
-float _AWGN_generator(void)
-{ // feels like overkill but fuck it
-	// from https://www.embeddedrelated.com/showcode/311.php
-	/* Generates additive white Gaussian Noise samples with zero mean and a standard deviation of 1. */
-	double temp1;
-	double temp2;
-	float result;
-	int p;
-	p = 1;
-	while (p > 0)
-	{
-		temp2 = (rand() / ((double)RAND_MAX)); /* rand() function generates an integer between 0 and  RAND_MAX, which is defined in stdlib.h */
-		if (temp2 == 0)
-		{ // temp2 is >= (RAND_MAX / 2)
-			p = 1;
-		}
-		else
-		{ // temp2 is < (RAND_MAX / 2)
-			p = -1;
-		}
-	} // end while()
-	temp1 = cos((2.0 * (double)PI) * rand() / ((double)RAND_MAX));
-	result = (float)sqrt(-2.0 * log(temp2)) * temp1;
-	return result; // return the generated random sample to the caller
-}
-
 void _createBursts(bool *Bursts, unsigned input_data_length)
 {
 	unsigned int bits_per_cyc = BIT_RATE * CHNL_CYC; // non-zero integer
 	chnl_state chnl_st;								 // current state of the channel
-	float init_st = _randF();
+	float init_st = __randF();
 
 	if (init_st < 0.250)
 	{
@@ -109,7 +79,7 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 			switch (chnl_st)
 			{
 			case GOOD_S:
-				if (_randF() < P_a2)
+				if (__randF() < P_a2)
 				{
 					chnl_st = BAD_UNS;
 				}
@@ -119,7 +89,7 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 				}
 				break;
 			case BAD_S:
-				if (_randF() < P_b2)
+				if (__randF() < P_b2)
 				{
 					chnl_st = GOOD_UNS;
 				}
@@ -129,7 +99,7 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 				}
 				break;
 			case BAD_UNS:
-				if (_randF() < P_b1)
+				if (__randF() < P_b1)
 				{
 					chnl_st = GOOD_UNS;
 				}
@@ -139,7 +109,7 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 				}
 				break;
 			case GOOD_UNS:
-				if (_randF() < P_a1)
+				if (__randF() < P_a1)
 				{
 					chnl_st = BAD_UNS;
 				}
@@ -228,4 +198,37 @@ void _applyBurstsToSamples(bool *Bursts, float *samples, unsigned smpls_len)
 			}
 		}
 	}
+}
+
+
+
+float __randF(void)
+{
+	return (float)rand() / (float)RAND_MAX;
+}
+
+float __AWGN_generator(void)
+{ // feels like overkill but fuck it
+	// from https://www.embeddedrelated.com/showcode/311.php
+	/* Generates additive white Gaussian Noise samples with zero mean and a standard deviation of 1. */
+	double temp1;
+	double temp2;
+	float result;
+	int p;
+	p = 1;
+	while (p > 0)
+	{
+		temp2 = (rand() / ((double)RAND_MAX)); /* rand() function generates an integer between 0 and  RAND_MAX, which is defined in stdlib.h */
+		if (temp2 == 0)
+		{ // temp2 is >= (RAND_MAX / 2)
+			p = 1;
+		}
+		else
+		{ // temp2 is < (RAND_MAX / 2)
+			p = -1;
+		}
+	} // end while()
+	temp1 = cos((2.0 * (double)PI) * rand() / ((double)RAND_MAX));
+	result = (float)sqrt(-2.0 * log(temp2)) * temp1;
+	return result; // return the generated random sample to the caller
 }

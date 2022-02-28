@@ -5,7 +5,7 @@
 #define PI 3.1415926536
 
 /// Channel stuff
-#define BIT_RATE 1 // in Mbps
+#define BIT_RATE 1 // in Mbps (should be 25)
 #define SAMP_PER_BIT 4
 #define BURST_VALUE 69.420E20 // equal to the ceiling of the ADC
 // ignoring burst positions for now
@@ -17,7 +17,7 @@
 #define P_a2 0.060
 #define P_b1 0.240
 #define P_b2 0.050
-#define CHNL_CYC 50 // in us (inverse of bit rate's order which is 10^6)
+#define CHNL_CYC 1 // in us (e-6s) should be 50 based on the paper
 
 typedef enum chnl_state
 {

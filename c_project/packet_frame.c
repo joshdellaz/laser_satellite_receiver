@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "packet_frame.h"
 //#include <complex>
@@ -139,42 +140,68 @@ bool removeInterleaving(uint8_t* input, unsigned int input_length) {
 }
 
 //FOR MLS TESTING PURPOSES (copied from josh's branch)
-float findAutocorrelation(uint8_t * samples, unsigned int shiftnum){
+float findAutocorrelation(uint8_t * samples){
 
-    unsigned int n = 4095*2;        // autocorr window length (length of entire sequence). 4095 zeroes appended for testing
-    unsigned int delay = n/2;    // autocorr overlap delay (length of one MLS)
-
-    // create autocorrelator object
-    autocorr_cccf q = autocorr_cccf_create(n,delay);//Does this need to be done every time?
-
+	//TODO make variables use file globals
+    unsigned int n = 4095*2;        // Window length
+    unsigned int delay = n/2;    // Overlap delay
     float complex rxx[n];          // output auto-correlation
+	float rxx_peak = 0;
+
+	printf("sequence:\n");
+	for(int i = 0; i <n; i++){
+		printf("%d", samples[i]);
+	}
+
+
+	printf("\nautocorrelation values with increasing offset:\n");
 
     // compute auto-correlation
-    for (int i= shiftnum + 0; i< shiftnum + n; i++) {
-		if(i < n){
-        	autocorr_cccf_push(q,(float complex)samples[i]);
-		} else {
-        	autocorr_cccf_push(q,(float complex)0);
+	for (int shiftnum = 0; shiftnum < 50; shiftnum++){
+		rxx_peak = 0;
+		//josh (not liquid) style:
+		for (int i = 0; i<shiftnum; i++){
+			rxx_peak += samples[i]*samples[n - 1 - shiftnum + i];
 		}
-        autocorr_cccf_execute(q,&rxx[i]);
-		rxx[i] = 2*rxx[i] - (i - shiftnum);
+		for (int i = shiftnum; i < delay; i++){
+			rxx_peak += samples[i]*samples[i+delay+shiftnum];
+		}
+		printf("%f ", rxx_peak);
 
-        // normalize by energy (not sure if necessary)
-        //rxx[i] /= autocorr_cccf_get_energy(q);
-		//printf("%f ", cabsf(rxx[i]));
-    }
+		// // create autocorrelator object
+		// autocorr_cccf q = autocorr_cccf_create(n,delay);
 
-    // find peak
-    float complex rxx_peak = 0;
-    for (int i=0; i<n; i++) {
-        if (i==0 || cabsf(rxx[i]) > cabsf(rxx_peak))
-            rxx_peak = rxx[i];
-    }
-		printf("%4.1f ", cabsf(rxx_peak));
-	    //printf("peak auto-correlation : %12.8f, angle %12.8f\n", cabsf(rxx_peak), cargf(rxx_peak));
+		// for (int i= 0; i< n; i++) {
+		// 	if(i < n){
+		// 		autocorr_cccf_push(q,(float complex)samples[shiftnum + i]);
+		// 	} else {
+		// 		autocorr_cccf_push(q,(float complex)0);
+		// 	}
+		// 	autocorr_cccf_execute(q,&rxx[i]);
+		// 	//rxx[i] = 2*rxx[i] - (i - shiftnum);//stolen from correlate using bsequences...
+
+		// 	// normalize by energy (not sure if necessary)
+		// 	//rxx[i] /= autocorr_cccf_get_energy(q);
+		// 	printf("%f ", cabsf(rxx[i]));
+		// }
+
+		// // find peak
+		// rxx_peak = 0;
+		// for (int i=0; i<n; i++) {
+		// 	if (i==0 || cabsf(rxx[i]) > cabsf(rxx_peak))
+		// 		rxx_peak = rxx[i];
+		// }
+		// printf("\n %4.1f \n", cabsf(rxx_peak));
+		// //printf("peak auto-correlation : %12.8f, angle %12.8f\n", cabsf(rxx_peak), cargf(rxx_peak));
+
+		// autocorr_cccf_destroy(q);
+
+	}
+
+
 
     // destroy autocorrelator object
-    autocorr_cccf_destroy(q);
+    
     return (float)rxx_peak;
 }
 
@@ -185,10 +212,8 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	//options
 	//TODO: Pick a good value for m
 	unsigned int m = 12;   // shift register length, n=2^m - 1
-	// unsigned int length = 4095; // min mls length
-	unsigned int repetitions = 2;	//Number of MLS repititions in preamble
-
-	printf("doing stuff i really hope this works \n");
+	unsigned int repititions = 2;	//Number of MLS repititions in preamble
+	unsigned int mls_preamble_length_bits = (pow(2,m) - 1)*repititions; // preamble length
 
 	// create and initialize m-sequence
 	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M12);//Fix these struct name definitions... Liquid maybe borked?
@@ -199,61 +224,16 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	bsequence mls = bsequence_create(n);
 	bsequence_init_msequence(mls, ms);
 
-	printf("yarrrrrrrrrrrrrrrr \n");
-
-//TEMPORARY TEST USING EXAMPLE CODE
-
-    // signed int rxx[n];  // auto-correlation
-
-    // // create and initialize first binary sequence on m-sequence
-    // bsequence bs1 = bsequence_create(n);
-    // bsequence_init_msequence(bs1, ms);
-
-    // // create and initialize second binary sequence on same m-sequence
-    // bsequence bs2 = bsequence_create(n);
-    // bsequence_init_msequence(bs2, ms);
-
-    // // when sequences are misaligned, autocorrelation is equal to -1
-    // unsigned int i;
-    // for (i=0; i<n; i++) {
-    //     // compute auto-correlation
-    //     rxx[i] = 2*bsequence_correlate(bs1, bs2)-n;
-
-    //     // circular shift the second sequence
-    //     bsequence_circshift(bs2);
-	// 	printf("%d ", rxx[i]);
-    // }
-
-	// signed int x[n];
-    // for (i=0; i<n; i++){
-    //     x[i] = bsequence_index(bs1, i);
-	// 	printf("%d", x[i]);
-	// }
-
-
-	// test out besequence_index (q,i) command to see what happens
-	// use msequence_example.c (lines 55-57) from liquid 
-	uint8_t sequence_arr[n*2];
-	for (int i = 0; i<n; i++){
-		sequence_arr[i] = bsequence_index(mls, i);
-		sequence_arr[i+n] = bsequence_index(mls, i);
-		printf("%d ", sequence_arr[i]);
+	//Write bits to array. Note bsequence indexing starts on "right"
+	uint8_t * buffer = (uint8_t*)malloc(sizeof(uint8_t)*mls_preamble_length_bits);
+	for (int i = 0; i < 2; i++){
+		for (unsigned int j = 0; j < n; j++) {
+			buffer[n*i + j] = bsequence_index(mls, j);
+		}
 	}
 
-	printf("\n\n");
-	for (int i = 0; i <2000; i += 5){
-		float autocor = findAutocorrelation(sequence_arr, i);
-	}
-	
 
-	//Repeat specified number of times and move to new array
-	// *mls_preamble = (uint8_t*)malloc(((mls->s_len))* repititions);
-	// for (unsigned int i = 0; i < repititions; i++) {
-	// 	for (unsigned int j = 0; j < (mls->s_len); j++) {
-	// 		(*mls_preamble)[i*(mls->s_len) + j] = (uint8_t)((mls->s)[j]);
-	// 	}
-	// }
-	// *mls_preamble_length = repititions*(mls->s_len);
+	findAutocorrelation(buffer);
 
 	// clean up memory
 	bsequence_destroy(mls);

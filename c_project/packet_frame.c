@@ -1,13 +1,12 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "packet_frame.h"
 //#include <complex>
 #include <liquid/liquid.h>
-
 
 //Move these into separate file? Considering having "utils" file containing smaller functions, and keeping the higher-level stuff here
 
@@ -88,16 +87,20 @@ bool getCRC(packet_t * packet) {//Note that deviating from crc32 size would requ
 	return 0;
 }
 
-//TODO
 //Applies LiquidDSP's scrambling to input buffer of input_length
-bool applyScrambling(uint8_t * input, unsigned int input_length) {
+bool applyScrambling(uint8_t ** input, unsigned int input_length, unsigned int preamble_length) {
+	//not necessary
+	//*frame = (uint8_t*)malloc((*frame_length) * sizeof(uint8_t));
+
+    scramble_data((*input) + preamble_length, (input_length-preamble_length));
 
 	return 0;
 }
 
-//TODO
 //Removes LiquidDSP's scrambling to input buffer of input_length
-bool removeScrambling(uint8_t* input, unsigned int input_length) {
+bool removeScrambling(uint8_t ** input, unsigned int input_length, unsigned int preamble_length) {
+
+    unscramble_data((*input) + preamble_length, (input_length-preamble_length));
 
 	return 0;
 }
@@ -136,17 +139,84 @@ bool removeInterleaving(uint8_t* input, unsigned int input_length) {
 	return 0;
 }
 
+//FOR MLS TESTING PURPOSES (copied from josh's branch)
+float findAutocorrelation(uint8_t * samples){
+
+	//TODO make variables use file globals
+    unsigned int n = 4095*2;        // Window length
+    unsigned int delay = n/2;    // Overlap delay
+    float complex rxx[n];          // output auto-correlation
+	float rxx_peak = 0;
+
+	printf("sequence:\n");
+	for(int i = 0; i <n; i++){
+		printf("%d", samples[i]);
+	}
+
+
+	printf("\nautocorrelation values with increasing offset:\n");
+
+    // compute auto-correlation
+	for (int shiftnum = 0; shiftnum < 50; shiftnum++){
+		rxx_peak = 0;
+		//josh (not liquid) style:
+		for (int i = 0; i<shiftnum; i++){
+			rxx_peak += samples[i]*samples[n - 1 - shiftnum + i];
+		}
+		for (int i = shiftnum; i < delay; i++){
+			rxx_peak += samples[i]*samples[i+delay+shiftnum];
+		}
+		printf("%f ", rxx_peak);
+
+		// // create autocorrelator object
+		// autocorr_cccf q = autocorr_cccf_create(n,delay);
+
+		// for (int i= 0; i< n; i++) {
+		// 	if(i < n){
+		// 		autocorr_cccf_push(q,(float complex)samples[shiftnum + i]);
+		// 	} else {
+		// 		autocorr_cccf_push(q,(float complex)0);
+		// 	}
+		// 	autocorr_cccf_execute(q,&rxx[i]);
+		// 	//rxx[i] = 2*rxx[i] - (i - shiftnum);//stolen from correlate using bsequences...
+
+		// 	// normalize by energy (not sure if necessary)
+		// 	//rxx[i] /= autocorr_cccf_get_energy(q);
+		// 	printf("%f ", cabsf(rxx[i]));
+		// }
+
+		// // find peak
+		// rxx_peak = 0;
+		// for (int i=0; i<n; i++) {
+		// 	if (i==0 || cabsf(rxx[i]) > cabsf(rxx_peak))
+		// 		rxx_peak = rxx[i];
+		// }
+		// printf("\n %4.1f \n", cabsf(rxx_peak));
+		// //printf("peak auto-correlation : %12.8f, angle %12.8f\n", cabsf(rxx_peak), cargf(rxx_peak));
+
+		// autocorr_cccf_destroy(q);
+
+	}
+
+
+
+    // destroy autocorrelator object
+    
+    return (float)rxx_peak;
+}
+
 
 //Generates MLS preamble based on parameters within function and assigns it, along with its length to the arguments
 bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls_preamble_length) {
 
 	//options
 	//TODO: Pick a good value for m
-	unsigned int m = 10;   // shift register length, n=2^m - 1
-	unsigned int repititions = 5;	//Number of MLS repititions in preamble
+	unsigned int m = 12;   // shift register length, n=2^m - 1
+	unsigned int repititions = 2;	//Number of MLS repititions in preamble
+	unsigned int mls_preamble_length_bits = (pow(2,m) - 1)*repititions; // preamble length
 
 	// create and initialize m-sequence
-	msequence ms = msequence_create_default(m);//Fix these struct name definitions... Liquid maybe borked?
+	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M12);//Fix these struct name definitions... Liquid maybe borked?
 	//msequence_print(ms);
 	unsigned int n = msequence_get_length(ms);
 
@@ -154,30 +224,23 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	bsequence mls = bsequence_create(n);
 	bsequence_init_msequence(mls, ms);
 
+	//Write bits to array. Note bsequence indexing starts on "right"
+	uint8_t * buffer = (uint8_t*)malloc(sizeof(uint8_t)*mls_preamble_length_bits);
+	for (int i = 0; i < 2; i++){
+		for (unsigned int j = 0; j < n; j++) {
+			buffer[n*i + j] = bsequence_index(mls, j);
+		}
+	}
 
-	//Repeat specified number of times and move to new array
-	// *mls_preamble = (uint8_t*)malloc(((mls->s_len))* repititions);
-	// for (unsigned int i = 0; i < repititions; i++) {
-	// 	for (unsigned int j = 0; j < (mls->s_len); j++) {
-	// 		(*mls_preamble)[i*(mls->s_len) + j] = (uint8_t)((mls->s)[j]);
-	// 	}
-	// }
-	// *mls_preamble_length = repititions*(mls->s_len);
+
+	findAutocorrelation(buffer);
 
 	// clean up memory
 	bsequence_destroy(mls);
+	msequence_destroy(ms);
 
 	return 0;
 }
-
-//TODO
-//Checks the autocorrelation of frame input buffer and determines the indices of the first bit of the packet field.
-//Note: byte_ and bit_index are indexed from zero (0).
-bool syncFrameUsingMLSPreamble(uint8_t *input, unsigned int * byte_index, unsigned int * bit_index) {
-	
-	return 0;
-}
-
 
 ////Assembles data from "packet" input buffer into output buffer "frame" of length "frame_length"
 //NOTE: Ensure *frame and *packet are freed after use!
@@ -188,7 +251,9 @@ bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * pack
 	unsigned int mls_preamble_length = 0;
 	uint8_t* mls_preamble = NULL;
 
+	printf("get MLS preamble \n");
 	getMaximumLengthSequencePreamble(&mls_preamble, &mls_preamble_length);
+	printf("MLS preamble received \n");
 
 	*frame_length = alternating_preamble_length + mls_preamble_length + packet_length;
 	*frame = (uint8_t*)malloc((*frame_length) * sizeof(uint8_t));

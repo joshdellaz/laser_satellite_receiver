@@ -7,6 +7,9 @@ int main(void) {
 	//softwareDACandADC();
 	simulatedAutocorSyncTest();
 	//fullSendTest();
+	//testMLSAutoCorrelation();
+	printf("starting the fullsend test shit\n");
+	fullSendTest();
 	//Aah!
 
 	return 0;

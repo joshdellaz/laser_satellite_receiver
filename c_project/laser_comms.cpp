@@ -1,5 +1,6 @@
+#include "laser_comms.h"
 #include <iostream>
 
-void say_hello(){
+extern "C" void say_hello(){
     std::cout << "Hello, from laser_comms!\n";
 }

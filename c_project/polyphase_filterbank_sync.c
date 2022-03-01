@@ -1,244 +1,295 @@
 #include <stdbool.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "samples_to_bits.h"
+#include <complex.h>
+#include <liquid/liquid.h>
 
-//MATLAB Generated Code
+#define PI 3.142857
+#define IS_SIMULATION
 
-// bool resample(float* samples) {
-//     static const double dv[18] = { 0.0,
-//                                   -3.6599908762554245E-20,
-//                                   -0.0018620382329331026,
-//                                   -0.012833066896205812,
-//                                   -0.029186818797226653,
-//                                   1.2911673020744453E-17,
-//                                   0.16615358664838167,
-//                                   0.49942439609101541,
-//                                   0.86491926089902982,
-//                                   1.026769360575877,
-//                                   0.86491926089902982,
-//                                   0.49942439609101541,
-//                                   0.16615358664838167,
-//                                   1.2911673020744453E-17,
-//                                   -0.029186818797226653,
-//                                   -0.012833066896205812,
-//                                   -0.0018620382329331026,
-//                                   -3.6599908762554245E-20 };
+int num_banks = 4;
+int mls_total_preamble_length_bits = 4095*2;//Make dependent on MLS order
+int number_of_mls_repititions = 2;
+int N = 4;
+extern int packet_data_length_with_fec_bytes;
 
-//     /* correct waveform for proper processing & resample */
-//     for (r = 0; r < 504; r++) {
-//         varargin_1[r] = (input_samples[10 * r] - 0.5) * 2.0;
-//     }
-//     memset(&y[0], 0, 2030U * sizeof(double));
-//     for (k = 0; k < 4; k++) {
-//         out_idx = (double)k + 1.0;
-//         if (k == 0) {
-//             r = 0;
-//         }
-//         else {
-//             r = k;
-//         }
-//         inphi_idx = 1.0;
-//         filthi_idx = r + 1;
-//         if (fmod(19.0 - ((double)r + 1.0), 4.0) != 0.0) {
-//             Lg = (int)floor((19.0 - ((double)r + 1.0)) / 4.0 + 1.0);
-//         }
-//         else {
-//             Lg = (int)floor((19.0 - ((double)r + 1.0)) / 4.0);
-//         }
-//         while ((inphi_idx < 505.0) && (filthi_idx < 19)) {
-//             accum = 0.0;
-//             idx = (int)inphi_idx;
-//             for (tmp_filtlo_idx = r + 1; tmp_filtlo_idx <= filthi_idx;
-//                 tmp_filtlo_idx += 4) {
-//                 accum += dv[tmp_filtlo_idx - 1] * varargin_1[idx - 1];
-//                 idx--;
-//             }
-//             y[(int)out_idx - 1] += accum;
-//             out_idx += 4.0;
-//             inphi_idx++;
-//             filthi_idx += 4;
-//         }
-//         if (inphi_idx < 505.0) {
-//             while (filthi_idx >= 19) {
-//                 filthi_idx -= 4;
-//             }
-//             while (inphi_idx < 505.0) {
-//                 accum = 0.0;
-//                 idx = (int)inphi_idx;
-//                 for (tmp_filtlo_idx = r + 1; tmp_filtlo_idx <= filthi_idx;
-//                     tmp_filtlo_idx += 4) {
-//                     accum += dv[tmp_filtlo_idx - 1] * varargin_1[idx - 1];
-//                     idx--;
-//                 }
-//                 if (out_idx < 2031.0) {
-//                     idx = (int)out_idx - 1;
-//                     y[idx] += accum;
-//                 }
-//                 out_idx += 4.0;
-//                 inphi_idx++;
-//             }
-//         }
-//         else if (filthi_idx < 19) {
-//             while (filthi_idx < 19) {
-//                 accum = 0.0;
-//                 for (idx = 0; idx < 504; idx++) {
-//                     accum += dv[(filthi_idx + idx * -4) - 1] * varargin_1[idx];
-//                 }
-//                 y[(int)out_idx - 1] += accum;
-//                 out_idx += 4.0;
-//                 inphi_idx++;
-//                 filthi_idx += 4;
-//             }
-//         }
-//         while (filthi_idx >= 19) {
-//             filthi_idx -= 4;
-//         }
-//         for (inplo_idx = (inphi_idx - (double)Lg) + 1.0; inplo_idx < 505.0;
-//             inplo_idx++) {
-//             accum = 0.0;
-//             idx = (int)inplo_idx;
-//             inphi_idx = filthi_idx;
-//             while (idx < 505) {
-//                 accum += dv[(int)inphi_idx - 1] * varargin_1[idx - 1];
-//                 idx++;
-//                 inphi_idx -= 4.0;
-//             }
-//             y[(int)out_idx - 1] += accum;
-//             out_idx += 4.0;
-//         }
-//     }
-// }
+//ENSURE shiftDownAndNormalizeSamples IS RUN ON SAMPLES BEFORE THIS FUNCTION - not sure about this Jan 29
+//Frees input pointer
+float * resampleInput(float* samplesin, int length_samples_in, int * length_samples_out) {
 
-// bool determinePhaseOffset(float* samples, float phase_offset)//design such that it can be done on 101010... stream OR w/ MLS sync
-// {
-//     static const double fircoefs[49] = {
-//         -1.154575593983648E-17, -0.012730960239875706, -0.025712250513688212,
-//         -0.038094166414430156,  -0.048988416693311589, -0.057515241064219715,
-//         -0.062852167922348892,  -0.064281740012951435, -0.061235520866639484,
-//         -0.053331832980202207,  -0.040404965092938588, -0.022524006578241607,
-//         1.154575593983648E-17,  0.026619280501558328,  0.056566951130114,
-//         0.08888638830033703,    0.12247104173327902,   0.15611279717431065,
-//         0.18855650376704669,    0.21855791604403488,   0.244942083466558,
-//         0.266659164901011,      0.28283475565057009,   0.29281208551714133,
-//         0.29618386351056508,    0.29281208551714133,   0.28283475565057009,
-//         0.266659164901011,      0.244942083466558,     0.21855791604403488,
-//         0.18855650376704669,    0.15611279717431065,   0.12247104173327902,
-//         0.08888638830033703,    0.056566951130114,     0.026619280501558328,
-//         1.154575593983648E-17,  -0.022524006578241607, -0.040404965092938588,
-//         -0.053331832980202207,  -0.061235520866639484, -0.064281740012951435,
-//         -0.062852167922348892,  -0.057515241064219715, -0.048988416693311589,
-//         -0.038094166414430156,  -0.025712250513688212, -0.012730960239875706,
-//         -1.154575593983648E-17 };
+    float        r = 4;   // resampling rate (output/input) [TODO eliminate magic number]
+    float        bw = 0.45f;  // resampling filter bandwidth (HMM)
+    unsigned int npfb = 64;     // number of filters in bank (timing resolution)
+    float slsl = 60;          // resampling filter sidelobe suppression level
+    unsigned int h_len = 16;  // filter semi-length (filter delay)
+    int filter_delay = 122;
+
+    float complex* complexbuffer = (float complex*)malloc(length_samples_in*r*sizeof(float complex)); 
+
+
+    // create resampler
+    resamp_crcf q = resamp_crcf_create(r, h_len, bw, slsl, npfb);
+
+
+    //unsigned int num_written = 0;   // number of values written to buffer this iteration
+    unsigned int num_written_total = 0;
+
+    resamp_crcf_execute_block(q, samplesin, length_samples_in, complexbuffer, &num_written_total);
+
+    *length_samples_out = length_samples_in*r;
+    if (num_written_total != *length_samples_out) {
+        printf("Filter not executed properly");
+    }
+
+    // clean up allocated objects
+    resamp_crcf_destroy(q);
+    free(samplesin);
+    return (float *)complexbuffer;
+}
+
+//TODO: design such that it can be done on 101010... stream OR w/ MLS sync
+//ASSUME INPUT SAMPLES ARRAY IS OF LENGTH 4 samples or more
+//INPUT SAMPLES ARRAY MUST HAVE UNDERGONE UPSAMPLING
+float determinePhaseOffset(float* samples)
+{
+    /* parameter definitions */
     
-//     static const signed char iv[20] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
-//                                        0, 1, 0, 1, 0, 1, 0, 1, 0, 1 };
-//     double input_samples[5040];
-//     double y[2030];
-//     double shiftedinput[2016];
-//     double a__1[1008];
-//     double varargin_1[504];
-//     double input_data[120];
-//     double b_r[100];
-//     double bankout[49];
-//     double banksum[36];
-//     double accum;
-//     double inphi_idx;
-//     double inplo_idx;
-//     double out_idx;
-//     int Lg;
-//     int filthi_idx;
-//     int idx;
-//     int k;
-//     int r;
-//     int tmp_filtlo_idx;
-//     signed char output[120];
-//     bool b_p;
-//     bool exitg1;
-//     bool p;
-//     /* parameter definitions */
-//     /* clear */
-//     /* in rads */
-//     /* Can't have more than 1 decimal!!! Number of samples per bit */
-//     /* num of symbols of filter */
-//     /* num of samples in symbol period */
-//     /* generate square wave w/ 20 bit alternation and then random sequence */
-//     memset(&input_data[0], 0, 120U * sizeof(double));
-//     for (r = 0; r < 20; r++) {
-//         input_data[r] = iv[r];
-//     }
-//     b_rand(b_r);
-//     for (k = 0; k < 100; k++) {
-//         inphi_idx = floor(b_r[k] * 2.0);
-//         b_r[k] = inphi_idx;
-//         input_data[k + 20] = inphi_idx;
-//     }
-//     /* Apply appropriate sample rate */
-//     idx = -1;
-//     for (k = 0; k < 120; k++) {
-//         for (filthi_idx = 0; filthi_idx < 42; filthi_idx++) {
-//             input_samples[(idx + filthi_idx) + 1] = input_data[k];
-//         }
-//         idx += 42;
-//     }
-//     /* if shift > half of sample, first sample is shifted by one */
+    int initial_n_offset = num_banks*round(N) + 1;
 
-
+    /* num of symbols of filter */
+    /* num of samples in symbol period */
    
-//     /* Create and apply polyphase filterbank */
-//     for (Lg = 0; Lg < 9; Lg++) {
-//         for (filthi_idx = 0; filthi_idx < 4; filthi_idx++) {
-//             idx = (Lg << 2) + filthi_idx;
-//             memcpy(&shiftedinput[0], &y[9], 2016U * sizeof(double));
-//             tmp_filtlo_idx = idx + 17;
-//             memset(&a__1[0], 0, 1008U * sizeof(double));
-//             if (0 <= tmp_filtlo_idx) {
-//                 memcpy(&a__1[0], &y[9], (tmp_filtlo_idx + 1) * sizeof(double));
-//             }
-//             r = 1997 - idx;
-//             for (k = 0; k <= r; k++) {
-//                 shiftedinput[k] = shiftedinput[(k + idx) + 18];
-//             }
-//             for (k = 0; k <= tmp_filtlo_idx; k++) {
-//                 shiftedinput[(k - idx) + 1998] = a__1[k];
-//             }
-//             for (k = 0; k < 49; k++) {
-//                 bankout[k] = fabs(shiftedinput[k] * fircoefs[k]);
-//             }
-//             inphi_idx = bankout[0];
-//             for (k = 0; k < 48; k++) {
-//                 inphi_idx += bankout[k + 1];
-//             }
-//             banksum[idx] = inphi_idx;
-//         }
-//     }
-//     /* find phase offset */
-//     if (!rtIsNaN(banksum[0])) {
-//         idx = 1;
-//     }
-//     else {
-//         idx = 0;
-//         k = 2;
-//         exitg1 = false;
-//         while ((!exitg1) && (k < 37)) {
-//             if (!rtIsNaN(banksum[k - 1])) {
-//                 idx = k;
-//                 exitg1 = true;
-//             }
-//             else {
-//                 k++;
-//             }
-//         }
-//     }
-//     if (idx == 0) {
-//         idx = 1;
-//     }
-//     else {
-//         inplo_idx = banksum[idx - 1];
-//         r = idx + 1;
-//         for (k = r; k < 37; k++) {
-//             inphi_idx = banksum[k - 1];
-//             if (inplo_idx > inphi_idx) {
-//                 inplo_idx = inphi_idx;
-//                 idx = k;
-//             }
-//         }
-//     }
+    /* Create and apply polyphase filterbank */
+    //Values generated via matlab
+    unsigned int h_len = 49;  // filter order
+    float fircoefs[49] = {
+       -1.154575593983648E-17, -0.012730960239875706, -0.025712250513688212,
+       -0.038094166414430156,  -0.048988416693311589, -0.057515241064219715,
+       -0.062852167922348892,  -0.064281740012951435, -0.061235520866639484,
+       -0.053331832980202207,  -0.040404965092938588, -0.022524006578241607,
+       1.154575593983648E-17,  0.026619280501558328,  0.056566951130114,
+       0.08888638830033703,    0.12247104173327902,   0.15611279717431065,
+       0.18855650376704669,    0.21855791604403488,   0.244942083466558,
+       0.266659164901011,      0.28283475565057009,   0.29281208551714133,
+       0.29618386351056508,    0.29281208551714133,   0.28283475565057009,
+       0.266659164901011,      0.244942083466558,     0.21855791604403488,
+       0.18855650376704669,    0.15611279717431065,   0.12247104173327902,
+       0.08888638830033703,    0.056566951130114,     0.026619280501558328,
+       1.154575593983648E-17,  -0.022524006578241607, -0.040404965092938588,
+       -0.053331832980202207,  -0.061235520866639484, -0.064281740012951435,
+       -0.062852167922348892,  -0.057515241064219715, -0.048988416693311589,
+       -0.038094166414430156,  -0.025712250513688212, -0.012730960239875706,
+       -1.154575593983648E-17 };
+
+    double buffer = 0;    // filter output buffer
+    double banksum[36] = {0};
+
+    //execute filter over 2 symbols?
+    //TODO: somehow execute over larger area and do averaging?
+    //TODO eliminate magic numbers
+    for (int i = 0; i< 2*N; i++){
+        for(int j = 0; j<num_banks; j++){
+            for(int k = 0; k<49; k++){
+                buffer = samples[i*num_banks + j + initial_n_offset + k]*fircoefs[k];
+                banksum[i*num_banks + j] += buffer;
+            }
+        }
+    }
+    
+    /* find phase offset */
+    int maxval_location = 0;
+    for (int i = 0; i < 36; i++){
+        if (banksum[0] < banksum[maxval_location])
+            maxval_location = i;
+    }
+    int best_sample = (int)round((float)maxval_location/(float)num_banks);
+    int best_bank = maxval_location % num_banks;
+    int n_offset = best_sample*N + best_bank;
+    return ((float)n_offset/(float)(N*num_banks))*PI - PI/2;//assuming 1 symbol = pi phase
+}
+
+
+//CODE ABOVE HERE IS FOR STRICTLY POLYPHASE FILTERBANK IMPLEMENTATION
+//CODE BELOW HERE IS FOR AUTOCORRELATOR IMPLEMENTATION
+
+void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
+
+    int length_samples_new = length_samples - num_samples_to_chop_off;
+    float * buffer = (float *)malloc(length_samples_new*sizeof(float)); 
+    for (int i = 0; i<length_samples_new; i++){
+        buffer[i] = *data[i+num_samples_to_chop_off];
+    }
+    free(*data);
+
+    *data = buffer;
+}
+
+//http://www.kempacoustics.com/thesis/node84.html
+//Unclear exactly how liquid code works. Needs testing and analysis
+float findAutocorrelation(float * samples){
+
+    unsigned int n = mls_total_preamble_length_bits;        // autocorr window length
+    unsigned int delay = n/2;    // autocorr overlap delay
+
+    // create autocorrelator object
+    autocorr_cccf q = autocorr_cccf_create(n,delay);//Does this need to be done every time?
+
+    float complex rxx[n];          // output auto-correlation
+
+    // compute auto-correlation
+    for (int i=0; i<n; i++) {
+        autocorr_cccf_push(q,samples[i]);
+        autocorr_cccf_execute(q,&rxx[i]);
+
+        // normalize by energy (not sure if necessary)
+        rxx[i] /= autocorr_cccf_get_energy(q);
+    }
+
+    // find peak
+    float complex rxx_peak = 0;
+    for (int i=0; i<n; i++) {
+        if (i==0 || cabsf(rxx[i]) > cabsf(rxx_peak))
+            rxx_peak = rxx[i];
+    }
+
+    // destroy autocorrelator object
+    autocorr_cccf_destroy(q);
+    return (float)rxx_peak;
+}
+
+//syncFrame() changes "samples" array to start with the first sample after the MLS preamble
+//NOTE Please run upsample before passing samples into here
+//Consider divying up into smaller functions. Lots of functionality here
+//Frees samples pointer input
+uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_out, int frame_start_index_guess){
+
+    *length_bytes_out = length_samples_in/(8*N*num_banks) - mls_total_preamble_length_bits/8;//requires mls total length to be multiple of 8 bits
+
+
+    float * buffer = (float *)malloc((length_samples_in/(N*num_banks))*sizeof(float)); 
+    float new_autocorr = 0;
+    float max_autocorr = 0;
+    int best_bank = 0;
+    int best_shift_bits = 0;
+    int max_shiftleft_bits = 1305;
+    int max_shiftright_bits = 10;
+
+    for(int i = 0; i<num_banks*N; i++){
+        for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){//MAKE START ON POSITIVE SIDE THEN GO NEGATIVE.
+            //ADD THRESHOLD SO THAT ENTIRE RANGE DOESN'T NEED TO BE SEARCHED?
+
+            for(int k = 0; k < mls_total_preamble_length_bits; k++){
+                buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];//MIGHT NEED TO APPLY FILTER HERE. CAN'T WORK ON SQUARE WAVE
+            }
+
+            new_autocorr = findAutocorrelation(buffer);
+
+            if(new_autocorr > max_autocorr){
+                max_autocorr = new_autocorr;
+                best_bank = i;//best_sample_in_bit?
+                best_shift_bits = j;
+            }
+        }
+    }
+
+    //Pick samples from selected bank and delay
+    for (int i = 0; i<*length_bytes_out*8; i++){
+        //Assign each element of buffer to be the selected sample for each bit (including preamble)
+        buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
+    }
+
+    chopFront(&samples, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));//CHOP BUFFER, NOT SAMPLES
+    //length of samples should now be = length_bits_out
+
+    printf("Samples before conversion to bits:\n");
+    for (unsigned int i = 0; i < (*length_bytes_out)*8; i++) {
+        printf("%.2f  ", samples[i]);
+    }
+    printf("\n\n");
+
+    shiftDownAndNormalizeSamples(&samples, (*length_bytes_out)*8);
+
+    uint8_t * output = samplesToBytes(samples, (*length_bytes_out)*8, 0);
+
+    free(samples);
+    free(buffer);
+
+    return output;
+}
+
+//Returns signal power value
+float calcSignalPower(float * signal, int len){
+    //Find formula and put here
+    float totalpower = 0;
+    for(int i = 0; i<len; i++){
+        totalpower += signal[i]/(float)len;
+    }
+    return totalpower;
+}
+
+
+
+
+// float getNextSample(float * input){
+//     return input[nextsample_counter];
+//     nextsample_counter++;
 // }
+//Constantly running function waiting for incoming data (from ADC) to pass signal threshold
+//This will have to be called repeatedly so that successive frames can be received
+//ENSURE frame_start_index_guess is scaled according to upsample rate in future function calls
+//Todo get current_index to reset and not go infinite
+float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_guess, int * output_length){
+
+    int current_index = 0;
+    float power_threshold = 0.1;//asuming input signal normalized to 1, avg of buffer signal values must be >power_threshold
+    int buffersize = 10*N;//10 bits worth
+    float * buffer = (float *)malloc(buffersize*sizeof(float)); 
+    int stuffing_len = 1300*N;//Make dependent variable based on bitrate and fade erasure length, eventually
+
+    int * output_length = (packet_data_length_with_fec_bytes*8 + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;//This is maybe throwing seg fault
+    float * data = (float *)malloc((* output_length)*sizeof(float));
+
+    while(1){
+
+        if(current_index > output_length){//might need tweak in future to be right length
+            current_index = 0;
+        }
+        for (int i = 0; i < buffersize; i++){
+            buffer[i] = ADC_output_float[current_index];//succ data from ADC Interface to fill whole buffer here:
+            current_index++;
+        }
+
+        if(calcSignalPower(buffer, buffersize) > power_threshold){
+
+            //write new data first so samples aren't missed
+            for (int i = 0; i < (*output_length - buffersize - stuffing_len); i++){
+                data[buffersize + stuffing_len + i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
+                current_index++;
+            }
+            //then copy buffer data to front
+            for (int i = 0; i < buffersize; i++){
+                data[stuffing_len + i] = buffer[i];
+            }
+            //then prepend a bunch of 0s in case we had a fade erasure at the start
+            for (int i = 0; i < stuffing_len; i++){
+                data[i] = 0;//should these be zeroes for best autocorrelation isolation?
+            }
+
+            *frame_start_index_guess = stuffing_len + buffersize/2;
+            break;
+        }
+    }
+
+    free(buffer);
+    free(ADC_output_float);
+
+    printf("Samples after power detector (excluding stuffing):\n");
+    for (unsigned int i = 0; i < (*output_length - stuffing_len); i++) {
+        printf("%.0f", data[stuffing_len + i]);
+    }
+    printf("\n\n");
+
+    return data;
+}

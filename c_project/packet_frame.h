@@ -12,7 +12,7 @@
 #define FEC_TYPE LIQUID_FEC_HAMMING74 //Other options = 
 #define PACKET_DATA_LENGTH_NO_FEC 1000
 
-extern int packet_data_length_with_fec;
+extern int packet_data_length_with_fec_bytes;
 
 //Enum type to avoid magic numbers
 //TODO evaluate if needed for design

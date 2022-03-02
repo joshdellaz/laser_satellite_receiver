@@ -139,73 +139,6 @@ bool removeInterleaving(uint8_t* input, unsigned int input_length) {
 	return 0;
 }
 
-//FOR MLS TESTING PURPOSES (copied from josh's branch)
-float findAutocorrelation(uint8_t * samples){
-
-	//TODO make variables use file globals
-    unsigned int n = 4095*2;        // Window length
-    unsigned int delay = n/2;    // Overlap delay
-    float complex rxx[n];          // output auto-correlation
-	float rxx_peak = 0;
-
-	printf("sequence:\n");
-	for(int i = 0; i <n; i++){
-		printf("%d", samples[i]);
-	}
-
-
-	printf("\nautocorrelation values with increasing offset:\n");
-
-    // compute auto-correlation
-	for (int shiftnum = 0; shiftnum < 50; shiftnum++){
-		rxx_peak = 0;
-		//josh (not liquid) style:
-		for (int i = 0; i<shiftnum; i++){
-			rxx_peak += samples[i]*samples[n - 1 - shiftnum + i];
-		}
-		for (int i = shiftnum; i < delay; i++){
-			rxx_peak += samples[i]*samples[i+delay+shiftnum];
-		}
-		printf("%f ", rxx_peak);
-
-		// // create autocorrelator object
-		// autocorr_cccf q = autocorr_cccf_create(n,delay);
-
-		// for (int i= 0; i< n; i++) {
-		// 	if(i < n){
-		// 		autocorr_cccf_push(q,(float complex)samples[shiftnum + i]);
-		// 	} else {
-		// 		autocorr_cccf_push(q,(float complex)0);
-		// 	}
-		// 	autocorr_cccf_execute(q,&rxx[i]);
-		// 	//rxx[i] = 2*rxx[i] - (i - shiftnum);//stolen from correlate using bsequences...
-
-		// 	// normalize by energy (not sure if necessary)
-		// 	//rxx[i] /= autocorr_cccf_get_energy(q);
-		// 	printf("%f ", cabsf(rxx[i]));
-		// }
-
-		// // find peak
-		// rxx_peak = 0;
-		// for (int i=0; i<n; i++) {
-		// 	if (i==0 || cabsf(rxx[i]) > cabsf(rxx_peak))
-		// 		rxx_peak = rxx[i];
-		// }
-		// printf("\n %4.1f \n", cabsf(rxx_peak));
-		// //printf("peak auto-correlation : %12.8f, angle %12.8f\n", cabsf(rxx_peak), cargf(rxx_peak));
-
-		// autocorr_cccf_destroy(q);
-
-	}
-
-
-
-    // destroy autocorrelator object
-    
-    return (float)rxx_peak;
-}
-
-
 //Generates MLS preamble based on parameters within function and assigns it, along with its length to the arguments
 bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls_preamble_length) {
 
@@ -225,17 +158,25 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	bsequence_init_msequence(mls, ms);
 
 	//Write bits to array. Note bsequence indexing starts on "right"
-	uint8_t * buffer = (uint8_t*)malloc(sizeof(uint8_t)*mls_preamble_length_bits);
+	uint8_t * bitbuffer = (uint8_t*)malloc(sizeof(uint8_t)*(mls_preamble_length_bits));
 	for (int i = 0; i < 2; i++){
 		for (unsigned int j = 0; j < n; j++) {
-			buffer[n*i + j] = bsequence_index(mls, j);
+			bitbuffer[n*i + j] = bsequence_index(mls, j);
 		}
 	}
-
-
-	findAutocorrelation(buffer);
+	//Write bit array to byte array
+	//TODO move this to a utils file for other use
+	*mls_preamble = (uint8_t*)malloc(sizeof(uint8_t)*(mls_preamble_length_bits/8 + 1));
+	uint8_t temp = 0;
+	for (int i = 0; i < (mls_preamble_length_bits/8 + 1); i++){
+		for (unsigned int j = 0; j < 8; j++) {
+			temp = (temp << j) | bitbuffer[i*8 + j];
+		}
+		*mls_preamble[i] = temp;
+	}
 
 	// clean up memory
+	free(bitbuffer);
 	bsequence_destroy(mls);
 	msequence_destroy(ms);
 

@@ -127,35 +127,29 @@ void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
 }
 
 //http://www.kempacoustics.com/thesis/node84.html
-//Unclear exactly how liquid code works. Needs testing and analysis
 float findAutocorrelation(float * samples){
 
-    unsigned int n = mls_total_preamble_length_bits;        // autocorr window length
-    unsigned int delay = n/2;    // autocorr overlap delay
+	//TODO make variables use file globals
+    unsigned int n = 4095*2;        // Window length
+    unsigned int delay = n/2;    // Overlap delay
+	float rxx_peak = 0;
 
-    // create autocorrelator object
-    autocorr_cccf q = autocorr_cccf_create(n,delay);//Does this need to be done every time?
+	printf("sequence:\n");
+	for(int i = 0; i <n; i++){
+		printf("%f ", samples[i]);
+	}
 
-    float complex rxx[n];          // output auto-correlation
+
+	printf("\nautocorrelation:\n");
 
     // compute auto-correlation
-    for (int i=0; i<n; i++) {
-        autocorr_cccf_push(q,samples[i]);
-        autocorr_cccf_execute(q,&rxx[i]);
-
-        // normalize by energy (not sure if necessary)
-        rxx[i] /= autocorr_cccf_get_energy(q);
+    rxx_peak = 0;
+    //josh (not liquid) style:
+    for (int i = 0; i < delay; i++){
+        rxx_peak += samples[i]*samples[i+delay];
     }
-
-    // find peak
-    float complex rxx_peak = 0;
-    for (int i=0; i<n; i++) {
-        if (i==0 || cabsf(rxx[i]) > cabsf(rxx_peak))
-            rxx_peak = rxx[i];
-    }
-
-    // destroy autocorrelator object
-    autocorr_cccf_destroy(q);
+    printf("%f ", rxx_peak);
+    
     return (float)rxx_peak;
 }
 

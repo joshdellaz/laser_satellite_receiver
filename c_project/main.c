@@ -8,8 +8,8 @@ int main(void) {
 	simulatedAutocorSyncTest();
 	//fullSendTest();
 	//testMLSAutoCorrelation();
-	printf("starting the fullsend test shit\n");
-	fullSendTest();
+	//printf("starting the fullsend test shit\n");
+	//fullSendTest();
 	//Aah!
 
 	return 0;

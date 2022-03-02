@@ -166,13 +166,14 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 	}
 	//Write bit array to byte array
 	//TODO move this to a utils file for other use
-	*mls_preamble = (uint8_t*)malloc(sizeof(uint8_t)*(mls_preamble_length_bits/8 + 1));
+	*mls_preamble_length = mls_preamble_length_bits/8 + 1;
+	*mls_preamble = (uint8_t*)malloc(sizeof(uint8_t)*(*mls_preamble_length));
 	uint8_t temp = 0;
-	for (int i = 0; i < (mls_preamble_length_bits/8 + 1); i++){
+	for (int i = 0; i < (*mls_preamble_length); i++){
 		for (unsigned int j = 0; j < 8; j++) {
 			temp = (temp << j) | bitbuffer[i*8 + j];
 		}
-		*mls_preamble[i] = temp;
+		(*mls_preamble)[i] = temp;
 	}
 
 	// clean up memory

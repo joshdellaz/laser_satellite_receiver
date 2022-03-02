@@ -119,7 +119,7 @@ void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
     int length_samples_new = length_samples - num_samples_to_chop_off;
     float * buffer = (float *)malloc(length_samples_new*sizeof(float)); 
     for (int i = 0; i<length_samples_new; i++){
-        buffer[i] = *data[i+num_samples_to_chop_off];
+        buffer[i] = (*data)[i+num_samples_to_chop_off];
     }
     free(*data);
 
@@ -134,14 +134,10 @@ float findAutocorrelation(float * samples){
     unsigned int delay = n/2;    // Overlap delay
 	float rxx_peak = 0;
 
-	printf("sequence:\n");
-	for(int i = 0; i <n; i++){
-		printf("%f ", samples[i]);
-	}
-
-
-	printf("\nautocorrelation:\n");
-
+	// printf("sequence:\n");
+	// for(int i = 0; i <n; i++){
+	// 	printf("%f ", samples[i]);
+	// }
     // compute auto-correlation
     rxx_peak = 0;
     //josh (not liquid) style:
@@ -169,9 +165,10 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     int best_shift_bits = 0;
     int max_shiftleft_bits = 1305;
     int max_shiftright_bits = 10;
+    printf("\nautocorrelation:\n");
 
     for(int i = 0; i<num_banks*N; i++){
-        for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){//MAKE START ON POSITIVE SIDE THEN GO NEGATIVE.
+        for (int j = max_shiftright_bits; j>-max_shiftleft_bits; j--){
             //ADD THRESHOLD SO THAT ENTIRE RANGE DOESN'T NEED TO BE SEARCHED?
 
             for(int k = 0; k < mls_total_preamble_length_bits; k++){
@@ -188,27 +185,29 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
         }
     }
 
+    printf("\nMax autocorrelation = %f\n", max_autocorr);
+
     //Pick samples from selected bank and delay
     for (int i = 0; i<*length_bytes_out*8; i++){
         //Assign each element of buffer to be the selected sample for each bit (including preamble)
         buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
     }
 
-    chopFront(&samples, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));//CHOP BUFFER, NOT SAMPLES
+    chopFront(&buffer, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out
 
     printf("Samples before conversion to bits:\n");
     for (unsigned int i = 0; i < (*length_bytes_out)*8; i++) {
-        printf("%.2f  ", samples[i]);
+        printf("%.2f  ", buffer[i]);
     }
     printf("\n\n");
 
-    shiftDownAndNormalizeSamples(&samples, (*length_bytes_out)*8);
+    shiftDownAndNormalizeSamples(&buffer, (*length_bytes_out)*8);
 
-    uint8_t * output = samplesToBytes(samples, (*length_bytes_out)*8, 0);
+    uint8_t * output = samplesToBytes(buffer, (*length_bytes_out)*8, 0);
 
-    free(samples);
-    free(buffer);
+    // free(samples);
+    // free(buffer);
 
     return output;
 }
@@ -242,12 +241,12 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     float * buffer = (float *)malloc(buffersize*sizeof(float)); 
     int stuffing_len = 1300*N;//Make dependent variable based on bitrate and fade erasure length, eventually
 
-    int * output_length = (packet_data_length_with_fec_bytes*8 + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;//This is maybe throwing seg fault
+    *output_length = (packet_data_length_with_fec_bytes*8 + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;//This is maybe throwing seg fault
     float * data = (float *)malloc((* output_length)*sizeof(float));
 
     while(1){
 
-        if(current_index > output_length){//might need tweak in future to be right length
+        if(current_index > *output_length){//might need tweak in future to be right length
             current_index = 0;
         }
         for (int i = 0; i < buffersize; i++){

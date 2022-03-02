@@ -42,16 +42,22 @@ void getFECDataLengths(void) {
 
 void simulatedAutocorSyncTest(void){
     //full MLS & randomly generated payload data.
+	int mls_total_preamble_length_bytes = mls_total_preamble_length_bits/8 + 1;
 
-	int originaldatalength = ceil((float)mls_total_preamble_length_bits/8.0) + packet_data_length_with_fec_bytes;
+	int originaldatalength = mls_total_preamble_length_bytes + packet_data_length_with_fec_bytes;
 	uint8_t* originalframe = (uint8_t*)malloc(originaldatalength);
 	
-	for (int i = 0; i < mls_total_preamble_length_bits/8; i++) {
-		originalframe[i] = rand() & 0xff;//SET MLS PREAMBLE HERE
+	uint8_t* mls_temp = NULL;
+	unsigned int mls_temp_length = 0;
+	getMaximumLengthSequencePreamble(&mls_temp, &mls_temp_length);
+
+	for (int i = 0; i < mls_total_preamble_length_bytes; i++) {
+		originalframe[i] = mls_temp[i];//SET MLS PREAMBLE HERE
 	}
+	free(mls_temp);
 
 	for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
-		originalframe[mls_total_preamble_length_bits/8 + i] = rand() & 0xff;
+		originalframe[mls_total_preamble_length_bytes + i] = rand() & 0xff;
 	}
 
 	printf("Original Data:\n");
@@ -107,13 +113,13 @@ void simulatedAutocorSyncTest(void){
 			case 10: //Next test: Original data but with 1250 bit burst erasure in middle of one MLS. pi/2 phase offset
 				phase = PI/2.0;
 				for(int i = 0; i<(1250/8); i++){
-					originalframe[2*(mls_total_preamble_length_bits/8)/10 + i] = 0;
+					originalframe[2*(mls_total_preamble_length_bytes)/10 + i] = 0;
 				}		
 				break;
 			case 11: //Next test: Original data but with 1250 bit burst erasure in middle of whole preamble. pi/2 phase offset
 				phase = PI/2.0;
 				for(int i = 0; i<(1250/8); i++){
-					originalframe[4*(mls_total_preamble_length_bits/8)/10 + i] = 0;
+					originalframe[4*(mls_total_preamble_length_bytes)/10 + i] = 0;
 				}		
 				break;
 		}
@@ -159,15 +165,21 @@ void simulatedAutocorSyncTest(void){
 		int finaldatalength = 0;
 		uint8_t * converteddata = syncFrame(samples_upsampled, numsamples_upsampled, &finaldatalength, frame_start_index_guess);
 
-		printf("Converted(demodulated) data:\n");
-		for (unsigned int i = 0; i < finaldatalength; i++) {
+
+		printf("Original user data:\n");
+		for (unsigned int i = 0; i < 50; i++) {
+			printf("%d", originalframe[mls_total_preamble_length_bytes + i]);
+		}
+		printf("\n\n");
+		printf("Converted(demodulated) user data:\n");
+		for (unsigned int i = 0; i < 50; i++) {
 			printf("%d", converteddata[i]);
 		}
 		printf("\n\n");
 
 		int counter = 0;
 		for(int i = 0; i<finaldatalength; i++){
-			if(originalframe[i] == converteddata[i]){
+			if(originalframe[mls_total_preamble_length_bytes + i] == converteddata[i]){
 				counter++;
 			}
 		}

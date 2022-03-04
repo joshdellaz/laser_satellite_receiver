@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 
 extern int mls_total_preamble_length_bits;
 extern int number_of_mls_repititions;
@@ -52,17 +53,18 @@ void simulatedAutocorSyncTest(void){
 	getMaximumLengthSequencePreamble(&mls_temp, &mls_temp_length);
 
 	for (int i = 0; i < mls_total_preamble_length_bytes; i++) {
-		originalframe[i] = mls_temp[i];//SET MLS PREAMBLE HERE
+		originalframe[i] = mls_temp[i];
 	}
 	free(mls_temp);
 
+	srand(time(NULL));
 	for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
-		originalframe[mls_total_preamble_length_bytes + i] = rand() & 0xff;
+		originalframe[mls_total_preamble_length_bytes - 1 + i] = rand() & 0xff;
 	}
 
-	printf("Original Data:\n");
-	for (unsigned int i = 0; i < originaldatalength; i++) {
-		printf("%d", originalframe[i]);
+	printf("\nOriginal Data:\n");
+	for (unsigned int i = 0; i < 50; i++) {
+		printf("%d ", originalframe[i]);
 	}
 	printf("\n\n");
 
@@ -139,9 +141,9 @@ void simulatedAutocorSyncTest(void){
 		for(j = 0; j < stuffing_len; j++){
 			samples[j] = 0;
 		}
-		printf("ADC output Samples:\n");
-		for (unsigned int i = 0; i < numsamples; i++) {
-			printf("%.0f", samples[i]);
+		printf("ADC output Samples, minus prepended zeroes:\n");
+		for (unsigned int i = 0; i < 50*4; i++) {
+			printf("%.0f", samples[stuffing_len -1 + i]);
 		}
 		printf("\n\n");
 
@@ -151,14 +153,14 @@ void simulatedAutocorSyncTest(void){
 		//Test it!
 		int frame_start_index_guess = 0;
 		int samples_shifted_length = 0;
-		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);//Dooes this still throw a seg fault sometimes?
+		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);//Does this still throw a seg fault sometimes?
 
 		int numsamples_upsampled = 0;
 		float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);
 		
-		printf("Samples after upsampler:\n");
-		for (unsigned int i = 0; i < numsamples_upsampled; i++) {
-			printf("%.2f ", samples_upsampled[i]);
+		printf("Samples before sync :\n");
+		for (unsigned int i = 0; i < 60*4*4; i++) {
+			printf("%.1f ", samples_upsampled[(1300-1)*4*4+ i]);//offset to account for stuffing in getIncomingSignalData
 		}
 		printf("\n\n");
 		
@@ -168,7 +170,7 @@ void simulatedAutocorSyncTest(void){
 
 		printf("Original user data:\n");
 		for (unsigned int i = 0; i < 50; i++) {
-			printf("%d", originalframe[mls_total_preamble_length_bytes + i]);
+			printf("%d", originalframe[mls_total_preamble_length_bytes - 1 + i]);
 		}
 		printf("\n\n");
 		printf("Converted(demodulated) user data:\n");

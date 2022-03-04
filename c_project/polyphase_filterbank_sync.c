@@ -6,6 +6,7 @@
 #include <complex.h>
 #include <liquid/liquid.h>
 
+
 #define PI 3.142857
 #define IS_SIMULATION
 
@@ -144,7 +145,8 @@ float findAutocorrelation(float * samples){
     for (int i = 0; i < delay; i++){
         rxx_peak += samples[i]*samples[i+delay];
     }
-    printf("%f ", rxx_peak);
+
+    //printf("%f ", rxx_peak);
     
     return (float)rxx_peak;
 }
@@ -153,9 +155,10 @@ float findAutocorrelation(float * samples){
 //NOTE Please run upsample before passing samples into here
 //Consider divying up into smaller functions. Lots of functionality here
 //Frees samples pointer input
+//Outputs byte array of one frame of user payload data
 uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_out, int frame_start_index_guess){
 
-    *length_bytes_out = length_samples_in/(8*N*num_banks) - mls_total_preamble_length_bits/8;//requires mls total length to be multiple of 8 bits
+    *length_bytes_out = packet_data_length_with_fec_bytes;
 
 
     float * buffer = (float *)malloc((length_samples_in/(N*num_banks))*sizeof(float)); 
@@ -165,7 +168,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     int best_shift_bits = 0;
     int max_shiftleft_bits = 1305;
     int max_shiftright_bits = 10;
-    printf("\nautocorrelation:\n");
+    printf("\nautocorrelation vals:\n");
 
     for(int i = 0; i<num_banks*N; i++){
         for (int j = max_shiftright_bits; j>-max_shiftleft_bits; j--){
@@ -176,6 +179,11 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
             }
 
             new_autocorr = findAutocorrelation(buffer);
+
+            //for testing
+            if(j> -50){
+                printf("%.1f ", new_autocorr);
+            }
 
             if(new_autocorr > max_autocorr){
                 max_autocorr = new_autocorr;
@@ -197,7 +205,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     //length of samples should now be = length_bits_out
 
     printf("Samples before conversion to bits:\n");
-    for (unsigned int i = 0; i < (*length_bytes_out)*8; i++) {
+    for (unsigned int i = 0; i < 50; i++) {
         printf("%.2f  ", buffer[i]);
     }
     printf("\n\n");
@@ -206,8 +214,8 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
 
     uint8_t * output = samplesToBytes(buffer, (*length_bytes_out)*8, 0);
 
-    // free(samples);
-    // free(buffer);
+    free(samples);
+    free(buffer);
 
     return output;
 }
@@ -278,8 +286,8 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     free(buffer);
     free(ADC_output_float);
 
-    printf("Samples after power detector (excluding stuffing):\n");
-    for (unsigned int i = 0; i < (*output_length - stuffing_len); i++) {
+    printf("Samples after power detector :\n");
+    for (unsigned int i = 0; i < 50; i++) {
         printf("%.0f", data[stuffing_len + i]);
     }
     printf("\n\n");

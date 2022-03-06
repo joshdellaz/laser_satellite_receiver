@@ -30,6 +30,10 @@ bool applyChannelToSamples(float *samples, unsigned smpls_len)
 	bool *bursts = (bool *)calloc(smpls_len / SAMP_PER_BIT, sizeof(bool));
 	_createBursts(bursts, smpls_len / SAMP_PER_BIT);
 	_applyBurstsToSamples(bursts, samples, smpls_len);
+	// add the AWGN
+	// signal power = 0.5 ? could even calculate precisely
+	// noise power (variance) = signal power / (10^(SNR_DB/10))
+	// std dev = sqrt(noise power)
 	return true;
 }
 

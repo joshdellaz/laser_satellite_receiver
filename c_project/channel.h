@@ -7,9 +7,9 @@
 /// Channel stuff
 #define BIT_RATE 1 // in Mbps (should be 25)
 #define SAMP_PER_BIT 4
-#define BURST_VALUE 69.420E20 // equal to the ceiling of the ADC
+#define BURST_VALUE 2 // should be something obviously too high to be considered a valid reading
 // ignoring burst positions for now
-#define SNR				// (for AWGN noise)
+#define SNR_DB	10			// (for AWGN noise)
 #define BIT_FLIP_FREQ 5 // increase to reduce probability of the bit flippage
 
 // Parameters which are based on the paper

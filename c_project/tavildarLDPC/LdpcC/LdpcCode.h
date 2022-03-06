@@ -91,16 +91,6 @@ public:
     void load_wifi_ldpc(unsigned block_length, unsigned rate_index) {
         int * h_pointer;
 
-        switch(block_length) {
-            case 648: _Z = 27;
-                break;
-            case 1296: _Z = 54;
-                break;
-            case 1944: _Z = 81;
-                break;
-            default: std::cout << "Block length value not supported for WiFi LDPC" << std::endl;
-        }
-
         _N = block_length;
 
         switch (rate_index) {
@@ -178,6 +168,16 @@ public:
         }
 
         _M = _N - _K;
+
+        switch(block_length) {
+            case 648: _Z = 27;
+                break;
+            case 1296: _Z = 54;
+                break;
+            case 1944: _Z = 81;
+                break;
+            default: std::cout << "Block length value not supported for WiFi LDPC" << std::endl;
+        }
 
         std::vector<std::vector<int>> baseH(_N/_Z);
 

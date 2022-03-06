@@ -51,6 +51,7 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "stdbool.h": "c",
-        "channel.h": "c"
+        "channel.h": "c",
+        "math.h": "c"
     }
 }

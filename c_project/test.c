@@ -120,9 +120,9 @@ bool fullSendTest(void) {
 	// }
 	// printf("\n\n");
 	//removeFEC(rxpacket_data.data);
-	printf("Data to be decoded:\n");
+	printf("Difference between rx and tx encoded data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-		printf("%d,", (rxpacket_data.data[i]));// - packet_data.data[i]));
+		printf("%d,", (rxpacket_data.data[i] - packet_data.data[i]));
 	}
 	printf("\n\n");
 

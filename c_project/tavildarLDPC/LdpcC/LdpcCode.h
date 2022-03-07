@@ -93,6 +93,9 @@ public:
 
         _N = block_length;
 
+        std::cout << "This is inside load_wifi_ldpc: " << _N << std::endl;
+        std::cout << rate_index << std::endl;
+
         switch (rate_index) {
             case 0: // rate 1/2
                 _K = _N / 2;
@@ -124,7 +127,7 @@ public:
                         h_pointer = & WiFiLDPC::H_1944_2_3[0][0];
                         break;
                     default:
-                        h_pointer = & WiFiLDPC::H_648_1_2[0][0];
+                        h_pointer = & WiFiLDPC::H_648_2_3[0][0];
                         break;
                 }
                 break;
@@ -141,7 +144,7 @@ public:
                         h_pointer = & WiFiLDPC::H_1944_3_4[0][0];
                         break;
                     default:
-                        h_pointer = & WiFiLDPC::H_648_1_2[0][0];
+                        h_pointer = & WiFiLDPC::H_648_3_4[0][0];
                         break;
                 }
                 break;
@@ -150,6 +153,45 @@ public:
                 switch(block_length) {
                     case 648:
                         h_pointer = & WiFiLDPC::H_648_5_6[0][0];
+                        break;
+                    case 1296:
+                        h_pointer = & WiFiLDPC::H_1296_5_6[0][0];
+                        break;
+                    case 1944:
+                        h_pointer = & WiFiLDPC::H_1944_5_6[0][0];
+                        break;
+                    default:
+                        h_pointer = & WiFiLDPC::H_648_5_6[0][0];
+                        break;
+                }
+                break;
+            case 4: // rate 1/3: BG1 of 5G protographs
+                _K = _N * 1 / 3;
+                switch(block_length) {
+                    case 7072:
+                        h_pointer = & WiFiLDPC::H_1296_5_6[0][0];
+                        break;
+                    case 7616:
+                        h_pointer = & WiFiLDPC::H_1296_5_6[0][0];
+                        break;
+                    case 8160:
+                        h_pointer = & WiFiLDPC::H_1944_5_6[0][0];
+                        break;
+                    case 9792:
+                        h_pointer = & WiFiLDPC::H_1944_5_6[0][0];
+                        break;
+                    default:
+                        h_pointer = & WiFiLDPC::H_648_1_2[0][0];
+                        break;
+                }
+                break;
+            case 5: // rate 1/5: BG2 of 5G protographs
+                _K = (unsigned int) ((float)_N * (1.0 - 42.0/52.0));
+                switch(block_length) {
+                    case 6656:
+                        h_pointer = & WiFiLDPC::H_6656_1_5[0][0];
+                        _Z = (unsigned int) (block_length / 52);
+                        std::cout << _Z << std::endl;
                         break;
                     case 1296:
                         h_pointer = & WiFiLDPC::H_1296_5_6[0][0];
@@ -178,6 +220,8 @@ public:
                 break;
             default: std::cout << "Block length value not supported for WiFi LDPC" << std::endl;
         }
+        std::cout << _N << std::endl;
+        std::cout << _Z << std::endl;
 
         std::vector<std::vector<int>> baseH(_N/_Z);
 
@@ -234,7 +278,6 @@ public:
             }
             parity.at(i_row) = (uint8_t) (parity.at(i_row) % 2);
         }
-
 
         for (unsigned i_col = _K + _Z; i_col < _N; i_col = i_col + _Z  ) {
             for (unsigned i_row = 0; i_row < _Z; ++i_row) {

@@ -93,8 +93,8 @@ public:
 
         _N = block_length;
 
-        std::cout << "This is inside load_wifi_ldpc: " << _N << std::endl;
-        std::cout << rate_index << std::endl;
+        // std::cout << "This is inside load_wifi_ldpc: " << _N << std::endl;
+        // std::cout << rate_index << std::endl;
 
         switch (rate_index) {
             case 0: // rate 1/2
@@ -220,8 +220,8 @@ public:
                 break;
             default: std::cout << "Block length value not supported for WiFi LDPC" << std::endl;
         }
-        std::cout << _N << std::endl;
-        std::cout << _Z << std::endl;
+        // std::cout << _N << std::endl;
+        // std::cout << _Z << std::endl;
 
         std::vector<std::vector<int>> baseH(_N/_Z);
 

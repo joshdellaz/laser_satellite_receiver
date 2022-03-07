@@ -23,9 +23,9 @@ extern "C" void applyLDPC(uint8_t* input) {
 
     unsigned rate_index;  // parametarize this
     if (CODEWRD_R == 0.5) { rate_index = 0; }
-    else if (CODEWRD_R == (double) (2/3)) { rate_index = 1; }
-    else if (CODEWRD_R == (double) (3/4)) { rate_index = 2; }
-    else if (CODEWRD_R == (double) (4/5)) { rate_index = 3; }
+    else if (CODEWRD_R == 0.66) { rate_index = 1; }
+    else if (CODEWRD_R == 0.75) { rate_index = 2; }
+    else if (CODEWRD_R == 0.8) { rate_index = 3; }
     else if (CODEWRD_R == 0.33) { rate_index = 4; }
     else if (CODEWRD_R == 0.2) { rate_index = 5; }
     else {
@@ -110,11 +110,14 @@ extern "C" void decodeLDPC(uint8_t* rxinput) {
 
     unsigned rate_index;  // parametarize this
     if (CODEWRD_R == 0.5) { rate_index = 0; }
-    else if (CODEWRD_R == (double) (2/3)) { rate_index = 1; }
-    else if (CODEWRD_R == (double) (3/4)) { rate_index = 2; }
-    else if (CODEWRD_R == (double) (4/5)) { rate_index = 3; }
+    else if (CODEWRD_R == 0.66) { rate_index = 1; }
+    else if (CODEWRD_R == 0.75) { rate_index = 2; }
+    else if (CODEWRD_R == 0.8) { rate_index = 3; }
+    else if (CODEWRD_R == 0.33) { rate_index = 4; }
+    else if (CODEWRD_R == 0.2) { rate_index = 5; }
     else {
         cout << "The chosen code rate (" << CODEWRD_R << ") is not supported." << endl;
+        return;
     }
     
     ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);

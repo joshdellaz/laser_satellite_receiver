@@ -155,5 +155,117 @@ bool fullSendTest(void) {
 	return 0;
 }
 
+bool halfSendTest(void) { // try it out
+	
+	printf("test\n");
+	
+	//Init all the things. 
+	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions
+	packet_t packet_data;//malloc this?
+	packet_data.selected_fec_scheme = LDPC;
+	uint8_t* packet_vector = NULL;
+	unsigned int packet_length;
+	unsigned int frame_length;
+	uint8_t* frame_vector = NULL;//malloc? yes
+
+	packet_data.data = generateRandPacket();
+
+	printf("Original Data:\n");
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+		printf("%d,", packet_data.data[i]);
+	}
+	printf("\n\n");
+
+	getCRC(&packet_data);
+	printf("Tx CRC: %d \n", packet_data.crc);
+
+	//Commented out functions are not yet implemented, so cannot be tested
+	applyLDPC(packet_data.data);
+	//applyFEC(packet_data.data);
+	printf("Encoded Data:\n");
+	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
+		printf("%d,", packet_data.data[i]);
+	}
+	printf("\n\n");
+
+	// assemblePacket(&packet_data, &packet_vector, &packet_length);
+	// applyInterleaving(packet_vector, packet_length);
+	
+	// assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
+	// unsigned int preamble_length = frame_length - packet_length;
+
+	// applyScrambling(&frame_vector, frame_length, preamble_length);
+
+	// // printf("Post-scramble:\n");
+	// // for (unsigned int i = 0; i < frame_length; i++) {
+	// // 	printf("%d", frame_vector[i]);
+	// // }
+	// // printf("\n\n");
+
+	// //Comment or un-comment, depending on the test you are trying to run
+	// //TODO consider turning into macro functionality in future
+	// //applyChannel(frame_vector, frame_length);
+	// applyBitFlips(frame_vector, frame_length);
+
+	// printf("New frame (after going through channel):\n");
+	// for (unsigned int i = 0; i < frame_length; i++) {
+	// 	printf("%d", frame_vector[i]);
+	// }
+	// printf("\n\n");
+	
+	//applyBitFlips(packet_data.data, packet_data_length_with_fec);
+
+	printf("Corrupted packet:\n");
+	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
+		printf("%d,", packet_data.data[i]);
+	}
+	printf("\n\n");
+
+	//Init "rx" stuff
+	packet_t rxpacket_data;//malloc this?
+	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec);
+	uint8_t* rxpacket_vector = NULL;
+	unsigned int rxpacket_length = 0;
+
+	// removeScrambling(&frame_vector, frame_length, preamble_length);
+
+	// disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
+	// removeInterleaving(rxpacket_vector, packet_length);
+
+	// disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
+	// printf("Pre decoding:\n");
+	// for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
+	// 	printf("%d,", rxpacket_data.data[i]);
+	// }
+	// printf("\n\n");
+	//removeFEC(rxpacket_data.data);
+
+	
+	decodeLDPC(packet_data.data);
+
+
+	printf("Decoded data:\n");
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+		printf("%d,", packet_data.data[i]);
+	}
+	printf("\n\n");
+
+	
+	if (checkCRC(&rxpacket_data)) {
+		printf("CRC Doesn't Match! (need to fix)\n");
+	}
+	else {
+		printf("CRC Matches!\n\n");
+	}
+
+	//Must free everything malloc'd
+	free(packet_data.data);
+	free(rxpacket_data.data);
+	free(rxpacket_vector);
+	free(packet_vector);
+	free(frame_vector);
+	return 0;
+}
+
 
 

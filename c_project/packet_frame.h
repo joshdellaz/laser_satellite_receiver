@@ -10,12 +10,13 @@
 #define CRC_DATA_LENGTH_BYTES 4
 #define FRAME_LENGTH_BYTES //TODO determine proper value
 #define FEC_TYPE LIQUID_FEC_HAMMING74 //Other options = 
-#define PACKET_DATA_LENGTH_NO_FEC 156 // need to consider LDPC params (this is based on 6656 and (1-42/52) rate which leads to 160 Bytes)
+#define PACKET_DATA_LENGTH_NO_FEC 156 // need to consider LDPC params (this is based on 6656 and (1-42/52) rate (BG2) which leads to 160 Bytes)
+// for BG1 the rate would be 1-46/68
 
 //LDPC params
 #define CODEWRD_L 6656
 #define CODEWRD_R 0.2 // for 1/3 write 0.33
-#define MAX_DECODE_ITERS 20
+#define MAX_DECODE_ITERS 25
 #define MIN_SUM false
 
 

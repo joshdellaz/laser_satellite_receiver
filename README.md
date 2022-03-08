@@ -14,7 +14,7 @@ Code for transmitting and receiving data to/from a satellite using laser light v
 contains a range of matlab and associated files used for basic testing
 * /pole_filter_phasesync_test.m is a working example of a polyphase filterbank used for phase syncronization of oversampled square wave
 
-## walking_skeleton
+## c_project
 Contains all project code for C/C++ implementation
 
 **Development instructions:**

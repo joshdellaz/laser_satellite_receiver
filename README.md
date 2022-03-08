@@ -1,4 +1,4 @@
-# N.O.S.O.C.K.S (Nearly Operational Satellite Optical Comminications <sub><sup>Kitten</sup></sub> System)
+# N.O.S.O.C.S (Nearly Operational Satellite Optical Comminications System)
 Code for transmitting and receiving data to/from a satellite using laser light via on-off keying (OOK). Current project scope includes:
 * Physical Layer
   * Interface with Eclypse Z7 + Zmod ADC and DAC modules

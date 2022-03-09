@@ -167,23 +167,25 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     int best_bank = 0;
     int best_shift_bits = 0;
     int max_shiftleft_bits = 1305;
-    int max_shiftright_bits = 10;
+    int max_shiftright_bits = 200;
     //printf("\nautocorrelation vals:\n");
 
     for(int i = 0; i<num_banks*N; i++){
         for (int j = max_shiftright_bits; j>-max_shiftleft_bits; j--){
             //ADD THRESHOLD SO THAT ENTIRE RANGE DOESN'T NEED TO BE SEARCHED?
 
-            for(int k = 0; k < mls_total_preamble_length_bits; k++){
+            for(int k = 0; k < mls_total_preamble_length_bits - 2 ; k++){// -2 because variable is meant to be multiple of 8
                 buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];//MIGHT NEED TO APPLY FILTER HERE. CAN'T WORK ON SQUARE WAVE
             }
 
             new_autocorr = findAutocorrelation(buffer);
 
             //for testing
-            // if(j> -50){
-            //     printf("%.1f ", new_autocorr);
-            // }
+            if(j> -10 && j < 10){
+                if(i == 4){
+                    printf("%.2f ", new_autocorr);
+                }
+            }
 
             if(new_autocorr > max_autocorr){
                 max_autocorr = new_autocorr;
@@ -198,7 +200,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
 
 
     //Pick samples from selected bank and delay
-    for (int i = 0; i<*length_bytes_out*8; i++){
+    for (int i = 0; i < (*length_bytes_out*8 + mls_total_preamble_length_bits); i++){
         //Assign each element of buffer to be the selected sample for each bit (including preamble)
         buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
     }
@@ -209,14 +211,14 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     }
     printf("\n");
 
-    chopFront(&buffer, mls_total_preamble_length_bits - 5, length_samples_in/(N*num_banks));
+    chopFront(&buffer, mls_total_preamble_length_bits - 9, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out
 
-    printf("Samples before conversion to bits:\n");
-    for (unsigned int i = 0; i < 50; i++) {
-        printf("%.2f  ", buffer[i]);
-    }
-    printf("\n\n");
+    // printf("Samples before conversion to bits:\n");
+    // for (unsigned int i = 0; i < 50; i++) {
+    //     printf("%.2f  ", buffer[i]);
+    // }
+    // printf("\n\n");
 
     shiftDownAndNormalizeSamples(&buffer, (*length_bytes_out)*8);
 
@@ -286,7 +288,7 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
                 data[i] = 0;//should these be zeroes for best autocorrelation isolation?
             }
 
-            *frame_start_index_guess = stuffing_len + buffersize/2;
+            *frame_start_index_guess = stuffing_len + buffersize/2;//11 bits due to zeroes at start of current mls
             break;
         }
     }

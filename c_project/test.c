@@ -68,7 +68,11 @@ void simulatedAutocorSyncTest(void){
 	srand(time(NULL));
 	for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
 		uint8_t temp = rand() & 0xff;
-		originalframe[mls_total_preamble_length_bytes - 1 + i] = temp;
+		if(i < 20){
+			originalframe[mls_total_preamble_length_bytes + i] = 0;
+		} else {
+			originalframe[mls_total_preamble_length_bytes + i] = temp;
+		}
 	}
 
 	printf("\nOriginal Data:\n");
@@ -138,21 +142,22 @@ void simulatedAutocorSyncTest(void){
 		float *samples = bytestreamToSamplestream(originalframe, originaldatalength, &numsamples, phase);
 
 		//Prepend a buncha zero samples (randomly generated amount between 4 and 1000)
-		int stuffing_len = (rand() % (1000 - 4 + 1)) + 4;
+		int stuffing_len = 8;
+		//int stuffing_len = (rand() % (1000 - 4 + 1)) + 4;
 		int j = numsamples;
 		float buffer;
 		numsamples += stuffing_len;
 		samples = realloc(samples, numsamples*sizeof(float));//Assuming this appends extra size allocated
 		for(j; j >= 0; j--){
 			buffer = samples[j];
-			samples[stuffing_len -1 + j] = buffer;
+			samples[stuffing_len + j] = buffer;
 		}
 		for(j = 0; j < stuffing_len; j++){
 			samples[j] = 0;
 		}
-		printf("ADC output Samples, minus prepended zeroes:\n");
+		printf("ADC output Samples\n");
 		for (unsigned int i = 0; i < 50*4; i++) {
-			printf("%.0f", samples[stuffing_len -1 + i]);
+			printf("%.0f", samples[i]);
 		}
 		printf("\n\n");
 
@@ -160,7 +165,7 @@ void simulatedAutocorSyncTest(void){
 		//Channel would be applied here if implemented
 
 		//Test it!
-		int frame_start_index_guess = 0;
+		int frame_start_index_guess = 0;//start of MLS preamble guess
 		int samples_shifted_length = 0;
 		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);//Does this still throw a seg fault sometimes?
 
@@ -183,10 +188,10 @@ void simulatedAutocorSyncTest(void){
 
 
 		printf("Original user data:\n");
-		printBitsfromBytes(&(originalframe[mls_total_preamble_length_bytes - 1]), 16);
+		printBitsfromBytes(&(originalframe[mls_total_preamble_length_bytes + 20]), 16);
 		printf("\n\n");
 		printf("Converted(demodulated) user data:\n");
-		printBitsfromBytes(converteddata, 16);
+		printBitsfromBytes(converteddata+20, 16);
 		printf("\n\n");
 
 
@@ -202,8 +207,9 @@ void simulatedAutocorSyncTest(void){
 			printf("Unuccessful demodulation!\n\n");
 		}
 		free(converteddata);
-		free(originalframe);
+		
 	}
+	free(originalframe);
 }
 
 void softwareDACandADC(void){

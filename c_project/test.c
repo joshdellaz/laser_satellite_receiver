@@ -24,6 +24,14 @@ uint8_t * generateRandPacket(void) {
 	return data;
 }
 
+void printBitsfromBytes(uint8_t * data, unsigned int lengthbytestoprint){
+	for(int i = 0; i<lengthbytestoprint; i++){
+		for(int j = 0; j<8; j++){
+			printf("%d ", (data[i] >> (7-j)) & 0b1);
+		}
+	}
+}
+
 
 //1 (maybe) lsb bit error every 8 bytes
 // void applyChannel(uint8_t * input_data, unsigned int input_data_length) {
@@ -43,7 +51,7 @@ void getFECDataLengths(void) {
 
 void simulatedAutocorSyncTest(void){
     //full MLS & randomly generated payload data.
-	int mls_total_preamble_length_bytes = mls_total_preamble_length_bits/8 + 1;
+	int mls_total_preamble_length_bytes = mls_total_preamble_length_bits/8;
 
 	int originaldatalength = mls_total_preamble_length_bytes + packet_data_length_with_fec_bytes;
 	uint8_t* originalframe = (uint8_t*)malloc(originaldatalength);
@@ -56,10 +64,11 @@ void simulatedAutocorSyncTest(void){
 		originalframe[i] = mls_temp[i];
 	}
 	free(mls_temp);
-
+	printf("\n\n");
 	srand(time(NULL));
 	for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
-		originalframe[mls_total_preamble_length_bytes - 1 + i] = rand() & 0xff;
+		uint8_t temp = rand() & 0xff;
+		originalframe[mls_total_preamble_length_bytes - 1 + i] = temp;
 	}
 
 	printf("\nOriginal Data:\n");
@@ -155,11 +164,16 @@ void simulatedAutocorSyncTest(void){
 		int samples_shifted_length = 0;
 		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);//Does this still throw a seg fault sometimes?
 
+		// printf("Actual frame start index = %d\n\n", stuffing_len-1);
+
+		// printf("Power detector frame_start_index_guess (before upsampling, minus stuffing) = %d\n\n", frame_start_index_guess - 1300*4);
+
 		int numsamples_upsampled = 0;
 		float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);
+		frame_start_index_guess *= 4;
 		
 		printf("Samples before sync :\n");
-		for (unsigned int i = 0; i < 60*4*4; i++) {
+		for (unsigned int i = 0; i < 60; i++) {
 			printf("%.1f ", samples_upsampled[(1300-1)*4*4+ i]);//offset to account for stuffing in getIncomingSignalData
 		}
 		printf("\n\n");
@@ -169,15 +183,12 @@ void simulatedAutocorSyncTest(void){
 
 
 		printf("Original user data:\n");
-		for (unsigned int i = 0; i < 50; i++) {
-			printf("%d", originalframe[mls_total_preamble_length_bytes - 1 + i]);
-		}
+		printBitsfromBytes(&(originalframe[mls_total_preamble_length_bytes - 1]), 16);
 		printf("\n\n");
 		printf("Converted(demodulated) user data:\n");
-		for (unsigned int i = 0; i < 50; i++) {
-			printf("%d", converteddata[i]);
-		}
+		printBitsfromBytes(converteddata, 16);
 		printf("\n\n");
+
 
 		int counter = 0;
 		for(int i = 0; i<finaldatalength; i++){
@@ -191,6 +202,7 @@ void simulatedAutocorSyncTest(void){
 			printf("Unuccessful demodulation!\n\n");
 		}
 		free(converteddata);
+		free(originalframe);
 	}
 }
 
@@ -253,7 +265,7 @@ void softwareDACandADC(void){
 	printf("Phase Offset(rads):\n");
 	printf("%f\n\n", phase);
 
-	uint8_t *converteddata = samplesToBytes(samples_shifted, numsamples_shifted, phase);
+	uint8_t *converteddata = filterbankSamplesToBytes(samples_shifted, numsamples_shifted, phase);
 	int finaldatalength = originaldatalength - 1;
 	printf("Converted data:\n");
 	for (unsigned int i = 0; i < finaldatalength; i++) {//-1 to account for filter delay

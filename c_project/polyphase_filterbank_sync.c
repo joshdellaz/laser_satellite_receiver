@@ -11,7 +11,7 @@
 #define IS_SIMULATION
 
 int num_banks = 4;
-int mls_total_preamble_length_bits = 4095*2;//Make dependent on MLS order
+int mls_total_preamble_length_bits = 4095*2 + 2;// +2 is to make it a multiple of 8. TODO: Make dependent on MLS order/
 int number_of_mls_repititions = 2;
 int N = 4;
 extern int packet_data_length_with_fec_bytes;
@@ -168,7 +168,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     int best_shift_bits = 0;
     int max_shiftleft_bits = 1305;
     int max_shiftright_bits = 10;
-    printf("\nautocorrelation vals:\n");
+    //printf("\nautocorrelation vals:\n");
 
     for(int i = 0; i<num_banks*N; i++){
         for (int j = max_shiftright_bits; j>-max_shiftleft_bits; j--){
@@ -181,9 +181,9 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
             new_autocorr = findAutocorrelation(buffer);
 
             //for testing
-            if(j> -50){
-                printf("%.1f ", new_autocorr);
-            }
+            // if(j> -50){
+            //     printf("%.1f ", new_autocorr);
+            // }
 
             if(new_autocorr > max_autocorr){
                 max_autocorr = new_autocorr;
@@ -195,13 +195,21 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
 
     printf("\nMax autocorrelation = %f\n", max_autocorr);
 
+
+
     //Pick samples from selected bank and delay
     for (int i = 0; i<*length_bytes_out*8; i++){
         //Assign each element of buffer to be the selected sample for each bit (including preamble)
         buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
     }
 
-    chopFront(&buffer, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
+    printf("\nBest MLS samples\n");
+    for(int i = 0; i<50; i++){
+        printf("%.1f ", buffer[i]);
+    }
+    printf("\n");
+
+    chopFront(&buffer, mls_total_preamble_length_bits - 5, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out
 
     printf("Samples before conversion to bits:\n");
@@ -212,7 +220,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
 
     shiftDownAndNormalizeSamples(&buffer, (*length_bytes_out)*8);
 
-    uint8_t * output = samplesToBytes(buffer, (*length_bytes_out)*8, 0);
+    uint8_t * output = samplesToBytes(buffer, (*length_bytes_out)*8);
 
     free(samples);
     free(buffer);
@@ -287,7 +295,7 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     free(ADC_output_float);
 
     printf("Samples after power detector :\n");
-    for (unsigned int i = 0; i < 50; i++) {
+    for (unsigned int i = 0; i < 50*4; i++) {
         printf("%.0f", data[stuffing_len + i]);
     }
     printf("\n\n");

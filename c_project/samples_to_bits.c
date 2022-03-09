@@ -7,7 +7,7 @@
 
 //Samples out (returned by pointer) are straight up 1s and zeroes
 //Must be un-malloc'd
-//Frees input data
+//des not free input data
 //Big endian: high bit transfered first
 //phaseshift must be float type with value between 0 and 2*pi. Only phase shifts to the right (cuts off MSB)
 float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_samples, float phaseshift){
@@ -57,7 +57,7 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
     // }
     // printf("\n\n");
 
-    free(data);
+    //free(data);
     free(temp);
     return samples;
 }
@@ -72,7 +72,7 @@ bool shiftDownAndNormalizeSamples(float ** samples, int length_samples){
 }
 
 //Big endian: high bit transfered first
-uint8_t * samplesToBytes(float* samples, int length_samples, float phase_offset){
+uint8_t * filterbankSamplesToBytes(float* samples, int length_samples, float phase_offset){
     int num_banks = 4;
     int samples_per_bit = 4;
     float phase_offset_fraction_of_symbol = 0;
@@ -88,6 +88,27 @@ uint8_t * samplesToBytes(float* samples, int length_samples, float phase_offset)
             int testvar_index = (i*8 + j)*samples_per_bit*num_banks + n_offset + init_offset;
             //printf("%.2f ", samples[testvar_index]);
             if(samples[testvar_index] >= 0){//init_offset is to avoid negative indices
+                bytes[i] = bytes[i] | (1 << (7-j));//this bit is a 1
+                //printf("1 ");
+            } else {
+                bytes[i] = bytes[i];//this bit is a 0
+                //printf("0 ");
+            }
+        }
+    }
+    return bytes;
+}
+
+//Big endian: high bit transfered first
+uint8_t * samplesToBytes(float* samples, int length_samples){
+
+    int length_bytes = length_samples/8;
+    uint8_t *bytes = (uint8_t*)malloc(length_bytes * sizeof(uint8_t));
+
+    for(int i = 0; i<length_bytes; i++){
+        bytes[i] = 0;
+        for (int j = 0; j<8; j++){
+            if(samples[i*8 + j] >= 0){
                 bytes[i] = bytes[i] | (1 << (7-j));//this bit is a 1
                 //printf("1 ");
             } else {

@@ -60,9 +60,10 @@ void simulatedAutocorSyncTest(void){
 	float phase = 0;
 	int testspassed = 0;
 	int rnd = 0;
+	unsigned int erasure_val = 1;
 
 
-	for(rnd = 0; rnd<=11; rnd++){
+	for(rnd = 8; rnd<=11; rnd++){
 		printf("TEST ROUND %d:\n\n", rnd);
 
 		uint8_t* originalframe = (uint8_t*)malloc(originaldatalength);
@@ -75,7 +76,7 @@ void simulatedAutocorSyncTest(void){
 			originalframe[i] = mls_temp[i];
 		}
 		free(mls_temp);
-		printf("\n\n");
+	
 		srand(time(NULL));
 		for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
 			uint8_t temp = rand() & 0xff;
@@ -126,20 +127,20 @@ void simulatedAutocorSyncTest(void){
 			case 9: //Next test: Original data but with 1250 bit fade erasure at front of preamble. pi/2 phase offset
 				//phase = PI/2.0;
 				for(int i = 0; i<(erasure_len_bits/8); i++){
-					originalframe[i] = 0;
+					originalframe[i] = erasure_val;
 				}
 				
 				break;
 			case 10: //Next test: Original data but with 1250 bit burst erasure in middle of one MLS. pi/2 phase offset
 				phase = PI/2.0;
 				for(int i = 0; i<(erasure_len_bits/8); i++){
-					originalframe[2*(mls_total_preamble_length_bytes)/10 + i] = 0;
+					originalframe[2*(mls_total_preamble_length_bytes)/10 + i] = erasure_val;
 				}		
 				break;
 			case 11: //Next test: Original data but with 1250 bit burst erasure in middle of whole preamble. pi/2 phase offset
 				phase = PI/2.0;
 				for(int i = 0; i<(erasure_len_bits/8); i++){
-					originalframe[4*(mls_total_preamble_length_bytes)/10 + i] = 0;
+					originalframe[4*(mls_total_preamble_length_bytes)/10 + i] = erasure_val;
 				}		
 				break;
 		}
@@ -170,12 +171,12 @@ void simulatedAutocorSyncTest(void){
 		for (unsigned int i = 0; i < 50*3; i++) {
 			printf("%.0f", samples[i]);
 		}
-		printf("\n\n");
+		printf("\n");
 		printf("Last few ADC output samples:\n");
 		for (unsigned int i = 0; i < 16*4; i++) {
 			printf("%.0f ", samples[numsamples - 16*4 + i]);
 		}
-		printf("\n\n");
+		printf("\n");
 
 
 		//Channel would be applied here if implemented
@@ -189,7 +190,7 @@ void simulatedAutocorSyncTest(void){
 		for (unsigned int i = 0; i < 16*4*4; i++) {
 			printf("%.0f ", samples_shifted[samples_shifted_length - 16*4*4 + i]);
 		}
-		printf("\n\n");
+		printf("\n");
 
 		// printf("Actual frame start index = %d\n\n", stuffing_len-1);
 
@@ -204,11 +205,11 @@ void simulatedAutocorSyncTest(void){
 		// 	printf("%.1f ", samples_upsampled[(1300-1)*4*4 + 11*4*4 + i]);//offset to account for stuffing in getIncomingSignalData
 		// }
 		// printf("\n\n");
-		printf("Last few samples before sync :\n");
-		for (unsigned int i = 0; i < 16*4*8 - 16; i++) {
-			printf("%.1f ", samples_upsampled[numsamples_upsampled - 16*4*8 + i]);
-		}
-		printf("\n\n");
+		// printf("Last few samples before sync :\n");
+		// for (unsigned int i = 0; i < 16*4*8 - 16; i++) {
+		// 	printf("%.1f ", samples_upsampled[numsamples_upsampled - 16*4*8 + i]);
+		// }
+		// printf("\n");
 		
 		int finaldatalength = 0;
 		uint8_t * converteddata = syncFrame(samples_upsampled, numsamples_upsampled, &finaldatalength, frame_start_index_guess);
@@ -216,14 +217,14 @@ void simulatedAutocorSyncTest(void){
 
 		printf("Original user data:\n");
 		printBitsfromBytes(&(originalframe[mls_total_preamble_length_bytes + 20]), 4);
-		printf("\n\n");
+		printf("\n");
 		printf("Converted(demodulated) user data:\n");
 		printBitsfromBytes(converteddata+20, 4);
-		printf("\n\n");
+		printf("\n");
 
 		printf("Last 5 bytes of user data:\n");
 		printBitsfromBytes(&(originalframe[mls_total_preamble_length_bytes + packet_data_length_with_fec_bytes - 6]), 6);
-		printf("\n\n");
+		printf("\n");
 		printf("Last 5 bytes of demoded data:\n");
 		printBitsfromBytes(&(converteddata[packet_data_length_with_fec_bytes - 6]), 6);
 		printf("\n\n");

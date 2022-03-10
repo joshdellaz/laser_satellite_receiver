@@ -195,7 +195,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
         }
     }
 
-    printf("\nMax autocorrelation = %f\n", max_autocorr);
+    printf("Max autocorrelation = %f\n", max_autocorr);
 
 
 
@@ -305,7 +305,7 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     for (unsigned int i = 0; i < 50*3; i++) {
         printf("%.0f", data[stuffing_len + i]);
     }
-    printf("\n\n");
+    printf("\n");
 
     return data;
 }

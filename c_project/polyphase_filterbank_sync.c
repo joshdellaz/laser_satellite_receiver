@@ -166,7 +166,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     float max_autocorr = 0;
     int best_bank = 0;
     int best_shift_bits = 0;
-    int max_shiftleft_bits = 1305;
+    int max_shiftleft_bits = 1300;
     int max_shiftright_bits = 200;
     //printf("\nautocorrelation vals:\n");
 
@@ -211,7 +211,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     // }
     // printf("\n");
 
-    chopFront(&buffer, mls_total_preamble_length_bits - 9, length_samples_in/(N*num_banks));
+    chopFront(&buffer, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out
 
     // printf("Samples before conversion to bits:\n");
@@ -275,9 +275,14 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
         if(calcSignalPower(buffer, buffersize) > power_threshold){
 
             //write new data first so samples aren't missed
-            for (int i = 0; i < (*output_length - buffersize - stuffing_len - 68); i++){//figure out where 68 number comes from...
-                data[buffersize + stuffing_len + i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
-                current_index++;
+            for (int i = 0; i < (*output_length - buffersize - stuffing_len -68); i++){//figure out where -68 number comes from... but its needed to fix things
+                if((ADC_output_float[current_index] < 2.0) && (ADC_output_float[current_index] > -2.0)){//TODO: fix this from accessing memory beyond array
+                    data[buffersize + stuffing_len + i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
+                    current_index++;
+                } else {
+                    data[buffersize + stuffing_len + i] = 0;
+                    current_index++;
+                }
             }
             //then copy buffer data to front
             for (int i = 0; i < buffersize; i++){

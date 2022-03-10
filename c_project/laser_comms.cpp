@@ -10,7 +10,7 @@
 using namespace std;
 
 
-extern "C" void applyLDPC(uint8_t *input)
+extern "C" void applyLDPC_WIFI(uint8_t *input)
 {
     std::cout << "Starting LDPC encoding...\n";
 
@@ -121,7 +121,7 @@ extern "C" void applyLDPC(uint8_t *input)
     printf("\n");
 }
 
-extern "C" void decodeLDPC(uint8_t *rxinput)
+extern "C" void decodeLDPC_WIFI(uint8_t *rxinput)
 {
     std::cout << "Starting LDPC decoding...\n";
 

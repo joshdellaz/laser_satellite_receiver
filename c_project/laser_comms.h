@@ -8,8 +8,14 @@
 extern "C"
 {
 #endif
-    void applyLDPC(uint8_t *); 
-    void decodeLDPC(uint8_t *);
+    // Tavildar code with WIFI LDPC matrices
+    void applyLDPC_WIFI(uint8_t *); 
+    void decodeLDPC_WIFI(uint8_t *);
+    
+    // 5G low-rate LDPC
+    void encode_LDPC(uint8_t *);
+    void decode_LDPC(uint8_t *);
+    
 #ifdef __cplusplus
 }
 #endif

@@ -66,7 +66,7 @@ bool fullSendTest(void)
 	printf("Tx CRC: %d \n", packet_data.crc);
 
 	//Commented out functions are not yet implemented, so cannot be tested
-	applyLDPC(packet_data.data);
+	//applyLDPC_WIFI(packet_data.data);
 
 	//applyFEC(packet_data.data);
 	printf("Encoded Data:\n");
@@ -133,7 +133,7 @@ bool fullSendTest(void)
 	}
 	printf("\n\n");
 
-	decodeLDPC(rxpacket_data.data);
+	//decodeLDPC_WIFI(rxpacket_data.data);
 
 	printf("Difference between Received Corrected Data and Original Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++)
@@ -151,6 +151,8 @@ bool fullSendTest(void)
 	{
 		printf("CRC Matches!\n\n");
 	}
+
+	encode_LDPC(packet_data.data);
 
 	//Must free everything malloc'd
 	free(packet_data.data);

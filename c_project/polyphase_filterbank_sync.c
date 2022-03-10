@@ -181,11 +181,11 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
             new_autocorr = findAutocorrelation(buffer);
 
             //for testing
-            if(j> -10 && j < 10){
-                if(i == 4){
-                    printf("%.2f ", new_autocorr);
-                }
-            }
+            // if(j> -10 && j < 10){
+            //     if(i == 4){
+            //         printf("%.2f ", new_autocorr);
+            //     }
+            // }
 
             if(new_autocorr > max_autocorr){
                 max_autocorr = new_autocorr;
@@ -205,11 +205,11 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
         buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
     }
 
-    printf("\nBest MLS samples\n");
-    for(int i = 0; i<50; i++){
-        printf("%.1f ", buffer[i]);
-    }
-    printf("\n");
+    // printf("\nBest MLS samples\n");
+    // for(int i = 0; i<50; i++){
+    //     printf("%.1f ", buffer[i]);
+    // }
+    // printf("\n");
 
     chopFront(&buffer, mls_total_preamble_length_bits - 9, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out
@@ -275,7 +275,7 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
         if(calcSignalPower(buffer, buffersize) > power_threshold){
 
             //write new data first so samples aren't missed
-            for (int i = 0; i < (*output_length - buffersize - stuffing_len); i++){
+            for (int i = 0; i < (*output_length - buffersize - stuffing_len - 68); i++){//figure out where 68 number comes from...
                 data[buffersize + stuffing_len + i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
                 current_index++;
             }
@@ -297,7 +297,7 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     free(ADC_output_float);
 
     printf("Samples after power detector :\n");
-    for (unsigned int i = 0; i < 50*4; i++) {
+    for (unsigned int i = 0; i < 50*3; i++) {
         printf("%.0f", data[stuffing_len + i]);
     }
     printf("\n\n");

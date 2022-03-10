@@ -85,11 +85,12 @@ void simulatedAutocorSyncTest(void){
 
 	int numsamples = 0;
 	float phase;
+	int testspassed = 0;
+	int rnd = 0;
+	for(rnd = 0; rnd<=11; rnd++){
+		printf("TEST ROUND %d:\n\n", rnd);
 
-	for(int i = 0; i<11; i++){
-		printf("TEST ROUND %d:\n\n", i);
-
-		switch (i){
+		switch (rnd){
 			case 0://Basic test
 				phase = 0;
 				//done
@@ -141,6 +142,12 @@ void simulatedAutocorSyncTest(void){
 
 		float *samples = bytestreamToSamplestream(originalframe, originaldatalength, &numsamples, phase);
 
+		printf("last 16*4 samples after phase shift\n");
+		for(int i = 0; i < 16*4; i++){
+			printf("%1.0f ", samples[numsamples - 16*4 + i]);
+		}
+		printf("\n");
+
 		//Prepend a buncha zero samples (randomly generated amount between 4 and 1000)
 		int stuffing_len = 8;
 		//int stuffing_len = (rand() % (1000 - 4 + 1)) + 4;
@@ -156,8 +163,13 @@ void simulatedAutocorSyncTest(void){
 			samples[j] = 0;
 		}
 		printf("ADC output Samples\n");
-		for (unsigned int i = 0; i < 50*4; i++) {
+		for (unsigned int i = 0; i < 50*3; i++) {
 			printf("%.0f", samples[i]);
+		}
+		printf("\n\n");
+		printf("Last few ADC output samples:\n");
+		for (unsigned int i = 0; i < 16*4; i++) {
+			printf("%.0f ", samples[numsamples - 16*4 + i]);
 		}
 		printf("\n\n");
 
@@ -169,6 +181,12 @@ void simulatedAutocorSyncTest(void){
 		int samples_shifted_length = 0;
 		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);//Does this still throw a seg fault sometimes?
 
+		printf("Last few samples before resample :\n");
+		for (unsigned int i = 0; i < 16*4*4; i++) {
+			printf("%.0f ", samples_shifted[samples_shifted_length - 16*4*4 + i]);
+		}
+		printf("\n\n");
+
 		// printf("Actual frame start index = %d\n\n", stuffing_len-1);
 
 		// printf("Power detector frame_start_index_guess (before upsampling, minus stuffing) = %d\n\n", frame_start_index_guess - 1300*4);
@@ -178,21 +196,34 @@ void simulatedAutocorSyncTest(void){
 		frame_start_index_guess *= 4;
 		
 		printf("Samples before sync :\n");
-		for (unsigned int i = 0; i < 60; i++) {
-			printf("%.1f ", samples_upsampled[(1300-1)*4*4+ i]);//offset to account for stuffing in getIncomingSignalData
+		for (unsigned int i = 0; i < 60*3; i++) {
+			printf("%.1f ", samples_upsampled[(1300-1)*4*4 + 11*4*4 + i]);//offset to account for stuffing in getIncomingSignalData
 		}
 		printf("\n\n");
+		// printf("Last few samples before sync :\n");
+		// for (unsigned int i = 0; i < 16*4*8 - 16; i++) {
+		// 	printf("%.1f ", samples_upsampled[numsamples_upsampled - 16*4*8 + i]);
+		// }
+		// printf("\n\n");
 		
 		int finaldatalength = 0;
 		uint8_t * converteddata = syncFrame(samples_upsampled, numsamples_upsampled, &finaldatalength, frame_start_index_guess);
 
 
 		printf("Original user data:\n");
-		printBitsfromBytes(&(originalframe[mls_total_preamble_length_bytes + 20]), 16);
+		printBitsfromBytes(&(originalframe[mls_total_preamble_length_bytes + 20]), 4);
 		printf("\n\n");
 		printf("Converted(demodulated) user data:\n");
-		printBitsfromBytes(converteddata+20, 16);
+		printBitsfromBytes(converteddata+20, 4);
 		printf("\n\n");
+
+		printf("Last 5 bytes of user data:\n");
+		printBitsfromBytes(&(originalframe[mls_total_preamble_length_bytes + packet_data_length_with_fec_bytes - 2]), 2);
+		printf("\n\n");
+		printf("Last 5 bytes of demoded data:\n");
+		printBitsfromBytes(&(converteddata[packet_data_length_with_fec_bytes - 2]), 2);
+		printf("\n\n");
+
 
 
 		int counter = 0;
@@ -203,6 +234,7 @@ void simulatedAutocorSyncTest(void){
 		}
 		if(counter == finaldatalength){
 			printf("Successful demodulation!\n\n");
+			testspassed++;
 		} else {
 			printf("Unuccessful demodulation!\n\n");
 		}
@@ -210,6 +242,11 @@ void simulatedAutocorSyncTest(void){
 		
 	}
 	free(originalframe);
+	if(testspassed == rnd + 1){
+		printf("All tests passed!\n\n");
+	} else {
+		printf("NOT all tests passed\n\n");
+	}
 }
 
 void softwareDACandADC(void){

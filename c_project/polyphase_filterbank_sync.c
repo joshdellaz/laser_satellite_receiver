@@ -9,12 +9,46 @@
 
 #define PI 3.142857
 #define IS_SIMULATION
+#define MLS_LENGTH 4095
 
 int num_banks = 4;
 int mls_total_preamble_length_bits = 4095*2 + 2;// +2 is to make it a multiple of 8. TODO: Make dependent on MLS order/
 int number_of_mls_repititions = 2;
 int N = 4;
 extern int packet_data_length_with_fec_bytes;
+
+float MLS_array[MLS_LENGTH] = {0};
+
+//populate static MLS
+//consider integrating with preamble get function in packet_frame.c to avoid duplicate code
+void initMLS(void){
+
+	//options
+	//TODO: Pick a good value for m
+	unsigned int m = 12;   // shift register length, n=2^m - 1
+	unsigned int mls_preamble_length_bits = (pow(2,m) - 1); // preamble length
+
+	// create and initialize m-sequence
+	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M12);//Fix these struct name definitions... Liquid maybe borked?
+	//msequence_print(ms);
+	unsigned int n = msequence_get_length(ms);
+
+	// create and initialize first binary sequence on m-sequence
+	bsequence mls = bsequence_create(n);
+	bsequence_init_msequence(mls, ms);
+
+    for (unsigned int i = 0; i < n; i++) {
+        MLS_array[i] = (float)bsequence_index(mls, i);
+    }
+	// printf("Generated MLS bits\n");
+	// for(int i = 0; i < 50; i++){
+	// 	printf("%d ", bitbuffer[i]);
+	// }
+
+	// clean up memory
+	bsequence_destroy(mls);
+	msequence_destroy(ms);
+}
 
 //ENSURE shiftDownAndNormalizeSamples IS RUN ON SAMPLES BEFORE THIS FUNCTION - not sure about this Jan 29
 //Frees input pointer

@@ -47,7 +47,7 @@ extern "C" void encode_LDPC(uint8_t * input)
 
     vector<uint8_t> temp(z, 0);
 
-    cout << "Checking temp:" << endl;
+    //cout << "Checking temp:" << endl;
 
     for (int i = 1; i <= 4; i++) {
         for (int j = 1; j <= n-m; j++) {
@@ -72,7 +72,25 @@ extern "C" void encode_LDPC(uint8_t * input)
     vector<uint8_t> p1 = mul_sh(temp, z-p1_sh);
     for (int i = 0; i < z; i++) {
         bits.at((n-m-1)*z+1-1+i) = p1.at(i);
+        //printf("%i,", p1.at(i)); // confirmed working
     }
+    
+    for (int i = 1; i <= 3; i++) { // parity bits 2,3,4
+        vector<uint8_t> temp(z, 0);
+        for (int j = 1; j <= n-m; j++) {
+            vector<uint8_t> part_msg(bits.begin() + (j-1)*z, bits.begin() + j*z); // copy of the needed part of msg (input) 
+
+            //printf("part_msg size: %i \n", part_msg.size());
+            vector<uint8_t> addition = mul_sh(part_msg, h_pointer[(i-1)*n + j-1]);
+            //printf("addition size: %i \n", addition.size());
+            for (int p = 0; p < z; p++) {
+                temp.at(p) = (temp.at(p) + addition.at(p)) % 2;
+                //printf("%i,", temp.at(p)); // compare this with MATLAB result
+            }
+            //printf("\n");
+        }
+    }
+
 }
 
 

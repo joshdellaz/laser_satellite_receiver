@@ -163,15 +163,18 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
 
     float * buffer = (float *)malloc((length_samples_in/(N*num_banks))*sizeof(float)); 
     float new_autocorr = 0;
+    float prev_autocorr = 0;
     float max_autocorr = 0;
     int best_bank = 0;
     int best_shift_bits = 0;
     int max_shiftleft_bits = 1300;
     int max_shiftright_bits = 200;
+    int downhill_counter = 0;
     //printf("\nautocorrelation vals:\n");
 
     for(int i = 0; i<num_banks*N; i++){
-        for (int j = max_shiftright_bits; j>-max_shiftleft_bits; j--){
+        prev_autocorr = 0;
+        for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){
             //ADD THRESHOLD SO THAT ENTIRE RANGE DOESN'T NEED TO BE SEARCHED?
 
             for(int k = 0; k < mls_total_preamble_length_bits - 2 ; k++){// -2 because variable is meant to be multiple of 8
@@ -192,6 +195,16 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
                 best_bank = i;//best_sample_in_bit?
                 best_shift_bits = j;
             }
+
+            if(new_autocorr < prev_autocorr){
+                downhill_counter++;
+                if(downhill_counter > 7*8){//assumes 8 bytes of buffer between MLS and user data
+                    break;
+                }
+            } else {
+                downhill_counter = 0;
+            }
+            prev_autocorr = new_autocorr;
         }
     }
 

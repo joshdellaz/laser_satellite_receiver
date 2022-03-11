@@ -60,10 +60,10 @@ void simulatedAutocorSyncTest(void){
 	float phase = 0;
 	int testspassed = 0;
 	int rnd = 0;
-	unsigned int erasure_val = 1;
+	unsigned int erasure_val = 0;
 
 
-	for(rnd = 8; rnd<=11; rnd++){
+	for(rnd = 0; rnd<=11; rnd++){
 		printf("TEST ROUND %d:\n\n", rnd);
 
 		uint8_t* originalframe = (uint8_t*)malloc(originaldatalength);
@@ -80,7 +80,7 @@ void simulatedAutocorSyncTest(void){
 		srand(time(NULL));
 		for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
 			uint8_t temp = rand() & 0xff;
-			if(i < 1250/8 + 10){
+			if(i < 8){
 				originalframe[mls_total_preamble_length_bytes + i] = 0;
 			} else {
 				originalframe[mls_total_preamble_length_bytes + i] = temp;

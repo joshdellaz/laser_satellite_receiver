@@ -159,7 +159,7 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 
 	//Write bits to array. Note bsequence indexing starts on "right"
 	uint8_t * bitbuffer = (uint8_t*)malloc(sizeof(uint8_t)*(mls_preamble_length_bits));
-	for (int i = 0; i < 2; i++){
+	for (int i = 0; i < repititions; i++){
 		for (unsigned int j = 0; j < n; j++) {
 			bitbuffer[n*i + j] = bsequence_index(mls, j);
 		}

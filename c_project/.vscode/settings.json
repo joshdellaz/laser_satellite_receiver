@@ -4,6 +4,8 @@
         "stdint.h": "c",
         "test.h": "c",
         "stdlib.h": "c",
-        "liquid.h": "c"
+        "liquid.h": "c",
+        "samples_to_bits.h": "c",
+        "stdbool.h": "c"
     }
 }

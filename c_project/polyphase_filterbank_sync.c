@@ -12,12 +12,11 @@
 #define MLS_LENGTH 4095
 
 int num_banks = 4;
-int mls_total_preamble_length_bits = 4095*2 + 2;// +2 is to make it a multiple of 8. TODO: Make dependent on MLS order/
-int number_of_mls_repititions = 2;
+int mls_total_preamble_length_bits = 4095+1;// + is to make it a multiple of 8. TODO: Make dependent on MLS order/
 int N = 4;
 extern int packet_data_length_with_fec_bytes;
 
-float MLS_array[MLS_LENGTH] = {0};
+float * MLS_array = NULL;
 
 //populate static MLS
 //consider integrating with preamble get function in packet_frame.c to avoid duplicate code
@@ -37,6 +36,7 @@ void initMLS(void){
 	bsequence mls = bsequence_create(n);
 	bsequence_init_msequence(mls, ms);
 
+    MLS_array = (float *)malloc(MLS_LENGTH*sizeof(float));
     for (unsigned int i = 0; i < n; i++) {
         MLS_array[i] = (float)bsequence_index(mls, i);
     }
@@ -165,8 +165,8 @@ void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
 float findAutocorrelation(float * samples){
 
 	//TODO make variables use file globals
-    unsigned int n = 4095*2;        // Window length
-    unsigned int delay = n/2;    // Overlap delay
+    //unsigned int n = 4095;        // Window length
+    //unsigned int delay = n/2;    // Overlap delay
 	float rxx_peak = 0;
 
 	// printf("sequence:\n");
@@ -176,8 +176,8 @@ float findAutocorrelation(float * samples){
     // compute auto-correlation
     rxx_peak = 0;
     //josh (not liquid) style:
-    for (int i = 0; i < delay; i++){
-        rxx_peak += samples[i]*samples[i+delay];
+    for (int i = 0; i < MLS_LENGTH; i++){
+        rxx_peak += samples[i]*MLS_array[i];
     }
 
     //printf("%f ", rxx_peak);
@@ -211,8 +211,8 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
         for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){
             //ADD THRESHOLD SO THAT ENTIRE RANGE DOESN'T NEED TO BE SEARCHED?
 
-            for(int k = 0; k < mls_total_preamble_length_bits - 2 ; k++){// -2 because variable is meant to be multiple of 8
-                buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];//MIGHT NEED TO APPLY FILTER HERE. CAN'T WORK ON SQUARE WAVE
+            for(int k = 0; k < mls_total_preamble_length_bits - 1; k++){// -2 because variable is meant to be multiple of 8
+                buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];
             }
 
             new_autocorr = findAutocorrelation(buffer);

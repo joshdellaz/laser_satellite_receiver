@@ -9,8 +9,8 @@ int main(void) {
 	getFECDataLengths();
 	initMLS();
 	//softwareDACandADC();
-	simulatedAutocorSyncTest();
-	//fullSendTest();
+	//simulatedAutocorSyncTest();
+	fullSendTest();
 	//testMLSAutoCorrelation();
 	//printf("starting the fullsend test shit\n");
 	//fullSendTest();

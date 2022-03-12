@@ -88,19 +88,19 @@ bool getCRC(packet_t * packet) {//Note that deviating from crc32 size would requ
 }
 
 //Applies LiquidDSP's scrambling to input buffer of input_length
-bool applyScrambling(uint8_t ** input, unsigned int input_length, unsigned int preamble_length) {
+bool applyScrambling(uint8_t ** input, unsigned int input_length) {
 	//not necessary
 	//*frame = (uint8_t*)malloc((*frame_length) * sizeof(uint8_t));
 
-    scramble_data((*input) + preamble_length, (input_length-preamble_length));
+    scramble_data(*input, input_length);
 
 	return 0;
 }
 
 //Removes LiquidDSP's scrambling to input buffer of input_length
-bool removeScrambling(uint8_t ** input, unsigned int input_length, unsigned int preamble_length) {
+bool removeScrambling(uint8_t ** input, unsigned int input_length) {
 
-    unscramble_data((*input) + preamble_length, (input_length-preamble_length));
+    unscramble_data(*input, input_length);
 
 	return 0;
 }
@@ -194,7 +194,6 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * packet, unsigned int packet_length) {//Basically just adds preamble
 
 	//Add MLS preamble 
-	unsigned int alternating_preamble_length = 2;
 	unsigned int mls_preamble_length = 0;
 	uint8_t* mls_preamble = NULL;
 
@@ -202,25 +201,24 @@ bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * pack
 	getMaximumLengthSequencePreamble(&mls_preamble, &mls_preamble_length);
 	printf("MLS preamble received \n");
 
-	*frame_length = alternating_preamble_length + mls_preamble_length + packet_length;
+	int stuffing_length = 8;//stuffing needed for sync to work properly
+	*frame_length = mls_preamble_length + packet_length + stuffing_length;
 	*frame = (uint8_t*)malloc((*frame_length) * sizeof(uint8_t));
-
-	//Add two 10101010 bytes to the start of frame
-	//TODO remove?
-	for (unsigned int i = 0; i < alternating_preamble_length; i++) {
-		(*frame)[i] = 0b10101010;
-	}
 
 	//Add rest of preamble to start of frame
 	//TODO change to MLS preamble
 	for (unsigned int i = 0; i < mls_preamble_length; i++) {
-		(*frame)[alternating_preamble_length + i] = mls_preamble[i];
+		(*frame)[i] = mls_preamble[i];
 	}
 	free(mls_preamble);
+	//Add stuffing to frame
+	for (unsigned int i = 0; i < stuffing_length; i++) {
+		(*frame)[mls_preamble_length + i] = 0;
+	}
 
 	//Add packet data to frame
 	for (unsigned int i = 0; i < packet_length; i++) {
-		(*frame)[alternating_preamble_length + mls_preamble_length + i] = packet[i];
+		(*frame)[mls_preamble_length + i] = packet[i];
 	}
 
 	return 0;
@@ -251,7 +249,7 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 	
 	//Macro usage probably okay because we ddont expect to change any of those values dynamically?
 
-	*packet_length = 1 + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES + packet_data_length_with_fec_bytes;
+	*packet_length = packet_data_length_with_fec_bytes;
 	*packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
 
 	(*packet)[0] = packet_data->selected_fec_scheme;
@@ -264,12 +262,12 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 		(*packet)[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));
 	}
 
-	for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
+	for (int i = 0; i < packet_data_length_with_fec_bytes - 1 - 2 * NUM_PACKETS_LENGTH_BYTES; i++) {
 		(*packet)[1 + 2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
 	}
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		(*packet)[1 + 2*NUM_PACKETS_LENGTH_BYTES + packet_data_length_with_fec_bytes + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
+		(*packet)[packet_data_length_with_fec_bytes - CRC_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
 	}
 
 	return 0;

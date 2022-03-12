@@ -341,6 +341,8 @@ void softwareDACandADC(void){
 }
 
 //Current full-data-pipeline test
+//To be added: parameters for changing signal phase, prepending zeroes, and changing channel traits, 
+//current issues: free(rx)
 bool fullSendTest(void) {
 	
 	say_hello();
@@ -357,21 +359,24 @@ bool fullSendTest(void) {
 
 	printf("Original Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-	//	printf("%d", packet_data.data[i]);
+		printf("%d", packet_data.data[i]);
 	}
-	// printf("\n\n");
+	printBitsfromBytes(packet_data.data, 10);
+	printf("\n\n");
 
 	printf("getting CRC\n");
 	getCRC(&packet_data);
 
 	//Commented out functions are not yet implemented, so cannot be tested
-	printf("applying FEC \n");
-	applyFEC(packet_data.data);
+	//printf("applying FEC \n");
+	//applyFEC(packet_data.data);
 
 	printf("assembling packet \n");
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
 	printf("applying interleaving \n");
 	applyInterleaving(packet_vector, packet_length);
+	//printf("scrambling eggs \n");
+	//applyScrambling(&packet_vector, packet_length);
 	
 	printf("assembling frame \n");
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
@@ -383,13 +388,10 @@ bool fullSendTest(void) {
 	}
 	// printf("\n\n");
 
-	printf("scrambling eggs \n");
-	applyScrambling(&frame_vector, frame_length, preamble_length);
-
-	printf("Post-scramble:\n");
-	for (unsigned int i = 0; i < frame_length; i++) {
-	//	printf("%d", frame_vector[i]);
-	}
+	// printf("Post-scramble:\n");
+	// for (unsigned int i = 0; i < frame_length; i++) {
+	// //	printf("%d", frame_vector[i]);
+	// }
 	// printf("\n\n");
 
 	//Comment or un-comment, depending on the test you are trying to run
@@ -402,30 +404,53 @@ bool fullSendTest(void) {
 	//}
 	//printf("\n\n");
 
+
+	//Turn to samples
+	unsigned int numsamples = 0;
+	float phase = 0;
+	float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
+
+	//receive samples via power detection
+	int frame_start_index_guess = 0;//start of MLS preamble guess
+	int samples_shifted_length = 0;
+	float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);
+
+	//resample
+	int numsamples_upsampled = 0;
+	float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);
+	frame_start_index_guess *= 4;
+
 	//Init "rx" stuff
 	packet_t rxpacket_data;//malloc this?
 	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
 	uint8_t* rxpacket_vector = NULL;
 	unsigned int rxpacket_length = 0;
 
-	printf("removing eggs\n");
-	removeScrambling(&frame_vector, frame_length, preamble_length);
+	//sync & demodulate
+	rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
 
-	printf("disassembling frame \n");
-	disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
+
+
+	// printf("disassembling frame \n");
+	// disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
+
+	//printf("removing eggs\n");
+	//removeScrambling(&rxpacket_vector, packet_length);
+
 	printf("removing interleaving \n");
 	removeInterleaving(rxpacket_vector, packet_length);
 
 	printf("disassembling packet \n");
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
-	printf("removing FEC \n");
-	removeFEC(rxpacket_data.data);
+	//printf("removing FEC \n");
+	//removeFEC(rxpacket_data.data);
 
 	printf("Received Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-	//	printf("%d", rxpacket_data.data[i]);
+		printf("%d", rxpacket_data.data[i]);
 	}
-	// printf("\n\n");
+	//printBitsfromBytes(rxpacket_data.data, 10);
+	printf("\n\n");
 
 	if (checkCRC(&rxpacket_data)) {
 		printf("CRC Doesn't Match!\n\n");
@@ -439,9 +464,9 @@ bool fullSendTest(void) {
 	printf("freeing the children \n");
 	free(packet_data.data);
 	free(rxpacket_data.data);
-	free(rxpacket_vector);
 	free(packet_vector);
 	free(frame_vector);
+	free(rxpacket_vector);
 	return 0;
 }
 

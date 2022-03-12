@@ -185,12 +185,13 @@ float __AWGN_generator(void)
 }
 
 
-bool applyChannel(uint8_t *input_data, unsigned int input_data_length)
+bool applyChannel(uint8_t *input_data, unsigned int input_data_length) // works with bit stream (not samples)
 { // change description to return array of bools
 	// initialize array of bursts
 	bool *bursts = (bool *)calloc(8 * input_data_length, sizeof(bool));
 	_createBursts(bursts, input_data_length);
 	_applyBursts(bursts, input_data, input_data_length);
+	free(bursts);
 	return true;
 }
 
@@ -245,6 +246,8 @@ void _applyBursts(bool *Bursts, uint8_t *input_data, unsigned int input_data_len
 		}
 	}
 }
+
+
 
 bool applyBitFlips(uint8_t *input_data, unsigned int input_data_length) // works with bit stream (not samples)
 {

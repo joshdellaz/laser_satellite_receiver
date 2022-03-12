@@ -6,23 +6,29 @@
 #include <stdio.h>
 
 void _createBursts(bool *, unsigned);
-void _createFades(bool *, unsigned);
+//void _createFades(bool *, unsigned);
 void _applyBursts(bool *, uint8_t *, unsigned);
 void _applyBurstsToSamples(bool *, float *, unsigned);
-void _applyFadesToSamples(bool *, float *, unsigned);
+void _applyFadesToSamples(float *, unsigned);
 
 float __AWGN_generator(void);
 float __randF(void); // rand float between 0 and 1
+int __randNum(int, int); // rand number between lower and upper inclusive
 
 
 bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr_packet_num)
 {
 	bool *bursts = (bool *)calloc(smpls_len / SAMP_PER_BIT, sizeof(bool));
-	bool *fades = (bool *)calloc(smpls_len / SAMP_PER_BIT, sizeof(bool));
 	_createBursts(bursts, smpls_len / (8*SAMP_PER_BIT));
-	_createFades(fades, smpls_len / (8*SAMP_PER_BIT));
 	_applyBurstsToSamples(bursts, samples, smpls_len);
-	_applyFadesToSamples(fades, samples, smpls_len);
+
+	_applyFadesToSamples(samples, smpls_len);
+
+	printf("Samples before AWGN:\n");
+	for (unsigned i = 0; i < smpls_len; i++) {
+		printf("%.0f,", samples[i]);
+	}
+	printf("\n\n");
 
 	//float current_packet_snr = _calcSNR(curr_packet_num);
 
@@ -35,7 +41,6 @@ bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr
 	}
 
 	free(bursts);
-	free(fades);
 	return true;
 }
 
@@ -100,19 +105,45 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 			printf("0");
 		}
 	}
+	printf("\n\n");
+}
+
+void _applyFadesToSamples(float *samples, unsigned smpls_len)
+{
+	float fade_certain_period = 1e6 / FADE_FREQ; // [us] period of time in which there should be a fade
+	int total_fades = (int) floor(smpls_len / (fade_certain_period*BIT_RATE*SAMP_PER_BIT)); 
+	int N = smpls_len / total_fades;
+	int M = FADE_LEN * BIT_RATE * SAMP_PER_BIT;
+	for (unsigned i = 0; i < total_fades; i++){
+		int fade_start = (i*N) + __randNum(0,N-M);
+		for (int j = fade_start; j < M; j++){
+			samples[j] = (float) FADE_VALUE;
+		}
+	}
 }
 
 void _applyBurstsToSamples(bool *Bursts, float *samples, unsigned smpls_len) // TODO add random offset of 1,2 or 3 samples
 {
+	// maybe TODO: make the bursts sharp normal distrbutions instead of constant values, maybe relate the height to the busrt length
+	unsigned burst_len = 0;
 	for (unsigned int i = 0; i < smpls_len / SAMP_PER_BIT; i++)
 	{
 		if (Bursts[i])
 		{
 			for (unsigned j = SAMP_PER_BIT * i; j < SAMP_PER_BIT * (i + 1); j++)
 			{
+				burst_len++;
+				if (burst_len == 1){ // random offset at the beginning of the burst
+					float chance = __randF();
+					if (chance < 0.33){
+						j++;
+					} else if (chance < 0.67){
+						j += 2;
+					} else {j += 3;}
+				}
 				samples[j] = (float)BURST_VALUE;
 			}
-		}
+		} else {burst_len = 0;} // zero the burst length when burst ends
 	}
 }
 
@@ -120,6 +151,11 @@ void _applyBurstsToSamples(bool *Bursts, float *samples, unsigned smpls_len) // 
 float __randF(void)
 {
 	return (float)rand() / (float)RAND_MAX;
+}
+
+int __randNum(int lower, int upper)
+{
+	return (rand() % (upper - lower + 1)) + lower;
 }
 
 float __AWGN_generator(void)

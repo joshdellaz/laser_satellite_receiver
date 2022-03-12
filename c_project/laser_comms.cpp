@@ -103,6 +103,8 @@ extern "C" void applyLDPC(uint8_t* input) {
 
 
 extern "C" void decodeLDPC(uint8_t* rxinput) {
+    // ignoring burst positions in LDPC for now
+
     std::cout << "Starting LDPC decoding...\n";
 
     LdpcCode ldpc_code(0, 0);

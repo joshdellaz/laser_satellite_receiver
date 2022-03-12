@@ -4,6 +4,8 @@
 //#include "tavildarLDPC/LdpcC/LdpcCode.h"
 //#include "packet_frame.h"
 
+// ignoring burst positions in LDPC for now
+
 #ifdef __cplusplus
 extern "C" {
 #endif

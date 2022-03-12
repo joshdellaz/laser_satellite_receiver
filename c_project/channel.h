@@ -7,9 +7,12 @@
 /// Channel stuff
 #define BIT_RATE 1 // in Mbps (should be 25)
 #define SAMP_PER_BIT 4
-#define BURST_VALUE 2 // should be something obviously too high to be considered a valid reading
+#define BURST_VALUE 2 // = sample during a burst... should be something significantly higher than normal readings
 // ignoring burst positions for now
 #define SNR_DB	10			// (for AWGN noise)
+#define FADE_FREQ 3 // per second, based on KT06-04 results around 25 degree elevation
+#define FADE_LEN 500 // in us
+
 #define BIT_FLIP_FREQ 5 // increase to reduce probability of the bit flippage
 
 // Parameters which are based on the paper
@@ -27,6 +30,6 @@ typedef enum chnl_state
 	GOOD_S	  // no erasure and stable
 } chnl_state;
 
-bool applyChannelToSamples(float *samples, unsigned smpls_len);
+bool applyChannelToSamples(float *samples, unsigned smpls_len); //, uint16_t curr_packet_num);
 bool applyChannel(uint8_t *input, unsigned int input_length);
 bool applyBitFlips(uint8_t *input, unsigned int input_length);

@@ -1,5 +1,4 @@
-#include <stdbool.h>
-#include <stdint.h>
+#include "samples_to_bits.h"
 
 //Matlab code:
 //%do the sampling
@@ -36,23 +35,83 @@
 //     return y;
 // }
 
-bool samplesToBytes(float* samples, int* num_bytes_to_convert, uint8_t* data, float phase_offset) {
+// bool samplesToBytes(float* samples, int* num_bytes_to_convert, uint8_t* data, float phase_offset) {
 
 
-    // /* use averaging? */
-    // idx = (int)((float)rt_roundd_snf((double)idx / 4.0) * 4.0F +
-    //     (float)fmod(idx, 4.0));
-    // /* assuming 1 symbol = pi phase */
-    // /* do the sampling */
-    // for (Lg = 0; Lg < 120; Lg++) {
-    //     if (y[((int)rt_roundd_snf((double)Lg * 4.2 * 4.0) + idx) + 8] >= 0.0) {
-    //         /* rounding issues due to N? */
-    //         output[Lg] = 1;
-    //         /* for later infographic */
-    //     }
-    //     else {
-    //         output[Lg] = 0;
-    //         /* for later infographic */
-    //     }
+//     // /* use averaging? */
+//     // idx = (int)((float)rt_roundd_snf((double)idx / 4.0) * 4.0F +
+//     //     (float)fmod(idx, 4.0));
+//     // /* assuming 1 symbol = pi phase */
+//     // /* do the sampling */
+//     // for (Lg = 0; Lg < 120; Lg++) {
+//     //     if (y[((int)rt_roundd_snf((double)Lg * 4.2 * 4.0) + idx) + 8] >= 0.0) {
+//     //         /* rounding issues due to N? */
+//     //         output[Lg] = 1;
+//     //         /* for later infographic */
+//     //     }
+//     //     else {
+//     //         output[Lg] = 0;
+//     //         /* for later infographic */
+//     //     }
+//     // }
+// }
+
+
+// copying most recent Josh's code!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+//Samples out (returned by pointer) are straight up 1s and zeroes
+//Must be un-malloc'd
+//Frees input data
+//Big endian: high bit transfered first
+//phaseshift must be float type with value between 0 and 2*pi. Only phase shifts to the right (cuts off MSB)
+float * bytestreamToSamplestream(uint8_t* data, int length_bytes, float phaseshift){
+    int samples_per_bit = 4;
+    int length_samples = length_bytes*8*samples_per_bit;
+    float *samples = (float*)malloc((length_samples) * sizeof(float));
+
+    //repeat each input element
+    for(int i = 0; i<length_bytes; i++){
+        for (int j = 0; j <8; j++){
+            for(int k = 0; k<samples_per_bit; k++){
+                if((data[i] & (1 << (7-j))) == 0){
+                    samples[i*8*samples_per_bit + j*samples_per_bit + k] = 0;
+                } else {
+                    samples[i*8*samples_per_bit + j*samples_per_bit + k] = 1;
+                }
+            }
+        }
+    }
+
+    // printf("Samples before phase shift:\n");
+    // for (unsigned int i = 0; i < output_length; i++) {
+    //     printf("%.0f", samples[i]);
     // }
+    // printf("\n\n");
+
+    int num_repititons = 10;//Phase shift resolution = 2*pi/(N*num_repititions)
+    float *temp = (float*)malloc((length_samples)*num_repititons * sizeof(float));
+
+    //repeat elements
+    for (int i = 0; i < length_samples; i++){
+        for(int j = 0; j<num_repititons; j++){
+            temp[i*num_repititons + j] = samples[i];
+        }
+    }
+
+    //shift and downsample
+    int phaseshift_number = round(phaseshift/(PI*(float)2)*(float)(num_repititons*samples_per_bit));//Not certain about this
+    for (int i = 0; i < length_samples; i++){
+        samples[i] = temp[i*num_repititons + phaseshift_number];
+    }
+
+    // printf("Samples after phase shift:\n");
+    // for (unsigned int i = 0; i < length_samples; i++) {
+    //     printf("%.0f", samples[i]);
+    // }
+    // printf("\n\n");
+
+    //data);
+    free(temp);
+    return samples;
 }

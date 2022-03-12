@@ -1,6 +1,7 @@
 #include "packet_frame.h"
 #include "channel.h"
 #include "laser_comms.h"
+#include "samples_to_bits.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -72,6 +73,10 @@ bool fullSendTest(void) {
 	printf("\n\n");
 
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
+
+	printf("Total number of packets: %i\n", packet_data.total_num_packets);
+	printf("Current packet number: %i\n", packet_data.current_packet_num);
+
 	applyInterleaving(packet_vector, packet_length);
 	
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
@@ -155,9 +160,9 @@ bool fullSendTest(void) {
 	return 0;
 }
 
-bool halfSendTest(void) { // try it out
+bool analogSendTest(void) { // try it out
 	
-	printf("test\n");
+	printf("Analog test\n");
 	
 	//Init all the things. 
 	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions
@@ -180,7 +185,7 @@ bool halfSendTest(void) { // try it out
 	printf("Tx CRC: %d \n", packet_data.crc);
 
 	//Commented out functions are not yet implemented, so cannot be tested
-	applyLDPC(packet_data.data);
+	applyLDPC(&packet_data.total_num_packets);
 	//applyFEC(packet_data.data);
 	printf("Encoded Data:\n");
 	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
@@ -188,84 +193,83 @@ bool halfSendTest(void) { // try it out
 	}
 	printf("\n\n");
 
-	// assemblePacket(&packet_data, &packet_vector, &packet_length);
-	// applyInterleaving(packet_vector, packet_length);
+	assemblePacket(&packet_data, &packet_vector, &packet_length);
+	applyInterleaving(packet_vector, packet_length);
 	
-	// assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
-	// unsigned int preamble_length = frame_length - packet_length;
+	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
+	unsigned int preamble_length = frame_length - packet_length;
 
-	// applyScrambling(&frame_vector, frame_length, preamble_length);
+	applyScrambling(&frame_vector, frame_length, preamble_length);
 
-	// // printf("Post-scramble:\n");
-	// // for (unsigned int i = 0; i < frame_length; i++) {
-	// // 	printf("%d", frame_vector[i]);
-	// // }
-	// // printf("\n\n");
+	printf("Before Tx:\n");
+	for (unsigned int i = 0; i < frame_length; i++) {
+		printf("%d", frame_vector[i]);
+	}
+	printf("\n\n");
 
-	// //Comment or un-comment, depending on the test you are trying to run
-	// //TODO consider turning into macro functionality in future
-	// //applyChannel(frame_vector, frame_length);
-	// applyBitFlips(frame_vector, frame_length);
+	//Comment or un-comment, depending on the test you are trying to run
+	//TODO consider turning into macro functionality in future
+	float *sample_stream = (float *)calloc(frame_length * 8 * SAMP_PER_BIT, sizeof(float));
+	int len_samples = frame_length*8*SAMP_PER_BIT;
+	sample_stream = bytestreamToSamplestream(frame_vector, frame_length, (float) 0);
 
-	// printf("New frame (after going through channel):\n");
-	// for (unsigned int i = 0; i < frame_length; i++) {
-	// 	printf("%d", frame_vector[i]);
-	// }
-	// printf("\n\n");
+	printf("Original samples:\n");
+	for (unsigned int i = 0; i < len_samples; i++) {
+		printf("%.0f", sample_stream[i]);
+	}
+	printf("\n\n");
 	
-	//applyBitFlips(packet_data.data, packet_data_length_with_fec);
-
-	printf("Corrupted packet:\n");
-	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
-		printf("%d,", packet_data.data[i]);
+	applyChannelToSamples(sample_stream, len_samples);
+	
+	printf("Corrupted samples:\n");
+	for (unsigned int i = 0; i < len_samples; i++) {
+		printf("%.1f,", sample_stream[i]);
 	}
 	printf("\n\n");
 
 	//Init "rx" stuff
-	packet_t rxpacket_data;//malloc this?
-	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec);
-	uint8_t* rxpacket_vector = NULL;
-	unsigned int rxpacket_length = 0;
+	// packet_t rxpacket_data;//malloc this?
+	// rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec);
+	// uint8_t* rxpacket_vector = NULL;
+	// unsigned int rxpacket_length = 0;
 
-	// removeScrambling(&frame_vector, frame_length, preamble_length);
+	// // removeScrambling(&frame_vector, frame_length, preamble_length);
 
-	// disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
-	// removeInterleaving(rxpacket_vector, packet_length);
+	// // disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
+	// // removeInterleaving(rxpacket_vector, packet_length);
 
-	// disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
-	// printf("Pre decoding:\n");
-	// for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
-	// 	printf("%d,", rxpacket_data.data[i]);
+	// // disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
+	// // printf("Pre decoding:\n");
+	// // for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
+	// // 	printf("%d,", rxpacket_data.data[i]);
+	// // }
+	// // printf("\n\n");
+	// //removeFEC(rxpacket_data.data);
+
+	
+	// decodeLDPC(packet_data.data);
+
+
+	// printf("Decoded data:\n");
+	// for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	// 	printf("%d,", packet_data.data[i]);
 	// }
 	// printf("\n\n");
-	//removeFEC(rxpacket_data.data);
 
 	
-	decodeLDPC(packet_data.data);
-
-
-	printf("Decoded data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-		printf("%d,", packet_data.data[i]);
-	}
-	printf("\n\n");
-
-	
-	if (checkCRC(&rxpacket_data)) {
-		printf("CRC Doesn't Match! (need to fix)\n");
-	}
-	else {
-		printf("CRC Matches!\n\n");
-	}
+	// if (checkCRC(&rxpacket_data)) {
+	// 	printf("CRC Doesn't Match! (need to fix)\n");
+	// }
+	// else {
+	// 	printf("CRC Matches!\n\n");
+	// }
 
 	//Must free everything malloc'd
 	free(packet_data.data);
-	free(rxpacket_data.data);
-	free(rxpacket_vector);
+	// free(rxpacket_data.data);
+	// free(rxpacket_vector);
 	free(packet_vector);
 	free(frame_vector);
+	free(sample_stream);
 	return 0;
 }
-
-
-

@@ -101,6 +101,7 @@ extern "C" void applyLDPC(uint8_t* input) {
     printf("\n");
 }
 
+
 extern "C" void decodeLDPC(uint8_t* rxinput) {
     std::cout << "Starting LDPC decoding...\n";
 

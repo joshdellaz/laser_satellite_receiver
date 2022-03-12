@@ -2,4 +2,4 @@
 
 void getFECDataLengths(void);
 bool fullSendTest(void);
-bool halfSendTest(void);
+bool analogSendTest(void);

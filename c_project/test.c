@@ -55,7 +55,7 @@ bool fullSendTest(void) {
 	packet_data.data = generateRandPacket();
 
 	printf("Original Data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES; i++) {
 		printf("%d,", packet_data.data[i]);
 	}
 	printf("\n\n");
@@ -64,8 +64,9 @@ bool fullSendTest(void) {
 	printf("Tx CRC: %d \n", packet_data.crc);
 
 	//Commented out functions are not yet implemented, so cannot be tested
-	applyLDPC(packet_data.data);
+	applyLDPC(packet_data.data); //total_num_packets);
 	//applyFEC(packet_data.data);
+	
 	printf("Encoded Data:\n");
 	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
 		printf("%d,", packet_data.data[i]);
@@ -98,8 +99,8 @@ bool fullSendTest(void) {
 
 	//Comment or un-comment, depending on the test you are trying to run
 	//TODO consider turning into macro functionality in future
-	//applyChannel(frame_vector, frame_length);
-	applyBitFlips(frame_vector, frame_length);
+	applyChannel(frame_vector, frame_length);
+	//applyBitFlips(frame_vector, frame_length);
 
 	printf("New frame (after going through channel):\n");
 	for (unsigned int i = 0; i < frame_length; i++) {
@@ -126,14 +127,13 @@ bool fullSendTest(void) {
 	// printf("\n\n");
 	//removeFEC(rxpacket_data.data);
 	printf("Difference between rx and tx encoded data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES; i++) {
 		printf("%d,", (rxpacket_data.data[i] - packet_data.data[i]));
 	}
 	printf("\n\n");
 
 	
 	decodeLDPC(rxpacket_data.data);
-
 
 
 	printf("Difference between Received Corrected Data and Original Data:\n");
@@ -160,7 +160,7 @@ bool fullSendTest(void) {
 	return 0;
 }
 
-bool analogSendTest(void) { // try it out
+bool analogSendTest(void) { // For testing the channel model on sample stream
 	
 	printf("Analog test\n");
 	
@@ -207,8 +207,7 @@ bool analogSendTest(void) { // try it out
 	}
 	printf("\n\n");
 
-	//Comment or un-comment, depending on the test you are trying to run
-	//TODO consider turning into macro functionality in future
+	// Testing the channel model on sample stream
 	float *sample_stream = (float *)calloc(frame_length * 8 * SAMP_PER_BIT, sizeof(float));
 	int len_samples = frame_length*8*SAMP_PER_BIT;
 	sample_stream = bytestreamToSamplestream(frame_vector, frame_length, (float) 0);

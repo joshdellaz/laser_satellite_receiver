@@ -10,7 +10,7 @@
 #define CRC_DATA_LENGTH_BYTES 4
 #define FRAME_LENGTH_BYTES //TODO determine proper value
 #define FEC_TYPE LIQUID_FEC_HAMMING74 //Other options = 
-#define PACKET_DATA_LENGTH_NO_FEC 73 // need to consider LDPC params and CRC and packet number and total => 81 - 4 - 2 - 2
+#define PACKET_DATA_LENGTH_NO_FEC 77 // need to consider LDPC params and CRC and packet number and total => 81 - 4 - 2 - 2
 
 //LDPC params
 #define CODEWRD_L 1296

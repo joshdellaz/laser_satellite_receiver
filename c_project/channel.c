@@ -8,6 +8,7 @@
 void _createBursts(bool *, unsigned);
 //void _createFades(bool *, unsigned);
 void _applyBursts(bool *, uint8_t *, unsigned);
+void _applyFades(uint8_t *, unsigned);
 void _applyBurstsToSamples(bool *, float *, unsigned);
 void _applyFadesToSamples(float *, unsigned);
 
@@ -115,14 +116,14 @@ void _applyFadesToSamples(float *samples, unsigned smpls_len)
 	int N = smpls_len / total_fades;
 	int M = FADE_LEN * BIT_RATE * SAMP_PER_BIT;
 	for (unsigned i = 0; i < total_fades; i++){
-		int fade_start = (i*N) + __randNum(0,N-M);
+		int fade_start = (i*N) + __randNum(0,N-M-1);
 		for (int j = fade_start; j < M; j++){
 			samples[j] = (float) FADE_VALUE;
 		}
 	}
 }
 
-void _applyBurstsToSamples(bool *Bursts, float *samples, unsigned smpls_len) // TODO add random offset of 1,2 or 3 samples
+void _applyBurstsToSamples(bool *Bursts, float *samples, unsigned smpls_len)
 {
 	// maybe TODO: make the bursts sharp normal distrbutions instead of constant values, maybe relate the height to the busrt length
 	unsigned burst_len = 0;
@@ -191,6 +192,8 @@ bool applyChannel(uint8_t *input_data, unsigned int input_data_length) // works 
 	bool *bursts = (bool *)calloc(8 * input_data_length, sizeof(bool));
 	_createBursts(bursts, input_data_length);
 	_applyBursts(bursts, input_data, input_data_length);
+	_applyFades(input_data, input_data_length);
+	
 	free(bursts);
 	return true;
 }
@@ -247,7 +250,26 @@ void _applyBursts(bool *Bursts, uint8_t *input_data, unsigned int input_data_len
 	}
 }
 
-
+void _applyFades(uint8_t *input_data, unsigned int input_data_length)
+{
+	float fade_certain_period = 1e6 / FADE_FREQ; // [us] period of time in which there should be a fade
+	int total_fades = (int) floor(8*input_data_length / (fade_certain_period*BIT_RATE)); 
+	int N = (int) floor(8*input_data_length / total_fades); // in bits
+	int M = FADE_LEN * BIT_RATE; // in bits
+	printf("Fades:\n");
+	for (unsigned i = 0; i < total_fades; i++){
+		int fade_start = (i*N) + __randNum(0,N-M-1);
+		int leadingZeros = 8 - (fade_start % 8);
+		int trailingZeros = (fade_start + M - 1) % 8;
+		for (int j = (int) ceil(fade_start/8); j < (int) floor(M/8); j++){
+			input_data[j] = input_data[j] | 0xff;
+			printf("0");
+		}
+		printf("\n\n");
+		input_data[fade_start/8] &= (uint8_t) (255 - pow(2,(leadingZeros-1)));
+		input_data[(fade_start + M - 1) / 8] &= (uint8_t) (pow(2,(8-trailingZeros)) - 1);
+	}
+}
 
 bool applyBitFlips(uint8_t *input_data, unsigned int input_data_length) // works with bit stream (not samples)
 {

@@ -50,7 +50,13 @@ extern "C" void applyLDPC(uint8_t* input) {
 
     std::vector<uint8_t> info_bits(info_len, 0); // converting the packet_data.data array to usable format for enbcoding
     uint8_t input_bit; // used for extracting each bit from the packet data array
+    uint16_t input_preamb;
     for (unsigned i_bit = 0; i_bit < info_len; ++i_bit) { // bit extraction
+        // if (i_bit < 32){
+        //     input_preamb = input[(int) i_bit/16];
+        //     input_preamb >>= (15 - (i_bit % 16));
+        //     info_bits.at(i_bit) = (uint8_t) (input_preamb & 0X01);
+        // }
         input_bit = input[(int) i_bit/8];
         input_bit >>= (7 - (i_bit % 8));
         info_bits.at(i_bit) = (uint8_t) (input_bit & 0X01);

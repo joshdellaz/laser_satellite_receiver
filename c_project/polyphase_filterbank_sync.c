@@ -6,14 +6,49 @@
 #include <complex.h>
 #include <liquid/liquid.h>
 
+
 #define PI 3.142857
 #define IS_SIMULATION
+#define MLS_LENGTH 4095
 
 int num_banks = 4;
-int mls_total_preamble_length_bits = 4095*2;//Make dependent on MLS order
-int number_of_mls_repititions = 2;
+int mls_total_preamble_length_bits = 4095+1;// + is to make it a multiple of 8. TODO: Make dependent on MLS order/
 int N = 4;
 extern int packet_data_length_with_fec_bytes;
+
+float * MLS_array = NULL;
+
+//populate static MLS
+//consider integrating with preamble get function in packet_frame.c to avoid duplicate code
+void initMLS(void){
+
+	//options
+	//TODO: Pick a good value for m
+	unsigned int m = 12;   // shift register length, n=2^m - 1
+	unsigned int mls_preamble_length_bits = (pow(2,m) - 1); // preamble length
+
+	// create and initialize m-sequence
+	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M12);//Fix these struct name definitions... Liquid maybe borked?
+	//msequence_print(ms);
+	unsigned int n = msequence_get_length(ms);
+
+	// create and initialize first binary sequence on m-sequence
+	bsequence mls = bsequence_create(n);
+	bsequence_init_msequence(mls, ms);
+
+    MLS_array = (float *)malloc(MLS_LENGTH*sizeof(float));
+    for (unsigned int i = 0; i < n; i++) {
+        MLS_array[i] = (float)bsequence_index(mls, i);
+    }
+	// printf("Generated MLS bits\n");
+	// for(int i = 0; i < 50; i++){
+	// 	printf("%d ", bitbuffer[i]);
+	// }
+
+	// clean up memory
+	bsequence_destroy(mls);
+	msequence_destroy(ms);
+}
 
 //ENSURE shiftDownAndNormalizeSamples IS RUN ON SAMPLES BEFORE THIS FUNCTION - not sure about this Jan 29
 //Frees input pointer
@@ -119,7 +154,7 @@ void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
     int length_samples_new = length_samples - num_samples_to_chop_off;
     float * buffer = (float *)malloc(length_samples_new*sizeof(float)); 
     for (int i = 0; i<length_samples_new; i++){
-        buffer[i] = *data[i+num_samples_to_chop_off];
+        buffer[i] = (*data)[i+num_samples_to_chop_off];
     }
     free(*data);
 
@@ -127,35 +162,26 @@ void chopFront(float ** data, int num_samples_to_chop_off, int length_samples){
 }
 
 //http://www.kempacoustics.com/thesis/node84.html
-//Unclear exactly how liquid code works. Needs testing and analysis
 float findAutocorrelation(float * samples){
 
-    unsigned int n = mls_total_preamble_length_bits;        // autocorr window length
-    unsigned int delay = n/2;    // autocorr overlap delay
+	//TODO make variables use file globals
+    //unsigned int n = 4095;        // Window length
+    //unsigned int delay = n/2;    // Overlap delay
+	float rxx_peak = 0;
 
-    // create autocorrelator object
-    autocorr_cccf q = autocorr_cccf_create(n,delay);//Does this need to be done every time?
-
-    float complex rxx[n];          // output auto-correlation
-
+	// printf("sequence:\n");
+	// for(int i = 0; i <n; i++){
+	// 	printf("%f ", samples[i]);
+	// }
     // compute auto-correlation
-    for (int i=0; i<n; i++) {
-        autocorr_cccf_push(q,samples[i]);
-        autocorr_cccf_execute(q,&rxx[i]);
-
-        // normalize by energy (not sure if necessary)
-        rxx[i] /= autocorr_cccf_get_energy(q);
+    rxx_peak = 0;
+    //josh (not liquid) style:
+    for (int i = 0; i < MLS_LENGTH; i++){
+        rxx_peak += samples[i]*MLS_array[i];
     }
 
-    // find peak
-    float complex rxx_peak = 0;
-    for (int i=0; i<n; i++) {
-        if (i==0 || cabsf(rxx[i]) > cabsf(rxx_peak))
-            rxx_peak = rxx[i];
-    }
-
-    // destroy autocorrelator object
-    autocorr_cccf_destroy(q);
+    //printf("%f ", rxx_peak);
+    
     return (float)rxx_peak;
 }
 
@@ -163,55 +189,87 @@ float findAutocorrelation(float * samples){
 //NOTE Please run upsample before passing samples into here
 //Consider divying up into smaller functions. Lots of functionality here
 //Frees samples pointer input
+//Outputs byte array of one frame of user payload data
 uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_out, int frame_start_index_guess){
 
-    *length_bytes_out = length_samples_in/(8*N*num_banks) - mls_total_preamble_length_bits/8;//requires mls total length to be multiple of 8 bits
+    *length_bytes_out = packet_data_length_with_fec_bytes;
 
 
     float * buffer = (float *)malloc((length_samples_in/(N*num_banks))*sizeof(float)); 
     float new_autocorr = 0;
+    float prev_autocorr = 0;
     float max_autocorr = 0;
     int best_bank = 0;
     int best_shift_bits = 0;
-    int max_shiftleft_bits = 1305;
-    int max_shiftright_bits = 10;
+    int max_shiftleft_bits = 1300;
+    int max_shiftright_bits = 200;
+    int downhill_counter = 0;
+    //printf("\nautocorrelation vals:\n");
 
     for(int i = 0; i<num_banks*N; i++){
-        for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){//MAKE START ON POSITIVE SIDE THEN GO NEGATIVE.
+        prev_autocorr = 0;
+        for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){
             //ADD THRESHOLD SO THAT ENTIRE RANGE DOESN'T NEED TO BE SEARCHED?
 
-            for(int k = 0; k < mls_total_preamble_length_bits; k++){
-                buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];//MIGHT NEED TO APPLY FILTER HERE. CAN'T WORK ON SQUARE WAVE
+            for(int k = 0; k < mls_total_preamble_length_bits - 1; k++){// -2 because variable is meant to be multiple of 8
+                buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];
             }
 
             new_autocorr = findAutocorrelation(buffer);
+
+            //for testing
+            // if(j> -10 && j < 10){
+            //     if(i == 4){
+            //         printf("%.2f ", new_autocorr);
+            //     }
+            // }
 
             if(new_autocorr > max_autocorr){
                 max_autocorr = new_autocorr;
                 best_bank = i;//best_sample_in_bit?
                 best_shift_bits = j;
             }
+
+            if(new_autocorr < prev_autocorr){
+                downhill_counter++;
+                if(downhill_counter > 7*8){//assumes 8 bytes of buffer between MLS and user data
+                    break;
+                }
+            } else {
+                downhill_counter = 0;
+            }
+            prev_autocorr = new_autocorr;
         }
     }
 
+    printf("Max autocorrelation = %f\n", max_autocorr);
+
+
+
     //Pick samples from selected bank and delay
-    for (int i = 0; i<*length_bytes_out*8; i++){
+    for (int i = 0; i < (*length_bytes_out*8 + mls_total_preamble_length_bits); i++){
         //Assign each element of buffer to be the selected sample for each bit (including preamble)
         buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
     }
 
-    chopFront(&samples, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));//CHOP BUFFER, NOT SAMPLES
+    // printf("\nBest MLS samples\n");
+    // for(int i = 0; i<50; i++){
+    //     printf("%.1f ", buffer[i]);
+    // }
+    // printf("\n");
+
+    chopFront(&buffer, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out
 
-    printf("Samples before conversion to bits:\n");
-    for (unsigned int i = 0; i < (*length_bytes_out)*8; i++) {
-        printf("%.2f  ", samples[i]);
-    }
-    printf("\n\n");
+    // printf("Samples before conversion to bits:\n");
+    // for (unsigned int i = 0; i < 50; i++) {
+    //     printf("%.2f  ", buffer[i]);
+    // }
+    // printf("\n\n");
 
-    shiftDownAndNormalizeSamples(&samples, (*length_bytes_out)*8);
+    shiftDownAndNormalizeSamples(&buffer, (*length_bytes_out)*8);
 
-    uint8_t * output = samplesToBytes(samples, (*length_bytes_out)*8, 0);
+    uint8_t * output = samplesToBytes(buffer, (*length_bytes_out)*8);
 
     free(samples);
     free(buffer);
@@ -248,12 +306,12 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     float * buffer = (float *)malloc(buffersize*sizeof(float)); 
     int stuffing_len = 1300*N;//Make dependent variable based on bitrate and fade erasure length, eventually
 
-    int * output_length = (packet_data_length_with_fec_bytes*8 + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;//This is maybe throwing seg fault
+    *output_length = (packet_data_length_with_fec_bytes*8 + mls_total_preamble_length_bits)*N + buffersize + stuffing_len;//This is maybe throwing seg fault
     float * data = (float *)malloc((* output_length)*sizeof(float));
 
     while(1){
 
-        if(current_index > output_length){//might need tweak in future to be right length
+        if(current_index > *output_length){//might need tweak in future to be right length
             current_index = 0;
         }
         for (int i = 0; i < buffersize; i++){
@@ -264,9 +322,14 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
         if(calcSignalPower(buffer, buffersize) > power_threshold){
 
             //write new data first so samples aren't missed
-            for (int i = 0; i < (*output_length - buffersize - stuffing_len); i++){
-                data[buffersize + stuffing_len + i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
-                current_index++;
+            for (int i = 0; i < (*output_length - buffersize - stuffing_len -68); i++){//figure out where -68 number comes from... but its needed to fix things
+                if((ADC_output_float[current_index] < 2.0) && (ADC_output_float[current_index] > -2.0)){//TODO: fix this from accessing memory beyond array
+                    data[buffersize + stuffing_len + i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
+                    current_index++;
+                } else {
+                    data[buffersize + stuffing_len + i] = 0;
+                    current_index++;
+                }
             }
             //then copy buffer data to front
             for (int i = 0; i < buffersize; i++){
@@ -277,7 +340,7 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
                 data[i] = 0;//should these be zeroes for best autocorrelation isolation?
             }
 
-            *frame_start_index_guess = stuffing_len + buffersize/2;
+            *frame_start_index_guess = stuffing_len + buffersize/2;//11 bits due to zeroes at start of current mls
             break;
         }
     }
@@ -285,11 +348,11 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     free(buffer);
     free(ADC_output_float);
 
-    printf("Samples after power detector (excluding stuffing):\n");
-    for (unsigned int i = 0; i < (*output_length - stuffing_len); i++) {
+    printf("Samples after power detector :\n");
+    for (unsigned int i = 0; i < 50*3; i++) {
         printf("%.0f", data[stuffing_len + i]);
     }
-    printf("\n\n");
+    printf("\n");
 
     return data;
 }

@@ -259,10 +259,10 @@ void _applyFades(uint8_t *input_data, unsigned int input_data_length)
 	printf("Fades:\n");
 	for (unsigned i = 0; i < total_fades; i++){
 		int fade_start = (i*N) + __randNum(0,N-M-1);
-		int leadingZeros = 8 - (fade_start % 8);
-		int trailingZeros = (fade_start + M - 1) % 8;
-		for (int j = (int) ceil(fade_start/8); j < (int) floor(M/8); j++){
-			input_data[j] = input_data[j] | 0xff;
+		int leadingZeros = (fade_start % 8) ? 8 - (fade_start % 8) : 0;
+		int trailingZeros = (fade_start + M) % 8;
+		for (int j = fade_start/8; j < (fade_start + M)/8; j++){
+			input_data[j] = input_data[j] & 0x00;
 			printf("0");
 		}
 		printf("\n\n");

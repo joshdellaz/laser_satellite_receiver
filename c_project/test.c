@@ -54,14 +54,14 @@ bool fullSendTest(void) {
 
 	packet_data.data = generateRandPacket();
 
+	getCRC(&packet_data);
+	printf("Tx CRC: %d \n", packet_data.crc);
+
 	printf("Original Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES; i++) {
 		printf("%d,", packet_data.data[i]);
 	}
 	printf("\n\n");
-
-	getCRC(&packet_data);
-	printf("Tx CRC: %d \n", packet_data.crc);
 
 	//Commented out functions are not yet implemented, so cannot be tested
 	applyLDPC(packet_data.data); //total_num_packets);
@@ -99,8 +99,8 @@ bool fullSendTest(void) {
 
 	//Comment or un-comment, depending on the test you are trying to run
 	//TODO consider turning into macro functionality in future
-	applyChannel(frame_vector, frame_length);
-	//applyBitFlips(frame_vector, frame_length);
+	//applyChannel(frame_vector, frame_length);
+	applyBitFlips(frame_vector, frame_length);
 
 	printf("New frame (after going through channel):\n");
 	for (unsigned int i = 0; i < frame_length; i++) {
@@ -185,7 +185,7 @@ bool analogSendTest(void) { // For testing the channel model on sample stream
 	printf("Tx CRC: %d \n", packet_data.crc);
 
 	//Commented out functions are not yet implemented, so cannot be tested
-	applyLDPC(&packet_data.total_num_packets);
+	applyLDPC(packet_data.data);
 	//applyFEC(packet_data.data);
 	printf("Encoded Data:\n");
 	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {

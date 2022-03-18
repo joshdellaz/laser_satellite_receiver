@@ -226,7 +226,7 @@ bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * pack
 //is added, since input will be in samples instead of bits
 bool disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_length) {
 
-	unsigned int packet_length = 1 + CRC_DATA_LENGTH_BYTES + packet_data_length_with_fec + (2 * NUM_PACKETS_LENGTH_BYTES);
+	unsigned int packet_length = 1 + packet_data_length_with_fec; //+ CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES +
 
 	*packet = (uint8_t*)malloc((sizeof(uint8_t))*packet_length);
 
@@ -244,7 +244,7 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 	
 	//Macro usage probably okay because we ddont expect to change any of those values dynamically?
 
-	*packet_length = 1 + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES + packet_data_length_with_fec;
+	*packet_length = 1 + packet_data_length_with_fec; //+ CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES +
 	*packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
 
 	(*packet)[0] = packet_data->selected_fec_scheme;
@@ -257,13 +257,15 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 		(*packet)[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));
 	}
 
-	for (int i = 0; i < packet_data_length_with_fec; i++) {
+	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) { // changing the limit from packet_data_length_with_fec to ...
 		(*packet)[1 + 2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
 	}
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		(*packet)[1 + 2*NUM_PACKETS_LENGTH_BYTES + packet_data_length_with_fec + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
+		(*packet)[1 + 2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_NO_FEC + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
 	}
+
+	// The remaining elements will be filled by the LDPC encoder with parity bits
 
 	return 0;
 }
@@ -302,7 +304,7 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 	}
 	packet_data->current_packet_num = temp_16;
 
-	for (int i = 0; i < packet_data_length_with_fec; i++) {
+	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) { //packet_data_length_with_fec
 		(packet_data->data)[i] = packet[2*NUM_PACKETS_LENGTH_BYTES +1 + i];
 	}
 

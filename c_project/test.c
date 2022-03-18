@@ -63,20 +63,26 @@ bool fullSendTest(void) {
 	}
 	printf("\n\n");
 
-	//Commented out functions are not yet implemented, so cannot be tested
-	applyLDPC(packet_data.data); //total_num_packets);
-	//applyFEC(packet_data.data);
-	
-	printf("Encoded Data:\n");
-	for (unsigned int i = 0; i < packet_data_length_with_fec; i++) {
-		printf("%d,", packet_data.data[i]);
+	assemblePacket(&packet_data, &packet_vector, &packet_length);
+
+	printf("Packet before encoding:\n");
+	for (unsigned int i = 0; i < packet_length; i++) {
+		printf("%d,", packet_vector[i]);
 	}
 	printf("\n\n");
 
-	assemblePacket(&packet_data, &packet_vector, &packet_length);
+	applyLDPC(packet_vector); //total_num_packets);
+	printf("packet_data_length_with_fec: %d \n", packet_data_length_with_fec);
+	printf("packet_length: %d \n", packet_length);
+	
+	printf("Encoded Packet:\n");
+	for (unsigned int i = 0; i < packet_length; i++) {
+		printf("%d,", packet_vector[i]);
+	}
+	printf("\n\n");
 
-	printf("Total number of packets: %i\n", packet_data.total_num_packets);
-	printf("Current packet number: %i\n", packet_data.current_packet_num);
+	//printf("Total number of packets: %i\n", packet_data.total_num_packets);
+	//printf("Current packet number: %i\n", packet_data.current_packet_num);
 
 	applyInterleaving(packet_vector, packet_length);
 	
@@ -91,18 +97,18 @@ bool fullSendTest(void) {
 
 	applyScrambling(&frame_vector, frame_length, preamble_length);
 
-	// printf("Post-scramble:\n");
-	// for (unsigned int i = 0; i < frame_length; i++) {
-	// 	printf("%d", frame_vector[i]);
-	// }
-	// printf("\n\n");
+	printf("Frame before transmission:\n");
+	for (unsigned int i = 0; i < frame_length; i++) {
+		printf("%d", frame_vector[i]);
+	}
+	printf("\n\n");
 
 	//Comment or un-comment, depending on the test you are trying to run
 	//TODO consider turning into macro functionality in future
 	//applyChannel(frame_vector, frame_length);
 	applyBitFlips(frame_vector, frame_length);
 
-	printf("New frame (after going through channel):\n");
+	printf("Corrupted embezzling immoral Frame:\n");
 	for (unsigned int i = 0; i < frame_length; i++) {
 		printf("%d", frame_vector[i]);
 	}
@@ -118,6 +124,8 @@ bool fullSendTest(void) {
 
 	disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
 	removeInterleaving(rxpacket_vector, packet_length);
+	
+	decodeLDPC(rxpacket_vector);
 
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
 	// printf("Pre decoding:\n");
@@ -125,15 +133,12 @@ bool fullSendTest(void) {
 	// 	printf("%d,", rxpacket_data.data[i]);
 	// }
 	// printf("\n\n");
-	//removeFEC(rxpacket_data.data);
-	printf("Difference between rx and tx encoded data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES; i++) {
-		printf("%d,", (rxpacket_data.data[i] - packet_data.data[i]));
-	}
-	printf("\n\n");
 
-	
-	decodeLDPC(rxpacket_data.data);
+	// printf("Difference between rx and tx encoded data:\n");
+	// for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES; i++) {
+	// 	printf("%d,", (rxpacket_data.data[i] - packet_data.data[i]));
+	// }
+	// printf("\n\n");
 
 
 	printf("Difference between Received Corrected Data and Original Data:\n");

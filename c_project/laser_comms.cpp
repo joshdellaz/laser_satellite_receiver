@@ -38,9 +38,9 @@ extern "C" void applyLDPC(uint8_t* input) {
     ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
 
     unsigned info_len = ldpc_code.get_info_length();
-    if (info_len/8 != (PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES)) {
+    if (info_len/8 != (PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES)) {
         cout << "The chosen data length is not compatible with the picked LDPC scheme ..." << endl;
-        cout << "Length of data to be encoded (with CRC): " << PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES << endl;
+        cout << "Length of data to be encoded (with CRC): " << PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES << endl;
         cout << "LDPC input length: " << (CODEWRD_L * CODEWRD_R)/8 << endl; // TODO needs correction 
         //return;
     }
@@ -57,7 +57,7 @@ extern "C" void applyLDPC(uint8_t* input) {
         //     input_preamb >>= (15 - (i_bit % 16));
         //     info_bits.at(i_bit) = (uint8_t) (input_preamb & 0X01);
         // }
-        input_bit = input[(int) i_bit/8];
+        input_bit = input[(int) 1 + (i_bit/8)];
         input_bit >>= (7 - (i_bit % 8));
         info_bits.at(i_bit) = (uint8_t) (input_bit & 0X01);
         //printf("%i", info_bits.at(i_bit));
@@ -100,7 +100,7 @@ extern "C" void applyLDPC(uint8_t* input) {
         }
         if ((i_bit % 8) == 7) {
             if (coded_bits.at(i_bit)) {output_byte = output_byte | 0x01;}
-            input[(int) i_bit/8] = output_byte;
+            input[(int) 1 + (i_bit/8)] = output_byte;
             output_byte = (uint8_t) 0;
         }
     }
@@ -139,7 +139,7 @@ extern "C" void decodeLDPC(uint8_t* rxinput) {
     std::vector<double> llr(CODEWRD_L, 0);
     uint8_t out_bit; // used for extracting each bit from the packet data array
     for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) { // bit extraction
-        out_bit = rxinput[(int) i_bit/8];
+        out_bit = rxinput[(int) 1 + (i_bit/8)];
         out_bit >>= (7 - (i_bit % 8));
         if (out_bit & 0X01) {
             llr.at(i_bit) = -log(9); // log(1/9) log(p0/p1)
@@ -187,7 +187,7 @@ extern "C" void decodeLDPC(uint8_t* rxinput) {
         }
         if ((i_bit % 8) == 7) {
             if (decoded_cw.at(i_bit)) {out_byte = out_byte | 0x01;}
-            rxinput[(int) i_bit/8] = out_byte;
+            rxinput[(int) 1 + (i_bit/8)] = out_byte;
             out_byte = (uint8_t) 0;
         }
     }

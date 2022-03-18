@@ -46,6 +46,8 @@ bool fullSendTest(void) {
 	//Init all the things. 
 	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions
 	packet_t packet_data;//malloc this?
+	packet_data.current_packet_num = (uint16_t) 5;
+	packet_data.total_num_packets = (uint16_t) 7; 
 	packet_data.selected_fec_scheme = LDPC;
 	uint8_t* packet_vector = NULL;
 	unsigned int packet_length;
@@ -81,8 +83,8 @@ bool fullSendTest(void) {
 	}
 	printf("\n\n");
 
-	//printf("Total number of packets: %i\n", packet_data.total_num_packets);
-	//printf("Current packet number: %i\n", packet_data.current_packet_num);
+	printf("Total number of packets: %i\n", packet_data.total_num_packets);
+	printf("Current packet number: %i\n", packet_data.current_packet_num);
 
 	applyInterleaving(packet_vector, packet_length);
 	
@@ -125,7 +127,17 @@ bool fullSendTest(void) {
 	disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
 	removeInterleaving(rxpacket_vector, packet_length);
 	
+	printf("Encoded Rx Packet:\n");
+	for (unsigned int i = 0; i < packet_length; i++) {
+		printf("%d,", rxpacket_vector[i]);
+	}
+	printf("\n\n");
 	decodeLDPC(rxpacket_vector);
+	printf("Decoded Rx Packet:\n");
+	for (unsigned int i = 0; i < packet_length; i++) {
+		printf("%d,", rxpacket_vector[i]);
+	}
+	printf("\n\n");
 
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
 	// printf("Pre decoding:\n");
@@ -140,6 +152,8 @@ bool fullSendTest(void) {
 	// }
 	// printf("\n\n");
 
+	printf("Total number of packets: %i\n", rxpacket_data.total_num_packets);
+	printf("Current packet number: %i\n", rxpacket_data.current_packet_num);
 
 	printf("Difference between Received Corrected Data and Original Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {

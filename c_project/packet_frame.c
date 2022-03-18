@@ -69,7 +69,6 @@ bool checkCRC(packet_t* received_packet) {
 
 	crc_scheme   check = LIQUID_CRC_32; // error-detection scheme
 	uint32_t calcd_crc = (uint32_t)crc_generate_key(check, received_packet->data, PACKET_DATA_LENGTH_NO_FEC);
-	//printf("Rx calcd CRC: %d \n", calcd_crc);
 
 	if (received_packet->crc != calcd_crc) {
 		return 1;
@@ -284,7 +283,7 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
 		mask32 = 0;
 		mask32 = 0xFF << 8*i;
-		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[packet_length - 1 - i] << 8*i));
+		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES - i] << 8*i));
 	}
 	packet_data->crc = temp_32;
 
@@ -292,7 +291,7 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 
 		mask16 = 0;
 		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -i);
-		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[i - 1] << 8 * i));
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[i + 1] << 8 * i));
 	}
 	packet_data->total_num_packets = temp_16;
 
@@ -300,7 +299,7 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 
 		mask16 = 0;
 		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES - i);
-		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i  - 1] << 8*i));
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i + 1] << 8*i));
 	}
 	packet_data->current_packet_num = temp_16;
 

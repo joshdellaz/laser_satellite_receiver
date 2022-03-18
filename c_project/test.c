@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+void tempImg(void);
 
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec
 uint8_t * generateRandPacket(void) {
@@ -18,7 +19,25 @@ uint8_t * generateRandPacket(void) {
 	return data;
 }
 
-
+// temporary for testing image format
+// from: http://rosettacode.org/wiki/Bitmap/Write_a_PPM_file#C
+void tempImg (void){
+	const int dimx = 800, dimy = 800;
+	int i, j;
+	FILE *fp = fopen("first.ppm", "wb"); /* b - binary mode */
+	(void) fprintf(fp, "P6\n%d %d\n255\n", dimx, dimy);
+	for (j = 0; j < dimy; ++j){
+		for (i = 0; i < dimx; ++i){
+			static unsigned char color[3];
+			color[0] = i % 256;  /* red */
+			color[1] = j % 256;  /* green */
+			color[2] = (i * j) % 256;  /* blue */
+			(void) fwrite(color, 1, 3, fp);
+		}
+	}
+	(void) fclose(fp);
+	return;
+}
 //1 (maybe) lsb bit error every 8 bytes
 // void applyChannel(uint8_t * input_data, unsigned int input_data_length) {
 // 	for (unsigned int i = 0; i < input_data_length; i++) {
@@ -42,6 +61,7 @@ void getFECDataLengths(void) {
 bool fullSendTest(void) {
 	
 	printf("test\n");
+	tempImg();
 	
 	//Init all the things. 
 	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions

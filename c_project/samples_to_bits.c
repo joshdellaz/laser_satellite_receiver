@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#define PI 3.142857
+#define PI 3.1415926536 // fixed
 
 //Samples out (returned by pointer) are straight up 1s and zeroes
 //Must be un-malloc'd

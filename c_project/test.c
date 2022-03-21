@@ -345,7 +345,7 @@ void softwareDACandADC(void){
 //current issues: free(rx)
 bool fullSendTest(void) {
 	
-	say_hello();
+	
 	//Init all the things. 
 	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions
 	packet_t packet_data;//malloc this?
@@ -382,10 +382,10 @@ bool fullSendTest(void) {
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
 	unsigned int preamble_length = frame_length - packet_length;
 
-	printf("Orignal frame:\n");
-	for (unsigned int i = 0; i < frame_length; i++) {
-	//	printf("%d", frame_vector[i]);
-	}
+	// printf("Orignal frame:\n");
+	// for (unsigned int i = 0; i < frame_length; i++) {
+	// 	printf("%d", frame_vector[i]);
+	// }
 	// printf("\n\n");
 
 	// printf("Post-scramble:\n");
@@ -410,6 +410,11 @@ bool fullSendTest(void) {
 	float phase = 0;
 	float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
+
+	applyChannelToSamples(samples, numsamples); // confirm this is where channel should be applied
+	// need to soften the burst erasures for demo (by changing the transition probabilities defined in channel.h)
+
+
 	//receive samples via power detection
 	int frame_start_index_guess = 0;//start of MLS preamble guess
 	int samples_shifted_length = 0;
@@ -428,7 +433,6 @@ bool fullSendTest(void) {
 
 	//sync & demodulate
 	rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
-
 
 
 	// printf("disassembling frame \n");

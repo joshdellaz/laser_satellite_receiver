@@ -6,6 +6,7 @@
         "stdlib.h": "c",
         "liquid.h": "c",
         "samples_to_bits.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "dwf.h": "c"
     }
 }

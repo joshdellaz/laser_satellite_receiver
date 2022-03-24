@@ -3,20 +3,22 @@
         {
             "type": "cppbuild",
             "label": "C/C++: gcc build active file",
-            "command": "/usr/bin/gcc",
+            "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
                 "${fileDirname}/*.c",
                 "${fileDirname}/*.cpp",
                 "${fileDirname}/*.h",
+                "${fileDirname}/*.hpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lliquid",
                 "-lm",
                 "-lstdc++",
                 "-lm",
-                "-lliquid"
+                "-lliquid",
+                "-ldwf"
             ],
             "options": {
                 "cwd": "${fileDirname}"
@@ -25,7 +27,7 @@
                 "$gcc"
             ],
             "group": "build",
-            "detail": "compiler: /usr/bin/gcc"
+            "detail": "compiler: /usr/bin/g++"
         },
         {
             "type": "cppbuild",

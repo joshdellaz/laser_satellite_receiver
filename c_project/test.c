@@ -159,7 +159,7 @@ void simulatedAutocorSyncTest(void){
 		int j = numsamples;
 		float buffer;
 		numsamples += stuffing_len;
-		samples = realloc(samples, numsamples*sizeof(float));//Assuming this appends extra size allocated
+		samples = (float *)realloc(samples, numsamples*sizeof(float));//Assuming this appends extra size allocated
 		for(j; j >= 0; j--){
 			buffer = samples[j];
 			samples[stuffing_len + j] = buffer;
@@ -406,7 +406,7 @@ bool fullSendTest(void) {
 
 
 	//Turn to samples
-	unsigned int numsamples = 0;
+	int numsamples = 0;
 	float phase = 0;
 	float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
@@ -429,7 +429,7 @@ bool fullSendTest(void) {
 	packet_t rxpacket_data;//malloc this?
 	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
 	uint8_t* rxpacket_vector = NULL;
-	unsigned int rxpacket_length = 0;
+	int rxpacket_length = 0;
 
 	//sync & demodulate
 	rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);

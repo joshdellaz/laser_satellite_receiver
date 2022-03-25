@@ -2,6 +2,7 @@
 #include "channel.h"
 #include "samples_to_bits.h"
 #include "laser_comms.h"
+#include "ad2_io.hpp"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -13,6 +14,7 @@
 extern int mls_total_preamble_length_bits;
 extern int number_of_mls_repititions;
 #define PI 3.142857
+#define AD2_DEMO
 
 
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec_bytes
@@ -411,18 +413,29 @@ bool fullSendTest(void) {
 	float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
 
-	applyChannelToSamples(samples, numsamples); // confirm this is where channel should be applied
+	//applyChannelToSamples(samples, numsamples); // confirm this is where channel should be applied
 	// need to soften the burst erasures for demo (by changing the transition probabilities defined in channel.h)
 
 
+//TODO figure out length and naming...
+#ifdef AD2_DEMO
+	
+	float *samples_recv = (float *)malloc(numsamples*sizeof(float));
+	int frame_start_index_guess = 0;//set this to something better than zero?
+	int samples_recv_length = 0;
+	samples_recv = sendAnalogLoopback(samples, numsamples, &samples_recv_length);
+
+#else
 	//receive samples via power detection
 	int frame_start_index_guess = 0;//start of MLS preamble guess
-	int samples_shifted_length = 0;
-	float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);
+	int samples_recv_length = 0;
+	float * samples_recv= getIncomingSignalData(samples, &frame_start_index_guess, &samples_recv_length);
+
+#endif
 
 	//resample
 	int numsamples_upsampled = 0;
-	float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);
+	float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
 	frame_start_index_guess *= 4;
 
 	//Init "rx" stuff

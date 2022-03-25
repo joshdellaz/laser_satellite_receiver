@@ -47,6 +47,9 @@ void getFECDataLengths(void) {
 
 	// create arrays
 	packet_data_length_with_fec_bytes = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
+
+	// temporary fix:
+	packet_data_length_with_fec_bytes = CODEWRD_L / 8;
 }
 
 void simulatedAutocorSyncTest(void){
@@ -349,6 +352,8 @@ bool fullSendTest(void) {
 	//Init all the things. 
 	//Array pointers are init'd to NULL as they are malloc'd and re-assigned within the packetizing functions
 	packet_t packet_data;//malloc this?
+	//packet_data.current_packet_num = (uint16_t) 5; // for testing
+	//packet_data.total_num_packets = (uint16_t) 7; 
 	packet_data.selected_fec_scheme = LDPC;
 	uint8_t* packet_vector = NULL;
 	unsigned int packet_length;
@@ -367,12 +372,17 @@ bool fullSendTest(void) {
 	printf("getting CRC\n");
 	getCRC(&packet_data);
 
-	//Commented out functions are not yet implemented, so cannot be tested
-	//printf("applying FEC \n");
-	//applyFEC(packet_data.data);
+	printf("Packet CRC: %d \n", packet_data.crc);
+	printf("Packet total: %d \n", packet_data.total_num_packets);
+	printf("Packet packet_num: %d \n", packet_data.current_packet_num);
+
 
 	printf("assembling packet \n");
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
+
+	// Encoding
+	applyLDPC(packet_vector);
+
 	printf("applying interleaving \n");
 	applyInterleaving(packet_vector, packet_length);
 	//printf("scrambling eggs \n");
@@ -434,7 +444,6 @@ bool fullSendTest(void) {
 	//sync & demodulate
 	rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
 
-
 	// printf("disassembling frame \n");
 	// disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
 
@@ -444,14 +453,17 @@ bool fullSendTest(void) {
 	printf("removing interleaving \n");
 	removeInterleaving(rxpacket_vector, packet_length);
 
+	// Decoding
+	decodeLDPC(rxpacket_vector);
+
 	printf("disassembling packet \n");
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
 	//printf("removing FEC \n");
 	//removeFEC(rxpacket_data.data);
 
-	printf("Received Data:\n");
+	printf("Difference between Received and Original Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-		printf("%d", rxpacket_data.data[i]);
+		printf("%d,", rxpacket_data.data[i] - packet_data.data[i]);
 	}
 	//printBitsfromBytes(rxpacket_data.data, 10);
 	printf("\n\n");

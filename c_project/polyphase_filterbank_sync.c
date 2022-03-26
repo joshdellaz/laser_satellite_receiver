@@ -3,12 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "samples_to_bits.h"
+
+
 #include <complex.h>
 #include <liquid/liquid.h>
-#include <iostream>
-#include <iomanip>
-#include <complex>
-#include <cmath>
+
+#ifdef  __cplusplus
+   using cfloat = std::complex<float>;
+#else
+   typedef float complex cfloat;
+#endif
 
 
 #define PI 3.142857
@@ -65,7 +69,7 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
     unsigned int h_len = 16;  // filter semi-length (filter delay)
     int filter_delay = 122;
 
-    float _Complex * complexbuffer = (float _Complex*)malloc(length_samples_in*r*sizeof(float _Complex)); 
+    cfloat * complexbuffer = (cfloat*)malloc(length_samples_in*r*sizeof(cfloat)); 
 
 
     // create resampler
@@ -75,7 +79,7 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
     //unsigned int num_written = 0;   // number of values written to buffer this iteration
     unsigned int num_written_total = 0;
 
-    resamp_crcf_execute_block(q, (std::complex<float>*)samplesin, length_samples_in, (std::complex<float>*)complexbuffer, &num_written_total);//might have broken due to fixing cpp build
+    resamp_crcf_execute_block(q, (cfloat *)samplesin, length_samples_in, complexbuffer, &num_written_total);
 
     *length_samples_out = length_samples_in*r;
     if (num_written_total != *length_samples_out) {

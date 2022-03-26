@@ -12,6 +12,12 @@ using namespace std;
 #include <sys/time.h>
 #define Wait(ts) usleep((int)(1000000*ts))
 
+Wavegen wavegen;
+Scope scope;
+HDWF hdwf;
+char szError[512] = {0};
+int bufoutlen = (8000+1);//yuck
+
 
 //Because output repeats uncontrollably, a trigger condition is inserted at the start of each frame.
 //The scope receives data starting at this trigger of specified length
@@ -30,7 +36,7 @@ void sendInfWaveform(void){
     }
 
     //change this to test
-    int datalength = 50;
+    int datalength = 000;
     int delaylength = 51;
 
     int length = datalength + delaylength;
@@ -39,11 +45,11 @@ void sendInfWaveform(void){
     double offset = 0;
     double txfreq_hz = 1000000.0;
     double txfrequency = (txfreq_hz)/((double)length + 1.0);//+1 for trigger bit
-    double amplitude = 5;
+    double amplitude = 5.0;
     double symmetry = 0;
     double wait = 0;
     double run_time = 0;
-    int repeat = 1;
+    int repeat = 0;
     vector<double> vect;
     
     scope_data rxdata;
@@ -92,6 +98,7 @@ void sendInfWaveform(void){
     for (auto i: rxdata.buffer){
         std::cout << i << ' ';
     }
+    printf("\n");
         
     printf("Trimmed Rx buffer = \n\n");
     for (auto i: rxdata_trimmed){
@@ -99,44 +106,131 @@ void sendInfWaveform(void){
     }
 }
 
+
+//Input length must be 8000 because of 8192 buffer size!!!
+float * loopbackOneBuffer(float * input, int * outputlen){
+
+
+    int delaylength = 51;
+    int inputlen = 8000;
+
+    int length = inputlen + delaylength;
+    int channel = 1;
+    FUNC function = funcCustom;
+    double offset = 0;
+    double txfreq_hz = 1000000.0;
+    double txfrequency = (txfreq_hz)/((double)length + 1.0);//+1 for trigger bit
+    double amplitude = 5;
+    double symmetry = 0;
+    double wait = 0;
+    double run_time = 0;
+    int repeat = 1;
+    vector<double> vect;
+    
+    scope_data rxdata;
+    double rxfrequency = 1000000.0;
+    int rxbuffersize = (int)(((float)length))*(rxfrequency/txfreq_hz);
+    double amplitude_range = 6.0;
+
+    //add start condition then delay
+    vect.push_back(1);
+    for(int i = 0; i<delaylength; i++){
+        vect.push_back(0);
+    }
+
+    //populate data
+    for(int i = 0; i < inputlen; i++){
+        vect.push_back((double)(input[i])*3.3/5.0);
+    }
+
+    float triggerlevel = 4.5;
+    bool edge_rising = true;
+    double timeout = 0.0;
+
+
+    // printf("DAC data = \n\n");
+    // for (int i = 0; i < inputlen; i++){
+    //     printf("%.2f ", input[i]);
+    // }
+    // printf("\n");
+
+    // printf("Tx buffer = \n\n");
+    // for (auto i: vect){
+    //     std::cout << i << ' ';
+    // }
+    // printf("\n");
+
+    
+
+    //consider moving these calls to an init
+    scope.open(hdwf, rxfrequency, rxbuffersize, offset, amplitude_range);
+    scope.trigger(hdwf, true, scope.trigger_source.analog, channel, timeout, edge_rising, triggerlevel);
+
+    wavegen.generate(hdwf,channel, function, offset, txfrequency, amplitude, symmetry, wait, run_time, repeat, vect);
+
+    rxdata = scope.record(hdwf, channel, rxfrequency, rxbuffersize);
+
+    scope.close(hdwf);
+
+    printf("Rx buffer = \n\n");
+    for (auto i: rxdata.buffer){
+        std::cout << i << ' ';
+    }
+    printf("\n");
+
+    *outputlen = (inputlen+1);
+
+    float * rxdata_trimmed = (float *)malloc(sizeof(float)*(*outputlen));
+    for(int i = 0; i < *outputlen; i++){//+1 to account for imperfect offset
+        rxdata_trimmed[i] = (float)(rxdata.buffer[i]);
+    }
+
+    return rxdata_trimmed;
+
+}
+
 float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
-    Wavegen wavegen;
-    Scope scope;
 
-    HDWF hdwf;
-    char szError[512] = {0};
+    // printf("DAC data = \n\n");
+    // for (int i = 0; i < inputlen; i++){
+    //     printf("%.2f ", input[i]);
+    // }
+    // printf("\n");
 
+    int bufinlen = 8000;
+    int repititions = inputlen/bufinlen + 1;
+    *outputlen = bufoutlen*repititions;
+    float * output = (float *)malloc(sizeof(float)*(*outputlen));
+
+    for(int i = 0; i < repititions; i++){
+        float * bufout = NULL;
+        bufout = loopbackOneBuffer(input + bufinlen*i, &bufoutlen);
+        for(int j = 0; j < bufoutlen; j++){
+            output[i*bufoutlen + j] = bufout[j];
+        }
+        free(bufout);
+    }
+
+    //normalize
+    for(int i = 0; i < *outputlen; i++){
+        output[i] /= 3.3;
+    }
+
+    // printf("DAC data = \n\n");
+    // for (int i = 0; i < inputlen; i++){
+    //     printf("%.2f ", input[i]);
+    // }
+    // printf("\n");
+
+    return output;
+}
+
+void initAD2(void){
     // connect to the device
     printf("Open automatically the first available device\n");
     if(!FDwfDeviceOpen(-1, &hdwf)) {
         FDwfGetLastErrorMsg(szError);
         printf("Device open failed\n\t%s", szError);
     }
-
-    int channel = 1;
-    FUNC function = funcCustom;
-    double offset = 0;
-    double txfreq_hz = 1000000.0;
-    double txfrequency = (txfreq_hz)/((float)inputlen);//note this may be frequency of the repeated entire pattern
-    double amplitude = 3.3;
-    double symmetry = 0;
-    double wait = 0;
-    double run_time = 0;
-    int repeat = 0;
-    vector<double> vect;
-
-    scope_data rxdata;
-    double rxfrequency = 4000000.0;
-    int rxbuffersize = 8192;
-    double amplitude_range = 4;
-
-    scope.open(hdwf, rxfrequency, rxbuffersize, offset, amplitude_range);
-
-    wavegen.generate(hdwf,channel, function, offset, txfrequency, amplitude, symmetry, wait, run_time, repeat, vect);
-
-    rxdata = scope.record(hdwf, channel, rxfrequency, rxbuffersize);
-    scope.close(hdwf);
-
-    for (auto i: rxdata.buffer)
-        std::cout << i << ' ';
+    
 }

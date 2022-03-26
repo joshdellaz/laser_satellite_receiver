@@ -14,7 +14,7 @@
 extern int mls_total_preamble_length_bits;
 extern int number_of_mls_repititions;
 #define PI 3.142857
-#define AD2_DEMO
+//#define AD2_DEMO
 
 
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec_bytes
@@ -419,9 +419,10 @@ bool fullSendTest(void) {
 
 //TODO figure out length and naming...
 #ifdef AD2_DEMO
+
 	
-	float *samples_recv = (float *)malloc(numsamples*sizeof(float));
-	int frame_start_index_guess = 0;//set this to something better than zero?
+	float *samples_recv = NULL;
+	int frame_start_index_guess = 0;//consider stting this in loopback function if not working well
 	int samples_recv_length = 0;
 	samples_recv = sendAnalogLoopback(samples, numsamples, &samples_recv_length);
 

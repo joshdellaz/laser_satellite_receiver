@@ -10,10 +10,11 @@ int main(void) {
 	//sendInfWaveform();
 
 	initAD2();
+	getFECDataLengths();
+	initMLS();
 	fullSendTest();
 
-	//getFECDataLengths();
-	//initMLS();
+
 	//softwareDACandADC();
 	//simulatedAutocorSyncTest();
 

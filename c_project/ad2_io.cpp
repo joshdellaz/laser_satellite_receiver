@@ -36,8 +36,8 @@ void sendInfWaveform(void){
     }
 
     //change this to test
-    int datalength = 000;
-    int delaylength = 51;
+    int datalength = 8000;
+    int delaylength = 8025;
 
     int length = datalength + delaylength;
     int channel = 1;
@@ -53,7 +53,7 @@ void sendInfWaveform(void){
     vector<double> vect;
     
     scope_data rxdata;
-    double rxfrequency = 4000000.0;
+    double rxfrequency = 1000000.0;
     int rxbuffersize = (int)(((float)length))*(rxfrequency/txfreq_hz);
     double amplitude_range = 6.0;
 
@@ -89,7 +89,7 @@ void sendInfWaveform(void){
     scope.close(hdwf);
 
     vector<double> rxdata_trimmed;
-    for(int i = 0; i < (datalength+1)*4; i++){//+1 to account for imperfect offset
+    for(int i = 0; i < (datalength+1); i++){//+1 to account for imperfect offset
         rxdata_trimmed.push_back(rxdata.buffer[i]);
     }
 
@@ -111,7 +111,7 @@ void sendInfWaveform(void){
 float * loopbackOneBuffer(float * input, int * outputlen){
 
 
-    int delaylength = 51;
+    int delaylength = 8000;
     int inputlen = 8000;
 
     int length = inputlen + delaylength;
@@ -159,6 +159,10 @@ float * loopbackOneBuffer(float * input, int * outputlen){
     //     std::cout << i << ' ';
     // }
     // printf("\n");
+    printf("\n\noutput right before dac\n");
+    for(int j = 0; j < 100; j++){
+        printf("%.2f ", vect[delaylength+1+j]);
+    }
 
     
 
@@ -172,17 +176,27 @@ float * loopbackOneBuffer(float * input, int * outputlen){
 
     scope.close(hdwf);
 
-    printf("Rx buffer = \n\n");
-    for (auto i: rxdata.buffer){
-        std::cout << i << ' ';
+    // printf("Rx buffer = \n\n");
+    // for (auto i: rxdata.buffer){
+    //     std::cout << i << ' ';
+    // }
+    // printf("\n");
+    printf("\n\noutput right before after adc\n");
+    for(int j = 0; j < 100; j++){
+        printf("%.2f ", rxdata.buffer[j]);
     }
-    printf("\n");
+    
 
     *outputlen = (inputlen+1);
 
     float * rxdata_trimmed = (float *)malloc(sizeof(float)*(*outputlen));
     for(int i = 0; i < *outputlen; i++){//+1 to account for imperfect offset
         rxdata_trimmed[i] = (float)(rxdata.buffer[i]);
+    }
+
+    printf("\n\noutput after variable changen");
+    for(int j = 0; j < 100; j++){
+        printf("%.2f ", rxdata_trimmed[j]);
     }
 
     return rxdata_trimmed;
@@ -203,10 +217,22 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
     float * output = (float *)malloc(sizeof(float)*(*outputlen));
 
     for(int i = 0; i < repititions; i++){
+        if(i == 0){
+            printf("input\n");
+            for(int j = 0; j < 100; j++){
+                printf("%.2f ", input[j]);
+            }
+        }
         float * bufout = NULL;
         bufout = loopbackOneBuffer(input + bufinlen*i, &bufoutlen);
         for(int j = 0; j < bufoutlen; j++){
             output[i*bufoutlen + j] = bufout[j];
+        }
+        if(i == 0){
+            printf("\n\noutput\n");
+            for(int j = 0; j < 100; j++){
+                printf("%.2f ", output[j]);
+            }
         }
         free(bufout);
     }

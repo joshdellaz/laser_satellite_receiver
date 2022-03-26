@@ -108,13 +108,13 @@ void sendInfWaveform(void){
 
 
 //Input length must be 8000 because of 8192 buffer size!!!
-float * loopbackOneBuffer(float * input, int * outputlen){
+float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
 
 
     int delaylength = 8000;
-    int inputlen = 8000;
+    int maxinputlen = 8000;
 
-    int length = inputlen + delaylength;
+    int length = maxinputlen + delaylength;
     int channel = 1;
     FUNC function = funcCustom;
     double offset = 0;
@@ -139,8 +139,12 @@ float * loopbackOneBuffer(float * input, int * outputlen){
     }
 
     //populate data
-    for(int i = 0; i < inputlen; i++){
-        vect.push_back((double)(input[i])*3.3/5.0);
+    for(int i = 0; i < maxinputlen; i++){
+        if(i < inputlen){
+            vect.push_back((double)(input[i])*3.3/5.0);
+        } else {
+            vect.push_back(0);
+        }
     }
 
     float triggerlevel = 4.5;
@@ -159,10 +163,10 @@ float * loopbackOneBuffer(float * input, int * outputlen){
     //     std::cout << i << ' ';
     // }
     // printf("\n");
-    printf("\n\noutput right before dac\n");
-    for(int j = 0; j < 100; j++){
-        printf("%.2f ", vect[delaylength+1+j]);
-    }
+    // printf("\n\noutput right before dac\n");
+    // for(int j = 0; j < 100; j++){
+    //     printf("%.2f ", vect[delaylength+1+j]);
+    // }
 
     
 
@@ -181,23 +185,23 @@ float * loopbackOneBuffer(float * input, int * outputlen){
     //     std::cout << i << ' ';
     // }
     // printf("\n");
-    printf("\n\noutput right before after adc\n");
-    for(int j = 0; j < 100; j++){
-        printf("%.2f ", rxdata.buffer[j]);
-    }
+    // printf("\n\noutput right before after adc\n");
+    // for(int j = 0; j < 100; j++){
+    //     printf("%.2f ", rxdata.buffer[j]);
+    // }
     
 
-    *outputlen = (inputlen+1);
+    *outputlen = (maxinputlen+1);
 
     float * rxdata_trimmed = (float *)malloc(sizeof(float)*(*outputlen));
     for(int i = 0; i < *outputlen; i++){//+1 to account for imperfect offset
         rxdata_trimmed[i] = (float)(rxdata.buffer[i]);
     }
 
-    printf("\n\noutput after variable changen");
-    for(int j = 0; j < 100; j++){
-        printf("%.2f ", rxdata_trimmed[j]);
-    }
+    // printf("\n\noutput after variable changen");
+    // for(int j = 0; j < 100; j++){
+    //     printf("%.2f ", rxdata_trimmed[j]);
+    // }
 
     return rxdata_trimmed;
 
@@ -211,27 +215,34 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
     // }
     // printf("\n");
 
-    int bufinlen = 8000;
-    int repititions = inputlen/bufinlen + 1;
+    int maxbufinlen = 8000;
+    int bufinlen;
+    int repititions = inputlen/maxbufinlen + 1;
     *outputlen = bufoutlen*repititions;
     float * output = (float *)malloc(sizeof(float)*(*outputlen));
 
     for(int i = 0; i < repititions; i++){
-        if(i == 0){
+        if((inputlen - (i)*maxbufinlen) < maxbufinlen){//if only filling part of buffer, pass that size to loopbackOneBuffer()
+            bufinlen = inputlen - (i)*maxbufinlen;
+        } else {
+            bufinlen = maxbufinlen;
+        }
+        
+        if(i == 2){
             printf("input\n");
             for(int j = 0; j < 100; j++){
-                printf("%.2f ", input[j]);
+                printf("%.2f ", input[maxbufinlen*i + j]);
             }
         }
         float * bufout = NULL;
-        bufout = loopbackOneBuffer(input + bufinlen*i, &bufoutlen);
+        bufout = loopbackOneBuffer(input + maxbufinlen*i, bufinlen, &bufoutlen);
         for(int j = 0; j < bufoutlen; j++){
             output[i*bufoutlen + j] = bufout[j];
         }
-        if(i == 0){
+        if(i == 2){
             printf("\n\noutput\n");
             for(int j = 0; j < 100; j++){
-                printf("%.2f ", output[j]);
+                printf("%.2f ", output[i*bufoutlen + j]);
             }
         }
         free(bufout);

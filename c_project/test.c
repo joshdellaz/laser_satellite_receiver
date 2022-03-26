@@ -363,7 +363,8 @@ bool fullSendTest(void) {
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
 		printf("%d", packet_data.data[i]);
 	}
-	printBitsfromBytes(packet_data.data, 10);
+	printf("\n\n");
+	printBitsfromBytes(packet_data.data, 20);
 	printf("\n\n");
 
 	printf("getting CRC\n");
@@ -375,14 +376,17 @@ bool fullSendTest(void) {
 
 	printf("assembling packet \n");
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
-	printf("applying interleaving \n");
-	applyInterleaving(packet_vector, packet_length);
+	// printf("applying interleaving \n");
+	// applyInterleaving(packet_vector, packet_length);
 	//printf("scrambling eggs \n");
 	//applyScrambling(&packet_vector, packet_length);
 	
 	printf("assembling frame \n");
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
 	unsigned int preamble_length = frame_length - packet_length;
+	printf("\nMLS bits\n");
+	printBitsfromBytes(frame_vector, 20);
+	printf("\n\n");
 
 	// printf("Orignal frame:\n");
 	// for (unsigned int i = 0; i < frame_length; i++) {
@@ -431,11 +435,11 @@ bool fullSendTest(void) {
 	int samples_recv_length = 0;
 	samples_recv = sendAnalogLoopback(samples, numsamples, &samples_recv_length);
 
-	// printf("ADC In:\n");
-	// for (unsigned int i = 0; i < samples_recv_length/4; i++) {
-	// 	printf("%.2f ", samples_recv[i]);
-	// }
-	// printf("\n\n");
+	printf("ADC In:\n");
+	for (unsigned int i = 0; i < 100; i++) {
+		printf("%.2f ", samples_recv[i]);
+	}
+	printf("\n\n");
 
 #else
 	//receive samples via power detection
@@ -450,6 +454,12 @@ bool fullSendTest(void) {
 	float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
 	frame_start_index_guess *= 4;
 
+	// printf("Post-upsample:\n");
+	// for (unsigned int i = 0; i < 400; i++) {
+	// 	printf("%.2f ", samples_upsampled[i]);
+	// }
+	// printf("\n\n");
+
 	//Init "rx" stuff
 	packet_t rxpacket_data;//malloc this?
 	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
@@ -458,6 +468,9 @@ bool fullSendTest(void) {
 
 	//sync & demodulate
 	rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
+	// printf("\nData after syncFrame\n");
+	// printBitsfromBytes(rxpacket_vector, 20);
+	// printf("\n\n");
 
 
 	// printf("disassembling frame \n");
@@ -466,8 +479,8 @@ bool fullSendTest(void) {
 	//printf("removing eggs\n");
 	//removeScrambling(&rxpacket_vector, packet_length);
 
-	printf("removing interleaving \n");
-	removeInterleaving(rxpacket_vector, packet_length);
+	// printf("removing interleaving \n");
+	// removeInterleaving(rxpacket_vector, packet_length);
 
 	printf("disassembling packet \n");
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
@@ -478,7 +491,8 @@ bool fullSendTest(void) {
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
 		printf("%d", rxpacket_data.data[i]);
 	}
-	//printBitsfromBytes(rxpacket_data.data, 10);
+	printf("\n\n");
+	printBitsfromBytes(rxpacket_data.data, 40);
 	printf("\n\n");
 
 	if (checkCRC(&rxpacket_data)) {

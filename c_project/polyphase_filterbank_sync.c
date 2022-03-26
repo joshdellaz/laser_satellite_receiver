@@ -45,9 +45,16 @@ void initMLS(void){
 	bsequence_init_msequence(mls, ms);
 
     MLS_array = (float *)malloc(MLS_LENGTH*sizeof(float));
+    //non-flipped
     for (unsigned int i = 0; i < n; i++) {
         MLS_array[i] = (float)bsequence_index(mls, i);
     }
+    //FLIP IT
+    // for (unsigned int i = 0; i < n; i++) {
+    //     MLS_array[n - 1 - i] = (float)bsequence_index(mls, i);
+    // }
+
+
 	// printf("Generated MLS bits\n");
 	// for(int i = 0; i < 50; i++){
 	// 	printf("%d ", bitbuffer[i]);
@@ -217,7 +224,6 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     for(int i = 0; i<num_banks*N; i++){
         prev_autocorr = 0;
         for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){
-            //ADD THRESHOLD SO THAT ENTIRE RANGE DOESN'T NEED TO BE SEARCHED?
 
             for(int k = 0; k < mls_total_preamble_length_bits - 1; k++){// -2 because variable is meant to be multiple of 8
                 buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];
@@ -260,11 +266,11 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
         buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
     }
 
-    // printf("\nBest MLS samples\n");
-    // for(int i = 0; i<50; i++){
-    //     printf("%.1f ", buffer[i]);
-    // }
-    // printf("\n");
+    printf("\nBest user data samples\n");
+    for(int i = 0; i<50; i++){
+        printf("%.1f ", buffer[mls_total_preamble_length_bits + i]);
+    }
+    printf("\n");
 
     chopFront(&buffer, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out

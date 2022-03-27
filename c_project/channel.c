@@ -6,7 +6,7 @@
 #include <stdio.h>
 #define PI 3.1415926536
 
-void _createBursts(bool *, unsigned);
+void _createBursts(bool *, unsigned, int *);
 //void _createFades(bool *, unsigned);
 void _applyBursts(bool *, uint8_t *, unsigned);
 void _applyFades(uint8_t *, unsigned);
@@ -18,10 +18,10 @@ float __randF(void); // rand float between 0 and 1
 int __randNum(int, int); // rand number between lower and upper inclusive
 
 
-bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr_packet_num)
+bool applyChannelToSamples(float *samples, unsigned smpls_len, int *chnl_tracking)
 {
 	bool *bursts = (bool *)calloc(smpls_len / SAMP_PER_BIT, sizeof(bool));
-	//_createBursts(bursts, smpls_len / (8*SAMP_PER_BIT));
+	//_createBursts(bursts, smpls_len / (8*SAMP_PER_BIT), *chnl_tracking);
 	//_applyBurstsToSamples(bursts, samples, smpls_len);
 
 	_applyFadesToSamples(samples, smpls_len);
@@ -48,25 +48,25 @@ bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr
 }
 
 
-void _createBursts(bool *Bursts, unsigned input_data_length)
+void _createBursts(bool *Bursts, unsigned input_data_length, int *chnl_tracking)
 {
 	unsigned int bits_per_cyc = BIT_RATE * CHNL_CYC; // non-zero integer
 	chnl_state chnl_st;								 // current state of the channel
 	float init_st = __randF();
 
-	if (init_st < 0.250){
+	if (((init_st < 0.250) && (*chnl_tracking == 0)) || (*chnl_tracking == 1)){
 		chnl_st = GOOD_S;
 		Bursts[0] = false; // false represents absence of burst erasure
 	}
-	else if (init_st < 0.50){
+	else if (((init_st < 0.50) && (*chnl_tracking == 0)) || (*chnl_tracking == 2)){
 		chnl_st = BAD_S;
 		Bursts[0] = true; // true represents existence of burst erasure
 	}
-	else if (init_st < 0.750){
+	else if (((init_st < 0.750) && (*chnl_tracking == 0)) || (*chnl_tracking == 3)){
 		chnl_st = BAD_UNS;
 		Bursts[0] = true;
 	}
-	else{
+	else if (((init_st >= 0.750) && (*chnl_tracking == 0)) || (*chnl_tracking == 4)){
 		chnl_st = GOOD_UNS;
 		Bursts[0] = false;
 	}
@@ -94,6 +94,22 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 			case GOOD_UNS:
 				if (__randF() < P_a1) {chnl_st = BAD_UNS;} 
 				else {chnl_st = GOOD_S;}
+				break;
+			}
+		}
+		if ((i+1) >= 8*input_data_length){
+			switch (chnl_st) {
+			case GOOD_S:
+				*chnl_tracking = 1;
+				break;
+			case BAD_S:
+				*chnl_tracking = 2;
+				break;
+			case BAD_UNS:
+				*chnl_tracking = 3;
+				break;
+			case GOOD_UNS:
+				*chnl_tracking = 4;
 				break;
 			}
 		}
@@ -196,7 +212,7 @@ bool applyChannel(uint8_t *input_data, unsigned int input_data_length) // works 
 { // change description to return array of bools
 	// initialize array of bursts
 	bool *bursts = (bool *)calloc(8 * input_data_length, sizeof(bool));
-	_createBursts(bursts, input_data_length);
+	_createBursts(bursts, input_data_length, *chnl_tracking);
 	_applyBursts(bursts, input_data, input_data_length);
 	_applyFades(input_data, input_data_length);
 	

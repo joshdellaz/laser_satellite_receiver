@@ -420,8 +420,9 @@ bool fullSendTest(void) {
 	float phase = 0;
 	float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
-
-	applyChannelToSamples(samples, numsamples); // confirm this is where channel should be applied
+	int *chnl_tr;
+	*chnl_tr = 0;
+	applyChannelToSamples(samples, numsamples, *chnl_tr); // confirm this is where channel should be applied
 	// need to soften the burst erasures for demo (by changing the transition probabilities defined in channel.h)
 
 
@@ -493,3 +494,254 @@ bool fullSendTest(void) {
 // 	findAutocorrelation(uint8_t * samples){
 
 // }
+
+
+bool imageSendTest(char * filename) {
+	
+	char buff[16];
+	FILE *fp_origin, *fp_damaged, *fp_corrected;
+	int x,y, rgb_comp_color;
+
+	//open PPM file for reading
+	fp_origin = fopen(filename, "rb");
+	if (!fp_origin) {
+		fprintf(stderr, "Unable to open file '%s'\n", filename);
+		exit(1);
+	}
+	//read image format
+	if (!fgets(buff, sizeof(buff), fp_origin)) {
+		perror(filename);
+		exit(1);
+	}
+	//check the image format
+    if (buff[0] != 'P' || buff[1] != '6') {
+         fprintf(stderr, "Invalid image format (must be 'P6')\n");
+         exit(1);
+    }
+	//read image size information
+    if (fscanf(fp_origin, "%d %d", &x, &y) != 2) {
+         fprintf(stderr, "Invalid image size (error loading '%s')\n", filename);
+         exit(1);
+    }
+	printf("x, y: %d, %d\n",x,y);
+	//read rgb component
+    if (fscanf(fp_origin, "%d", &rgb_comp_color) != 1) {
+         fprintf(stderr, "Invalid rgb component (error loading '%s')\n", filename);
+         exit(1);
+    }
+    //check rgb component depth
+    if (rgb_comp_color!= 255) {
+         fprintf(stderr, "'%s' does not have 8-bits components\n", filename);
+         exit(1);
+    }
+
+	//open PPM file for writing
+	fp_damaged = fopen("damaged.ppm", "wb");
+	if (!fp_damaged) {
+		fprintf(stderr, "Unable to open file damaged.ppm\n");
+		exit(1);
+	}
+	//write the header file
+    //image format
+    fprintf(fp_damaged, "P6\n");
+    //image size
+    fprintf(fp_damaged, "%d %d\n",x,y);
+    // rgb component depth
+    fprintf(fp_damaged, "%d\n",255);
+
+
+	//open PPM file for writing
+	fp_corrected = fopen("corrected.ppm", "wb");
+	if (!fp_corrected) {
+		fprintf(stderr, "Unable to open file corrected.ppm\n");
+		exit(1);
+	}
+	//write the header file
+    //image format
+    fprintf(fp_corrected, "P6\n");
+    //image size
+    fprintf(fp_corrected, "%d %d\n",x,y);
+    // rgb component depth
+    fprintf(fp_corrected, "%d\n",255);
+
+	
+
+	packet_t packet_data;
+	packet_data.total_num_packets = (uint16_t) 3*x*y/PACKET_DATA_LENGTH_NO_FEC;
+	packet_data.total_num_packets = packet_data.total_num_packets + ((3*x*y) % PACKET_DATA_LENGTH_NO_FEC ? 1 : 0);
+	unsigned int last_packet_data_length = (3*x*y) % PACKET_DATA_LENGTH_NO_FEC;
+	packet_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
+	packet_data.selected_fec_scheme = LDPC;
+
+	uint8_t* packet_vector = NULL; //malloced in assemblePacket
+	unsigned int packet_length;
+	unsigned int frame_length;
+	uint8_t* frame_vector = NULL;//malloced in assembleFrame
+
+	packet_t rxpacket_data;
+	rxpacket_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
+	uint8_t* rxpacket_vector = NULL; //malloced in samplesToBytes
+	unsigned int rxpacket_length = 0;
+
+	for (int i = 0; i < packet_data.total_num_packets; i++){ // each iteration is a Tx and Rx of a packet
+		
+		if (fread(packet_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_origin) != 1){
+			fprintf(stderr, "Error loading image '%s'\n", filename);
+         	exit(1);
+		}
+
+		packet_data.current_packet_num = (uint16_t) i;
+		getCRC(&packet_data);
+
+		assemblePacket(&packet_data, &packet_vector, &packet_length);
+		applyLDPC(packet_vector);
+		applyInterleaving(packet_vector, packet_length);
+
+		unsigned int numsamples = 0;
+		float phase = 0;
+		float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
+
+		applyChannelToSamples(samples, numsamples, *chnl_tracking);
+
+		int frame_start_index_guess = 0;//start of MLS preamble guess
+		int samples_shifted_length = 0;
+		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);
+
+		//resample
+		int numsamples_upsampled = 0;
+		float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);
+		frame_start_index_guess *= 4;
+
+		rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
+
+		removeInterleaving(rxpacket_vector, packet_length);
+
+	}
+
+	// malloc packet_data.data based on macro size
+	// malloc packet_vector based on macro size
+	// malloc frame_vector based on macro size
+	// malloc rxpacket_vector based on macro size
+	// malloc rxpacket_data.data based on macro size
+	// fopen damaged_img and corrected_img
+	// assign packet_data.total_num_packets
+	
+	// start loop
+	// use fread to read image into packet_data.data
+	// assign packet_data.current_packet_num
+	// assign CRC
+	// vectorize packet
+	// ldpc encoding
+	// assign frame_vector
+	// sampling and channel model; keep track of chnl_state
+	// detect frame and assign rxpacket_vector
+	// write deinterleaved yet-to-be-decoded data to damaged_img file
+	// ldpc decoding
+	// disasemble rxpacket_data
+	// check CRC; flag if not matching?
+	// write decoded data to corrected_img file
+	// end loop
+
+	// fclose files
+	// free stuff
+
+
+
+
+	fclose(fp_origin);
+	fclose(fp_damaged);
+	fclose(fp_corrected);
+
+
+	// packet_data.data = generateRandPacket();
+
+	// printf("Original Data:\n");
+	// for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	// 	printf("%d", packet_data.data[i]);
+	// }
+	// printBitsfromBytes(packet_data.data, 10);
+	// printf("\n\n");
+
+	// printf("getting CRC\n");
+	// getCRC(&packet_data);
+
+	// printf("Packet CRC: %d \n", packet_data.crc);
+	// printf("Packet total: %d \n", packet_data.total_num_packets);
+	// printf("Packet packet_num: %d \n", packet_data.current_packet_num);
+
+
+	// printf("assembling packet \n");
+	// assemblePacket(&packet_data, &packet_vector, &packet_length);
+
+	// // Encoding
+	// applyLDPC(packet_vector);
+
+	// printf("applying interleaving \n");
+	// applyInterleaving(packet_vector, packet_length);
+	
+	// printf("assembling frame \n");
+	// assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
+	// unsigned int preamble_length = frame_length - packet_length;
+
+	// //Turn to samples
+	// unsigned int numsamples = 0;
+	// float phase = 0;
+	// float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
+
+
+	// applyChannelToSamples(samples, numsamples); // confirm this is where channel should be applied
+	// // need to soften the burst erasures for demo (by changing the transition probabilities defined in channel.h)
+
+
+	// //receive samples via power detection
+	// int frame_start_index_guess = 0;//start of MLS preamble guess
+	// int samples_shifted_length = 0;
+	// float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);
+
+	// //resample
+	// int numsamples_upsampled = 0;
+	// float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);
+	// frame_start_index_guess *= 4;
+
+	// //Init "rx" stuff
+	// packet_t rxpacket_data;//malloc this?
+	// rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
+	// uint8_t* rxpacket_vector = NULL;
+	// unsigned int rxpacket_length = 0;
+
+	// //sync & demodulate
+	// rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
+
+	// printf("removing interleaving \n");
+	// removeInterleaving(rxpacket_vector, packet_length);
+
+	// // Decoding
+	// decodeLDPC(rxpacket_vector);
+
+	// printf("disassembling packet \n");
+	// disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
+
+	// printf("Difference between Received and Original Data:\n");
+	// for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	// 	printf("%d,", rxpacket_data.data[i] - packet_data.data[i]);
+	// }
+	// //printBitsfromBytes(rxpacket_data.data, 10);
+	// printf("\n\n");
+
+	// if (checkCRC(&rxpacket_data)) {
+	// 	printf("CRC Doesn't Match!\n\n");
+	// }
+	// else {
+	// 	printf("CRC Matches!\n\n");
+	// }
+
+
+	// //Must free everything malloc'd
+	// printf("freeing the children \n");
+	// free(packet_data.data);
+	// free(rxpacket_data.data);
+	// free(packet_vector);
+	// free(frame_vector);
+	// free(rxpacket_vector);
+	return 0;
+}

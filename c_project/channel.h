@@ -20,6 +20,8 @@
 #define P_b2 0.050
 #define CHNL_CYC 10 // in us (e-6s) should be 50 based on the paper
 
+extern int *chnl_tracking;
+
 typedef enum chnl_state
 {
 	GOOD_UNS, // no erasure and unstable
@@ -28,6 +30,6 @@ typedef enum chnl_state
 	GOOD_S	  // no erasure and stable
 } chnl_state;
 
-bool applyChannelToSamples(float *samples, unsigned smpls_len); //, uint16_t curr_packet_num);
+bool applyChannelToSamples(float *samples, unsigned smpls_len, int *chnl_tracking); 
 bool applyChannel(uint8_t *input, unsigned int input_length);
 bool applyBitFlips(uint8_t *input, unsigned int input_length);

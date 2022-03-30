@@ -582,7 +582,7 @@ bool imageSendTest(char * filename) {
 	uint8_t* rxpacket_vector = NULL; //malloced in samplesToBytes
 	unsigned int rxpacket_length = 0;
 
-	for (int i = 0; i < 3; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
+	for (int i = 0; i < 1000; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
 		
 		if (fread(packet_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_origin) != 1){
 			fprintf(stderr, "Error loading image '%s'\n", filename);

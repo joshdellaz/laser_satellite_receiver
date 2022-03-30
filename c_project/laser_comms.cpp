@@ -15,7 +15,7 @@ using namespace std;
 // }
 
 extern "C" void applyLDPC(uint8_t* input) {
-    std::cout << "Starting LDPC encoding...\n";
+    //std::cout << "Starting LDPC encoding...\n";
     
     LdpcCode ldpc_code(0, 0);
 
@@ -32,8 +32,8 @@ extern "C" void applyLDPC(uint8_t* input) {
         cout << "The chosen code rate (" << CODEWRD_R << ") is not supported." << endl;
         return;
     }
-    cout << "The chosen code rate is " << CODEWRD_R << endl;
-    cout << "The code rate index is " << rate_index << endl;
+    //cout << "The chosen code rate is " << CODEWRD_R << endl;
+    //cout << "The code rate index is " << rate_index << endl;
     
     ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
 
@@ -111,7 +111,7 @@ extern "C" void applyLDPC(uint8_t* input) {
 extern "C" void decodeLDPC(uint8_t* rxinput) {
     // ignoring burst positions in LDPC for now
 
-    std::cout << "Starting LDPC decoding...\n";
+    //std::cout << "Starting LDPC decoding...\n";
 
     LdpcCode ldpc_code(0, 0);
 

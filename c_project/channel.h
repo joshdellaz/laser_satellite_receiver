@@ -20,7 +20,8 @@
 #define P_b2 0.050
 #define CHNL_CYC 10 // in us (e-6s) should be 50 based on the paper
 
-extern int *chnl_tracking;
+extern int chnl_tracking;
+//extern int chnl_offset = 0; // the offset of the first bit of each packet that is passed to the channel model for a continuous Markov channel cycle
 
 typedef enum chnl_state
 {
@@ -30,6 +31,6 @@ typedef enum chnl_state
 	GOOD_S	  // no erasure and stable
 } chnl_state;
 
-bool applyChannelToSamples(float *samples, unsigned smpls_len, int *chnl_tracking); 
+bool applyChannelToSamples(float *samples, unsigned smpls_len); 
 bool applyChannel(uint8_t *input, unsigned int input_length);
 bool applyBitFlips(uint8_t *input, unsigned int input_length);

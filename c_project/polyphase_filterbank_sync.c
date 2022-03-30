@@ -242,7 +242,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
         }
     }
 
-    printf("Max autocorrelation = %f\n", max_autocorr);
+    printf("Max autocorrelation = %f", max_autocorr);
 
 
 
@@ -348,11 +348,11 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     free(buffer);
     free(ADC_output_float);
 
-    printf("Samples after power detector :\n");
-    for (unsigned int i = 0; i < 50*3; i++) {
-        printf("%.0f", data[stuffing_len + i]);
-    }
-    printf("\n");
+    // printf("Samples after power detector :\n");
+    // for (unsigned int i = 0; i < 50*3; i++) {
+    //     printf("%.0f", data[stuffing_len + i]);
+    // }
+    // printf("\n");
 
     return data;
 }

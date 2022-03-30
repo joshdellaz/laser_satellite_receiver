@@ -420,9 +420,8 @@ bool fullSendTest(void) {
 	float phase = 0;
 	float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
-	int *chnl_tr;
-	*chnl_tr = 0;
-	applyChannelToSamples(samples, numsamples, *chnl_tr); // confirm this is where channel should be applied
+
+	applyChannelToSamples(samples, numsamples); // confirm this is where channel should be applied
 	// need to soften the burst erasures for demo (by changing the transition probabilities defined in channel.h)
 
 
@@ -535,6 +534,7 @@ bool imageSendTest(char * filename) {
          exit(1);
     }
 
+
 	//open PPM file for writing
 	fp_damaged = fopen("damaged.ppm", "wb");
 	if (!fp_damaged) {
@@ -565,7 +565,6 @@ bool imageSendTest(char * filename) {
     fprintf(fp_corrected, "%d\n",255);
 
 	
-
 	packet_t packet_data;
 	packet_data.total_num_packets = (uint16_t) 3*x*y/PACKET_DATA_LENGTH_NO_FEC;
 	packet_data.total_num_packets = packet_data.total_num_packets + ((3*x*y) % PACKET_DATA_LENGTH_NO_FEC ? 1 : 0);
@@ -583,7 +582,7 @@ bool imageSendTest(char * filename) {
 	uint8_t* rxpacket_vector = NULL; //malloced in samplesToBytes
 	unsigned int rxpacket_length = 0;
 
-	for (int i = 0; i < packet_data.total_num_packets; i++){ // each iteration is a Tx and Rx of a packet
+	for (int i = 0; i < 3; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
 		
 		if (fread(packet_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_origin) != 1){
 			fprintf(stderr, "Error loading image '%s'\n", filename);
@@ -592,16 +591,19 @@ bool imageSendTest(char * filename) {
 
 		packet_data.current_packet_num = (uint16_t) i;
 		getCRC(&packet_data);
+		printf(">>>> Packet %d being transmitted", i);
 
 		assemblePacket(&packet_data, &packet_vector, &packet_length);
 		applyLDPC(packet_vector);
 		applyInterleaving(packet_vector, packet_length);
 
+		assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
+
 		unsigned int numsamples = 0;
 		float phase = 0;
 		float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
-		applyChannelToSamples(samples, numsamples, *chnl_tracking);
+		applyChannelToSamples(samples, numsamples);
 
 		int frame_start_index_guess = 0;//start of MLS preamble guess
 		int samples_shifted_length = 0;
@@ -614,7 +616,27 @@ bool imageSendTest(char * filename) {
 
 		rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
 
+		// printf("\n");
+		// for (int j = 0; j < packet_data_length_with_fec_bytes; j++){
+		// 	printf("%d",rxpacket_vector[j]);
+		// }
+		// printf("\n");
+
 		removeInterleaving(rxpacket_vector, packet_length);
+
+		fwrite(&rxpacket_vector[2 * NUM_PACKETS_LENGTH_BYTES], PACKET_DATA_LENGTH_NO_FEC, 1, fp_damaged); // write to damaged file
+
+		decodeLDPC(rxpacket_vector);
+		disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
+		printf("> Packet %d received\n", rxpacket_data.current_packet_num);
+
+		if (checkCRC(&rxpacket_data)) {
+			printf("CRC Doesn't Match!\n\n");
+		}
+		else {
+			printf("CRC Matches!\n\n");
+		}
+		fwrite(rxpacket_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_corrected); // write to corrected file
 
 	}
 
@@ -651,6 +673,12 @@ bool imageSendTest(char * filename) {
 	fclose(fp_origin);
 	fclose(fp_damaged);
 	fclose(fp_corrected);
+	printf("freeing the children \n");
+	free(packet_data.data);
+	free(rxpacket_data.data);
+	free(packet_vector);
+	free(frame_vector);
+	free(rxpacket_vector);
 
 
 	// packet_data.data = generateRandPacket();

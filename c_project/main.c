@@ -4,7 +4,7 @@
 
 int packet_data_length_with_fec_bytes = 0;
 extern float * MLS_array;
-int *chnl_tracking = 0;
+int chnl_tracking = 0;
 
 int main(void) {
 	getFECDataLengths();

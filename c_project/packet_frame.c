@@ -197,9 +197,9 @@ bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * pack
 	unsigned int mls_preamble_length = 0;
 	uint8_t* mls_preamble = NULL;
 
-	printf("get MLS preamble \n");
+	//printf("get MLS preamble \n");
 	getMaximumLengthSequencePreamble(&mls_preamble, &mls_preamble_length);
-	printf("MLS preamble received \n");
+	//printf("MLS preamble received \n");
 
 	int stuffing_length = 8;//stuffing needed for sync to work properly
 	*frame_length = mls_preamble_length + packet_length + stuffing_length;
@@ -267,8 +267,8 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 	}
 
 	// checking
-	printf("packet_data_length_with_fec_bytes = %d \n", packet_data_length_with_fec_bytes);
-	printf("PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2 * NUM_PACKETS_LENGTH_BYTES = %d \n", PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2 * NUM_PACKETS_LENGTH_BYTES);
+	//printf("packet_data_length_with_fec_bytes = %d \n", packet_data_length_with_fec_bytes);
+	//printf("PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2 * NUM_PACKETS_LENGTH_BYTES = %d \n", PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2 * NUM_PACKETS_LENGTH_BYTES);
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
 		(*packet)[2 * NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_NO_FEC + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));

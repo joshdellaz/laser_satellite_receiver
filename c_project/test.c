@@ -454,11 +454,11 @@ bool fullSendTest(void) {
 	float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
 	frame_start_index_guess *= 4;
 
-	// printf("Post-upsample:\n");
-	// for (unsigned int i = 0; i < 400; i++) {
-	// 	printf("%.2f ", samples_upsampled[i]);
-	// }
-	// printf("\n\n");
+	printf("Post-upsample:\n");
+	for (unsigned int i = 0; i < 400; i++) {
+		printf("%.2f ", samples_upsampled[mls_total_preamble_length_bits*4*4 + i]);
+	}
+	printf("\n\n");
 
 	//Init "rx" stuff
 	packet_t rxpacket_data;//malloc this?

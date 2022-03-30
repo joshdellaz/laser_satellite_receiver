@@ -267,7 +267,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     }
 
     printf("\nBest user data samples\n");
-    for(int i = 0; i<50; i++){
+    for(int i = 0; i<100; i++){
         printf("%.1f ", buffer[mls_total_preamble_length_bits + i]);
     }
     printf("\n");

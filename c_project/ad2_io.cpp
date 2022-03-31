@@ -118,7 +118,7 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     int channel = 1;
     FUNC function = funcCustom;
     double offset = 0;
-    double txfreq_hz = 1000000.0;
+    double txfreq_hz = 5000000.0;
     double txfrequency = (txfreq_hz)/((double)length + 1.0);//+1 for trigger bit
     double amplitude = 5;
     double symmetry = 0;
@@ -128,7 +128,7 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     vector<double> vect;
     
     scope_data rxdata;
-    double rxfrequency = 1000000.0;
+    double rxfrequency = 5000000.0;
     int rxbuffersize = (int)(((float)length))*(rxfrequency/txfreq_hz);
     double amplitude_range = 6.0;
 
@@ -229,10 +229,10 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
         }
         
         if(i == 2){
-            // printf("input\n");
-            // for(int j = 0; j < 100; j++){
-            //     printf("%.2f ", input[maxbufinlen*i + j]);
-            // }
+            printf("input\n");
+            for(int j = 0; j < 100; j++){
+                printf("%.2f ", input[maxbufinlen*i + j]);
+            }
         }
         float * bufout = NULL;
         bufout = loopbackOneBuffer(input + maxbufinlen*i, bufinlen, &bufoutlen);
@@ -240,10 +240,10 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
             output[i*bufoutlen + j] = bufout[j];
         }
         if(i == 2){
-            // printf("\n\noutput\n");
-            // for(int j = 0; j < 100; j++){
-            //     printf("%.2f ", output[i*bufoutlen + j]);
-            // }
+            printf("\n\noutput\n");
+            for(int j = 0; j < 100; j++){
+                printf("%.2f ", output[i*bufoutlen + j]);
+            }
         }
         free(bufout);
     }

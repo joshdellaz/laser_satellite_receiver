@@ -144,12 +144,12 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 
 	//options
 	//TODO: Pick a good value for m
-	unsigned int m = 12;   // shift register length, n=2^m - 1
+	unsigned int m = 9;   // shift register length, n=2^m - 1
 	unsigned int repititions = 1;	//Number of MLS repititions in preamble
 	unsigned int mls_preamble_length_bits = (pow(2,m) - 1)*repititions; // preamble length
 
 	// create and initialize m-sequence
-	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M12);//Fix these struct name definitions... Liquid maybe borked?
+	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M9);//Fix these struct name definitions... Liquid maybe borked?
 	//msequence_print(ms);
 	unsigned int n = msequence_get_length(ms);
 

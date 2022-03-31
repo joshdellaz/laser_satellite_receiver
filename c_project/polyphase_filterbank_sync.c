@@ -17,10 +17,10 @@
 
 #define PI 3.142857
 #define IS_SIMULATION
-#define MLS_LENGTH 4095
+#define MLS_LENGTH 511
 
 int num_banks = 4;
-int mls_total_preamble_length_bits = 4095+1;// + is to make it a multiple of 8. TODO: Make dependent on MLS order/
+int mls_total_preamble_length_bits = 511+1;// + is to make it a multiple of 8. TODO: Make dependent on MLS order/
 int N = 4;
 extern int packet_data_length_with_fec_bytes;
 
@@ -32,11 +32,11 @@ void initMLS(void){
 
 	//options
 	//TODO: Pick a good value for m
-	unsigned int m = 12;   // shift register length, n=2^m - 1
+	unsigned int m = 9;   // shift register length, n=2^m - 1
 	unsigned int mls_preamble_length_bits = (pow(2,m) - 1); // preamble length
 
 	// create and initialize m-sequence
-	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M12);//Fix these struct name definitions... Liquid maybe borked?
+	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M9);//Fix these struct name definitions... Liquid maybe borked?
 	//msequence_print(ms);
 	unsigned int n = msequence_get_length(ms);
 

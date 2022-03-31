@@ -229,10 +229,10 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
         }
         
         if(i == 2){
-            printf("input\n");
-            for(int j = 0; j < 100; j++){
-                printf("%.2f ", input[maxbufinlen*i + j]);
-            }
+            // printf("input\n");
+            // for(int j = 0; j < 100; j++){
+            //     printf("%.2f ", input[maxbufinlen*i + j]);
+            // }
         }
         float * bufout = NULL;
         bufout = loopbackOneBuffer(input + maxbufinlen*i, bufinlen, &bufoutlen);
@@ -240,10 +240,10 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
             output[i*bufoutlen + j] = bufout[j];
         }
         if(i == 2){
-            printf("\n\noutput\n");
-            for(int j = 0; j < 100; j++){
-                printf("%.2f ", output[i*bufoutlen + j]);
-            }
+            // printf("\n\noutput\n");
+            // for(int j = 0; j < 100; j++){
+            //     printf("%.2f ", output[i*bufoutlen + j]);
+            // }
         }
         free(bufout);
     }

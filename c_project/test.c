@@ -15,7 +15,9 @@ extern int mls_total_preamble_length_bits;
 extern int number_of_mls_repititions;
 #define PI 3.142857
 #define AD2_DEMO
-
+//#define LDPC_ENABLED
+//#define CHANNEL_ENABLED
+//#define INTRLV_SCRMBL_ENABLED
 
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec_bytes
 uint8_t * generateRandPacket(void) {
@@ -376,10 +378,12 @@ bool fullSendTest(void) {
 
 	printf("assembling packet \n");
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
-	// printf("applying interleaving \n");
-	// applyInterleaving(packet_vector, packet_length);
-	//printf("scrambling eggs \n");
-	//applyScrambling(&packet_vector, packet_length);
+#ifdef INTRLV_SCRMBL_ENABLED
+	printf("applying interleaving \n");
+	applyInterleaving(packet_vector, packet_length);
+	printf("scrambling eggs \n");
+	applyScrambling(&packet_vector, packet_length);
+#endif
 	
 	printf("assembling frame \n");
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
@@ -417,8 +421,9 @@ bool fullSendTest(void) {
 	float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
 
-	//applyChannelToSamples(samples, numsamples); // confirm this is where channel should be applied
-	// need to soften the burst erasures for demo (by changing the transition probabilities defined in channel.h)
+#ifdef CHANNEL_ENABLED
+	applyChannelToSamples(samples, numsamples);
+#endif	//need to soften the burst erasures for demo (by changing the transition probabilities defined in channel.h)
 
 
 //TODO figure out length and naming...
@@ -475,12 +480,13 @@ bool fullSendTest(void) {
 
 	// printf("disassembling frame \n");
 	// disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
+#ifdef INTRLV_SCRMBL_ENABLED
+	printf("removing eggs\n");
+	removeScrambling(&rxpacket_vector, packet_length);
 
-	//printf("removing eggs\n");
-	//removeScrambling(&rxpacket_vector, packet_length);
-
-	// printf("removing interleaving \n");
-	// removeInterleaving(rxpacket_vector, packet_length);
+	printf("removing interleaving \n");
+	removeInterleaving(rxpacket_vector, packet_length);
+#endif
 
 	printf("disassembling packet \n");
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
@@ -615,7 +621,7 @@ bool imageSendTest(char * filename) {
 	packet_data.total_num_packets = (uint16_t) 3*x*y/PACKET_DATA_LENGTH_NO_FEC;
 	packet_data.total_num_packets = packet_data.total_num_packets + ((3*x*y) % PACKET_DATA_LENGTH_NO_FEC ? 1 : 0);
 	unsigned int last_packet_data_length = (3*x*y) % PACKET_DATA_LENGTH_NO_FEC;
-	packet_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
+	packet_data.data = (uint8_t*)malloc((packet_data_length_with_fec_bytes)* sizeof(uint8_t)); //malloced
 	packet_data.selected_fec_scheme = LDPC;
 
 	uint8_t* packet_vector = NULL; //malloced in assemblePacket
@@ -624,7 +630,7 @@ bool imageSendTest(char * filename) {
 	uint8_t* frame_vector = NULL;//malloced in assembleFrame
 
 	packet_t rxpacket_data;
-	rxpacket_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
+	rxpacket_data.data = (uint8_t*)malloc((packet_data_length_with_fec_bytes)* sizeof(uint8_t)); //malloced
 	uint8_t* rxpacket_vector = NULL; //malloced in samplesToBytes
 	int rxpacket_length = 0;
 
@@ -640,24 +646,54 @@ bool imageSendTest(char * filename) {
 		printf(">>>> Packet %d being transmitted", i);
 
 		assemblePacket(&packet_data, &packet_vector, &packet_length);
+#ifdef LDPC_ENABLED
 		applyLDPC(packet_vector);
+#endif
+#ifdef INTRLV_SCRMBL_ENABLED
+		printf("applying interleaving \n");
 		applyInterleaving(packet_vector, packet_length);
-
+		printf("scrambling eggs \n");
+		applyScrambling(&packet_vector, packet_length);
+#endif
 		assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
 
 		int numsamples = 0;
 		float phase = 0;
 		float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
+#ifdef CHANNEL_ENABLED
 		applyChannelToSamples(samples, numsamples);
+#endif
 
+#ifdef AD2_DEMO
+
+		// printf("DAC Out:\n");
+		// for (unsigned int i = 0; i < numsamples/4; i++) {
+		// 	printf("%.2f ", samples[i]);
+		// }
+		// printf("\n\n");
+		
+		float *samples_recv = NULL;
+		int frame_start_index_guess = 0;//consider stting this in loopback function if not working well
+		int samples_recv_length = 0;
+		samples_recv = sendAnalogLoopback(samples, numsamples, &samples_recv_length);
+
+		// printf("ADC In:\n");
+		// for (unsigned int i = 0; i < 100; i++) {
+		// 	printf("%.2f ", samples_recv[i]);
+		// }
+		// printf("\n\n");
+
+#else
+		//receive samples via power detection
 		int frame_start_index_guess = 0;//start of MLS preamble guess
-		int samples_shifted_length = 0;
-		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);
+		int samples_recv_length = 0;
+		float * samples_recv= getIncomingSignalData(samples, &frame_start_index_guess, &samples_recv_length);
 
+#endif
 		//resample
 		int numsamples_upsampled = 0;
-		float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);
+		float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
 		frame_start_index_guess *= 4;
 
 		rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
@@ -668,11 +704,18 @@ bool imageSendTest(char * filename) {
 		// }
 		// printf("\n");
 
+#ifdef INTRLV_SCRMBL_ENABLED
+		printf("removing eggs\n");
+		removeScrambling(&rxpacket_vector, packet_length);
+
+		printf("removing interleaving \n");
 		removeInterleaving(rxpacket_vector, packet_length);
+#endif
 
 		fwrite(&rxpacket_vector[2 * NUM_PACKETS_LENGTH_BYTES], PACKET_DATA_LENGTH_NO_FEC, 1, fp_damaged); // write to damaged file
-
+#ifdef LDPC_ENABLED
 		decodeLDPC(rxpacket_vector);
+#endif
 		disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
 		printf("> Packet %d received\n", rxpacket_data.current_packet_num);
 

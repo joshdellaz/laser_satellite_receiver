@@ -12,9 +12,13 @@ int main(void) {
 	initAD2();
 	getFECDataLengths();
 	initMLS();
-	//fullSendTest();
+	int repititions = 5;
+	for(int i = 0; i < repititions; i++){
+		fullSendTest();
+	}
 	
-	imageSendTest("sample.ppm");
+	
+	//imageSendTest("sample.ppm");
 
 
 	//softwareDACandADC();

@@ -239,9 +239,11 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
             // }
 
             if(new_autocorr > max_autocorr){
-                max_autocorr = new_autocorr;
-                best_bank = i;//best_sample_in_bit?
-                best_shift_bits = j;
+                if(new_autocorr < MLS_LENGTH){//crude fix for ~inf autocor values. find root cause and improve fix
+                    max_autocorr = new_autocorr;
+                    best_bank = i;//best_sample_in_bit?
+                    best_shift_bits = j;
+                }
             }
 
             if(new_autocorr < prev_autocorr){

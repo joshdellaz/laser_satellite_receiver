@@ -521,21 +521,180 @@ bool fullSendTest(void) {
 
 // }
 
-//Reads from file. Should write file with identical contents if everything goes well!
-//Consider adding code to check that file contents match...
-bool fullSendTest_FileIO(void){
+// //TODO
+// //Reads from file. Should write file with identical contents if everything goes well!
+// //Consider adding code to check that file contents match...
+// bool fullSendTest_FileIO(void){
 
-	int input_file_len = 0;
-	uint8_t * inputdata;
-	readFiletoArray("test_input.txt", inputdata, &input_file_len);
-	int tx_frames_len = 0;
-	uint8_t * tx_frames;
-	fragmentDataBufferIntoFrames(inputdata, input_file_len, tx_frames, &tx_frames_len);
+// 	int input_file_len = 0;
+// 	uint8_t * inputdata;
+// 	readFiletoArray("test_input.txt", inputdata, &input_file_len);
+// 	int tx_frames_len = 0;
+// 	uint8_t * tx_frames;
+// 	fragmentDataBufferIntoFrames(inputdata, input_file_len, tx_frames, &tx_frames_len);
 
-	//Consider adding channel and/or all analog stuff here...
+// 	//Consider adding channel and/or all analog stuff here...
 
-	int output_file_len = 0;
-	uint8_t * rxdata;
-	assembleFramesIntoDataBuffer(tx_frames, tx_frames_len, rxdata, &output_file_len);
-	writeArraytoFile("test_output.txt", rxdata, output_file_len);
+// 	int output_file_len = 0;
+// 	uint8_t * rxdata;
+// 	assembleFramesIntoDataBuffer(tx_frames, tx_frames_len, rxdata, &output_file_len);
+// 	writeArraytoFile("test_output.txt", rxdata, output_file_len);
+// }
+
+bool imageSendTest(char * filename) {
+	
+	char buff[16];
+	FILE *fp_origin, *fp_damaged, *fp_corrected;
+	int x,y, rgb_comp_color;
+
+	//open PPM file for reading
+	fp_origin = fopen(filename, "rb");
+	if (!fp_origin) {
+		fprintf(stderr, "Unable to open file '%s'\n", filename);
+		exit(1);
+	}
+	//read image format
+	if (!fgets(buff, sizeof(buff), fp_origin)) {
+		perror(filename);
+		exit(1);
+	}
+	//check the image format
+    if (buff[0] != 'P' || buff[1] != '6') {
+         fprintf(stderr, "Invalid image format (must be 'P6')\n");
+         exit(1);
+    }
+	//read image size information
+    if (fscanf(fp_origin, "%d %d", &x, &y) != 2) {
+         fprintf(stderr, "Invalid image size (error loading '%s')\n", filename);
+         exit(1);
+    }
+	printf("x, y: %d, %d\n",x,y);
+	//read rgb component
+    if (fscanf(fp_origin, "%d", &rgb_comp_color) != 1) {
+         fprintf(stderr, "Invalid rgb component (error loading '%s')\n", filename);
+         exit(1);
+    }
+    //check rgb component depth
+    if (rgb_comp_color!= 255) {
+         fprintf(stderr, "'%s' does not have 8-bits components\n", filename);
+         exit(1);
+    }
+
+
+	//open PPM file for writing
+	fp_damaged = fopen("damaged.ppm", "wb");
+	if (!fp_damaged) {
+		fprintf(stderr, "Unable to open file damaged.ppm\n");
+		exit(1);
+	}
+	//write the header file
+    //image format
+    fprintf(fp_damaged, "P6\n");
+    //image size
+    fprintf(fp_damaged, "%d %d\n",x,y);
+    // rgb component depth
+    fprintf(fp_damaged, "%d\n",255);
+
+
+	//open PPM file for writing
+	fp_corrected = fopen("corrected.ppm", "wb");
+	if (!fp_corrected) {
+		fprintf(stderr, "Unable to open file corrected.ppm\n");
+		exit(1);
+	}
+	//write the header file
+    //image format
+    fprintf(fp_corrected, "P6\n");
+    //image size
+    fprintf(fp_corrected, "%d %d\n",x,y);
+    // rgb component depth
+    fprintf(fp_corrected, "%d\n",255);
+
+	
+	packet_t packet_data;
+	packet_data.total_num_packets = (uint16_t) 3*x*y/PACKET_DATA_LENGTH_NO_FEC;
+	packet_data.total_num_packets = packet_data.total_num_packets + ((3*x*y) % PACKET_DATA_LENGTH_NO_FEC ? 1 : 0);
+	unsigned int last_packet_data_length = (3*x*y) % PACKET_DATA_LENGTH_NO_FEC;
+	packet_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
+	packet_data.selected_fec_scheme = LDPC;
+
+	uint8_t* packet_vector = NULL; //malloced in assemblePacket
+	unsigned int packet_length;
+	unsigned int frame_length;
+	uint8_t* frame_vector = NULL;//malloced in assembleFrame
+
+	packet_t rxpacket_data;
+	rxpacket_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
+	uint8_t* rxpacket_vector = NULL; //malloced in samplesToBytes
+	int rxpacket_length = 0;
+
+	for (int i = 0; i < 1000; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
+		
+		if (fread(packet_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_origin) != 1){
+			fprintf(stderr, "Error loading image '%s'\n", filename);
+         	exit(1);
+		}
+
+		packet_data.current_packet_num = (uint16_t) i;
+		getCRC(&packet_data);
+		printf(">>>> Packet %d being transmitted", i);
+
+		assemblePacket(&packet_data, &packet_vector, &packet_length);
+		applyLDPC(packet_vector);
+		applyInterleaving(packet_vector, packet_length);
+
+		assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
+
+		int numsamples = 0;
+		float phase = 0;
+		float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
+
+		applyChannelToSamples(samples, numsamples);
+
+		int frame_start_index_guess = 0;//start of MLS preamble guess
+		int samples_shifted_length = 0;
+		float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);
+
+		//resample
+		int numsamples_upsampled = 0;
+		float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);
+		frame_start_index_guess *= 4;
+
+		rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
+
+		// printf("\n");
+		// for (int j = 0; j < packet_data_length_with_fec_bytes; j++){
+		// 	printf("%d",rxpacket_vector[j]);
+		// }
+		// printf("\n");
+
+		removeInterleaving(rxpacket_vector, packet_length);
+
+		fwrite(&rxpacket_vector[2 * NUM_PACKETS_LENGTH_BYTES], PACKET_DATA_LENGTH_NO_FEC, 1, fp_damaged); // write to damaged file
+
+		decodeLDPC(rxpacket_vector);
+		disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
+		printf("> Packet %d received\n", rxpacket_data.current_packet_num);
+
+		if (checkCRC(&rxpacket_data)) {
+			printf("CRC Doesn't Match!\n\n");
+		}
+		else {
+			printf("CRC Matches!\n\n");
+		}
+		fwrite(rxpacket_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_corrected); // write to corrected file
+
+	}
+
+	fclose(fp_origin);
+	fclose(fp_damaged);
+	fclose(fp_corrected);
+	printf("freeing the children \n");
+	free(packet_data.data);
+	free(rxpacket_data.data);
+	free(packet_vector);
+	free(frame_vector);
+	free(rxpacket_vector);
+
+	return 0;
 }

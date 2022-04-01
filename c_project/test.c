@@ -14,9 +14,9 @@
 extern int mls_total_preamble_length_bits;
 extern int number_of_mls_repititions;
 #define PI 3.142857
-//#define AD2_DEMO
+#define AD2_DEMO
 #define LDPC_ENABLED
-//#define CHANNEL_ENABLED
+#define CHANNEL_ENABLED
 #define INTRLV_SCRMBL_ENABLED
 
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec_bytes

@@ -252,22 +252,22 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 	*packet_length = packet_data_length_with_fec_bytes;
 	*packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
 
-	(*packet)[0] = packet_data->selected_fec_scheme;
+	//(*packet)[0] = packet_data->selected_fec_scheme;//commented out for demo
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		(*packet)[1 + i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES - 1 - i));
+		(*packet)[i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES - 1 - i));
 	}
 	
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		(*packet)[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));
+		(*packet)[NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));
 	}
 
-	for (int i = 0; i < packet_data_length_with_fec_bytes - 1 - 2 * NUM_PACKETS_LENGTH_BYTES; i++) {
-		(*packet)[1 + 2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
+	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+		(*packet)[2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
 	}
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		(*packet)[packet_data_length_with_fec_bytes - CRC_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
+		(*packet)[2 * NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_NO_FEC + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
 	}
 
 	return 0;
@@ -287,28 +287,29 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
 		mask32 = 0;
 		mask32 = 0xFF << 8*i;
-		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[packet_length - 1 - i] << 8*i));
+		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES - 1 - i] << 8*i));
 	}
 	packet_data->crc = temp_32;
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
 
 		mask16 = 0;
-		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -i);
-		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[i - 1] << 8 * i));
+		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -1 -i);
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[i] << 8 * (NUM_PACKETS_LENGTH_BYTES -1 -i)));
 	}
 	packet_data->total_num_packets = temp_16;
+	temp_16 = 0;
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
 
 		mask16 = 0;
-		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES - i);
-		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i  - 1] << 8*i));
+		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -1 - i);
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i  - 1] << 8 * (NUM_PACKETS_LENGTH_BYTES -1 -i)));
 	}
 	packet_data->current_packet_num = temp_16;
 
-	for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
-		(packet_data->data)[i] = packet[2*NUM_PACKETS_LENGTH_BYTES +1 + i];
+	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+		(packet_data->data)[i] = packet[2*NUM_PACKETS_LENGTH_BYTES + i];
 	}
 
 	return 0;

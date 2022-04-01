@@ -6,6 +6,7 @@
 #include <random>
 #include <iomanip> 
 #include <math.h>
+#include <vector>
 
 
 using namespace std;
@@ -14,7 +15,7 @@ using namespace std;
 
 // }
 
-extern "C" void applyLDPC(uint8_t* input) {
+void applyLDPC(uint8_t* input) {
     std::cout << "Starting LDPC encoding...\n";
     
     LdpcCode ldpc_code(0, 0);
@@ -108,7 +109,7 @@ extern "C" void applyLDPC(uint8_t* input) {
 }
 
 
-extern "C" void decodeLDPC(uint8_t* rxinput) {
+void decodeLDPC(uint8_t* rxinput) {
     // ignoring burst positions in LDPC for now
 
     std::cout << "Starting LDPC decoding...\n";

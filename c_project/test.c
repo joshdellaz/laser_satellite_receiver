@@ -15,7 +15,7 @@ extern int mls_total_preamble_length_bits;
 extern int number_of_mls_repititions;
 #define PI 3.142857
 #define AD2_DEMO
-//#define LDPC_ENABLED
+#define LDPC_ENABLED
 //#define CHANNEL_ENABLED
 #define INTRLV_SCRMBL_ENABLED
 
@@ -667,22 +667,10 @@ bool imageSendTest(char * filename) {
 
 #ifdef AD2_DEMO
 
-		// printf("DAC Out:\n");
-		// for (unsigned int i = 0; i < numsamples/4; i++) {
-		// 	printf("%.2f ", samples[i]);
-		// }
-		// printf("\n\n");
-		
 		float *samples_recv = NULL;
 		int frame_start_index_guess = 0;//consider stting this in loopback function if not working well
 		int samples_recv_length = 0;
 		samples_recv = sendAnalogLoopback(samples, numsamples, &samples_recv_length);
-
-		// printf("ADC In:\n");
-		// for (unsigned int i = 0; i < 100; i++) {
-		// 	printf("%.2f ", samples_recv[i]);
-		// }
-		// printf("\n\n");
 
 #else
 		//receive samples via power detection
@@ -698,11 +686,6 @@ bool imageSendTest(char * filename) {
 
 		rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
 
-		// printf("\n");
-		// for (int j = 0; j < packet_data_length_with_fec_bytes; j++){
-		// 	printf("%d",rxpacket_vector[j]);
-		// }
-		// printf("\n");
 
 #ifdef INTRLV_SCRMBL_ENABLED
 		printf("removing eggs\n");
@@ -726,18 +709,18 @@ bool imageSendTest(char * filename) {
 			printf("CRC Matches!\n\n");
 		}
 		fwrite(rxpacket_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_corrected); // write to corrected file
-
+		
+		printf("freeing the children \n");
+		free(packet_vector);
+		free(frame_vector);
+		free(rxpacket_vector);
 	}
 
 	fclose(fp_origin);
 	fclose(fp_damaged);
 	fclose(fp_corrected);
-	printf("freeing the children \n");
 	free(packet_data.data);
 	free(rxpacket_data.data);
-	free(packet_vector);
-	free(frame_vector);
-	free(rxpacket_vector);
 
 	return 0;
 }

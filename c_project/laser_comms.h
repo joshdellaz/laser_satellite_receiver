@@ -2,11 +2,11 @@
 
 // ignoring burst positions in LDPC for now
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void applyLDPC(uint8_t *);
-void decodeLDPC(uint8_t *);
-#ifdef __cplusplus
-}
-#endif
+// #ifdef __cplusplus
+// extern "C" {
+// #endif
+void applyLDPC(uint8_t * input);
+void decodeLDPC(uint8_t * rxinput);
+// #ifdef __cplusplus
+// }
+// #endif

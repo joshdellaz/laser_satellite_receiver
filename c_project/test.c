@@ -17,7 +17,7 @@ extern int number_of_mls_repititions;
 #define AD2_DEMO
 //#define LDPC_ENABLED
 //#define CHANNEL_ENABLED
-//#define INTRLV_SCRMBL_ENABLED
+#define INTRLV_SCRMBL_ENABLED
 
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec_bytes
 uint8_t * generateRandPacket(void) {
@@ -599,7 +599,7 @@ bool imageSendTest(char * filename) {
     //image size
     fprintf(fp_damaged, "%d %d\n",x,y);
     // rgb component depth
-    fprintf(fp_damaged, "%d\n",255);
+    fprintf(fp_damaged, "%d",255);//no newline, since it is transmitted from file
 
 
 	//open PPM file for writing
@@ -614,7 +614,7 @@ bool imageSendTest(char * filename) {
     //image size
     fprintf(fp_corrected, "%d %d\n",x,y);
     // rgb component depth
-    fprintf(fp_corrected, "%d\n",255);
+    fprintf(fp_corrected, "%d",255);//no newline, since it is transmitted from file
 
 	
 	packet_t packet_data;
@@ -634,7 +634,7 @@ bool imageSendTest(char * filename) {
 	uint8_t* rxpacket_vector = NULL; //malloced in samplesToBytes
 	int rxpacket_length = 0;
 
-	for (int i = 0; i < 1000; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
+	for (int i = 0; i < 11000; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
 		
 		if (fread(packet_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_origin) != 1){
 			fprintf(stderr, "Error loading image '%s'\n", filename);

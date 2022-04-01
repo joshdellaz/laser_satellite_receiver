@@ -216,7 +216,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     float max_autocorr = 0;
     int best_bank = 0;
     int best_shift_bits = 0;
-    int max_shiftleft_bits = 1300;
+    int max_shiftleft_bits = 100;
     int max_shiftright_bits = 200;
     int downhill_counter = 0;
     //printf("\nautocorrelation vals:\n");

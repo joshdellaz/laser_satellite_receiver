@@ -5,16 +5,16 @@
 /// Channel stuff
 #define BIT_RATE 1 // in Mbps (should be 25)
 #define SAMP_PER_BIT 4
-#define BURST_VALUE 2 // = sample during a burst... should be something significantly higher than normal readings
-#define FADE_VALUE -1
-#define SNR_DB	10 // for AWGN noise
+#define BURST_VALUE 1 // = sample during a burst... should be something significantly higher than normal readings
+#define FADE_VALUE 0
+#define SNR_DB	50 // for AWGN noise
 #define FADE_FREQ 770 // per second, estimation based on KT06-04 results around 25 degree elevation = 3 or 4
-#define FADE_LEN 250 // in us (equals bits at 1 Mbps)
+#define FADE_LEN 100 // in us (equals bits at 1 Mbps)
 
 #define BIT_FLIP_FREQ 5 // increase to reduce probability of the bit flippage
 
 // Parameters which are based on the paper
-#define P_a1 0.270
+#define P_a1 0.270 
 #define P_a2 0.060
 #define P_b1 0.240
 #define P_b2 0.050

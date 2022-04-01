@@ -26,12 +26,12 @@ bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr
 
 	_applyFadesToSamples(samples, smpls_len);
 
-	printf("Note: samples of bursts are replaced by %d and faded ones by %d \n", BURST_VALUE, FADE_VALUE);
-	printf("Samples before AWGN:\n");
-	for (unsigned i = 0; i < smpls_len; i++) {
-		printf("%.0f", samples[i]);
-	}
-	printf("\n\n");
+	// printf("Note: samples of bursts are replaced by %d and faded ones by %d \n", BURST_VALUE, FADE_VALUE);
+	// printf("Samples before AWGN:\n");
+	// for (unsigned i = 0; i < smpls_len; i++) {
+	// 	printf("%.0f", samples[i]);
+	// }
+	// printf("\n\n");
 
 	//float current_packet_snr = _calcSNR(curr_packet_num);
 

@@ -304,7 +304,7 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 
 		mask16 = 0;
 		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -1 - i);
-		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i  - 1] << 8 * (NUM_PACKETS_LENGTH_BYTES -1 -i)));
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i] << 8 * (NUM_PACKETS_LENGTH_BYTES -1 -i)));
 	}
 	packet_data->current_packet_num = temp_16;
 

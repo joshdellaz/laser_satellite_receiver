@@ -41,6 +41,7 @@
         "typeinfo": "cpp",
         "utility": "cpp",
         "laser_comms.h": "c",
-        "channel.h": "c"
+        "channel.h": "c",
+        "stdio.h": "c"
     }
 }

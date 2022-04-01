@@ -14,7 +14,7 @@
 extern int mls_total_preamble_length_bits;
 extern int number_of_mls_repititions;
 #define PI 3.142857
-#define AD2_DEMO
+//#define AD2_DEMO
 #define LDPC_ENABLED
 //#define CHANNEL_ENABLED
 #define INTRLV_SCRMBL_ENABLED
@@ -50,7 +50,8 @@ void printBitsfromBytes(uint8_t * data, unsigned int lengthbytestoprint){
 void getFECDataLengths(void) {
 
 	// create arrays
-	packet_data_length_with_fec_bytes = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
+	//packet_data_length_with_fec_bytes = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
+	packet_data_length_with_fec_bytes = CODEWRD_L / 8;
 }
 
 void simulatedAutocorSyncTest(void){
@@ -621,7 +622,7 @@ bool imageSendTest(char * filename) {
 	packet_data.total_num_packets = (uint16_t) 3*x*y/PACKET_DATA_LENGTH_NO_FEC;
 	packet_data.total_num_packets = packet_data.total_num_packets + ((3*x*y) % PACKET_DATA_LENGTH_NO_FEC ? 1 : 0);
 	unsigned int last_packet_data_length = (3*x*y) % PACKET_DATA_LENGTH_NO_FEC;
-	packet_data.data = (uint8_t*)malloc((packet_data_length_with_fec_bytes)* sizeof(uint8_t)); //malloced
+	packet_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
 	packet_data.selected_fec_scheme = LDPC;
 
 	uint8_t* packet_vector = NULL; //malloced in assemblePacket
@@ -630,7 +631,7 @@ bool imageSendTest(char * filename) {
 	uint8_t* frame_vector = NULL;//malloced in assembleFrame
 
 	packet_t rxpacket_data;
-	rxpacket_data.data = (uint8_t*)malloc((packet_data_length_with_fec_bytes)* sizeof(uint8_t)); //malloced
+	rxpacket_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
 	uint8_t* rxpacket_vector = NULL; //malloced in samplesToBytes
 	int rxpacket_length = 0;
 

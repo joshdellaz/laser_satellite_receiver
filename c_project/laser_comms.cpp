@@ -11,15 +11,17 @@
 
 using namespace std;
 
-// extern "C" void initLDPC(LdpcCode * ldpc_scheme) {
+LdpcCode ldpc_code(0,0);
 
-// }
+void initLDPC(void) {
+    unsigned rate_index = 0; 
+    //LdpcCode ldpc_code(0, 0);
+    ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
+}
 
 void applyLDPC(uint8_t* input) {
     std::cout << "Starting LDPC encoding...\n";
     
-    LdpcCode ldpc_code(0, 0);
-
     unsigned block_length = CODEWRD_L; // parametarize this
 
     unsigned rate_index;  // parametarize this
@@ -36,8 +38,6 @@ void applyLDPC(uint8_t* input) {
     cout << "The chosen code rate is " << CODEWRD_R << endl;
     cout << "The code rate index is " << rate_index << endl;
     
-    ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
-
     unsigned info_len = ldpc_code.get_info_length();
     if (info_len/8 != (PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES)) {
         cout << "The chosen data length is not compatible with the picked LDPC scheme ..." << endl;

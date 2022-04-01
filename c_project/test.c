@@ -51,7 +51,7 @@ void getFECDataLengths(void) {
 
 	// create arrays
 	//packet_data_length_with_fec_bytes = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
-	packet_data_length_with_fec_bytes = CODEWRD_L / 8;
+	packet_data_length_with_fec_bytes = (CODEWRD_L / 8)*NUM_BLOCKS_PCKT;
 }
 
 void simulatedAutocorSyncTest(void){

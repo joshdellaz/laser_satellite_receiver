@@ -37,15 +37,15 @@ void sendInfWaveform(void){
 
     //change this to test
     int datalength = 8000;
-    int delaylength = 8025;
+    int delaylength = 8000;
 
     int length = datalength + delaylength;
     int channel = 1;
     FUNC function = funcCustom;
     double offset = 0;
-    double txfreq_hz = 1000000.0;
+    double txfreq_hz = 5000000.0/4.0;
     double txfrequency = (txfreq_hz)/((double)length + 1.0);//+1 for trigger bit
-    double amplitude = 5.0;
+    double amplitude = 3.3;
     double symmetry = 0;
     double wait = 0;
     double run_time = 0;
@@ -57,18 +57,18 @@ void sendInfWaveform(void){
     int rxbuffersize = (int)(((float)length))*(rxfrequency/txfreq_hz);
     double amplitude_range = 6.0;
 
-    //add start condition then delay
-    vect.push_back(1);
-    for(int i = 0; i<delaylength; i++){
-        vect.push_back(0);
-    }
+    // //add start condition then delay
+    // vect.push_back(1);
+    // for(int i = 0; i<delaylength; i++){
+    //     vect.push_back(0);
+    // }
 
 
 
     //populate data
-    for(int i = 0; i < datalength; i++){
+    for(int i = 0; i < length; i++){
         if(i % 2 == 0){
-            vect.push_back(3.3/5.0);//scaled to 0-1 range
+            vect.push_back(1);//scaled to 0-1 range
         } else {
             vect.push_back(0);
         }
@@ -83,6 +83,7 @@ void sendInfWaveform(void){
     scope.trigger(hdwf, true, scope.trigger_source.analog, channel, timeout, edge_rising, triggerlevel);
 
     wavegen.generate(hdwf,channel, function, offset, txfrequency, amplitude, symmetry, wait, run_time, repeat, vect);
+    while(1);
 
     rxdata = scope.record(hdwf, channel, rxfrequency, rxbuffersize);
 

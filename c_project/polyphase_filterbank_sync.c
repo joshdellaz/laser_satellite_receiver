@@ -85,8 +85,11 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
 
     //unsigned int num_written = 0;   // number of values written to buffer this iteration
     unsigned int num_written_total = 0;
+    int repititions = 2;
+    for(int i = 0; i < repititions; i++){
+        resamp_crcf_execute_block(q, (cfloat *)samplesin, length_samples_in/repititions, &(complexbuffer[i*length_samples_in/repititions]), &num_written_total);
+    }
 
-    resamp_crcf_execute_block(q, (cfloat *)samplesin, length_samples_in, complexbuffer, &num_written_total);
 
     *length_samples_out = length_samples_in*r;
     if (num_written_total != *length_samples_out) {

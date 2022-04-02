@@ -662,6 +662,12 @@ bool imageSendTest(char * filename) {
 		float phase = 0;
 		float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
+			printf("sample stream\n");
+		for (unsigned int i = 0; i < 400; i++) {
+			printf("%.2f ", samples[i]);
+		}
+		printf("\n\n");
+
 #ifdef CHANNEL_ENABLED
 		applyChannelToSamples(samples, numsamples);
 #endif
@@ -680,10 +686,13 @@ bool imageSendTest(char * filename) {
 		float * samples_recv= getIncomingSignalData(samples, &frame_start_index_guess, &samples_recv_length);
 
 #endif
+
 		//resample
 		int numsamples_upsampled = 0;
 		float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
 		frame_start_index_guess *= 4;
+
+
 
 		rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
 

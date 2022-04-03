@@ -11,7 +11,7 @@
 #define FRAME_LENGTH_BYTES //TODO determine proper value
 #define FEC_TYPE LIQUID_FEC_HAMMING74 //Other options = 
 #define PACKET_DATA_LENGTH_NO_FEC 154 // need to consider LDPC params and CRC and packet number and total => 81 - 4 - 2 - 2
-//^ 154 = 2 blocks, 73 = 1 block
+//^ 316 = 4 blocks 235 = 3 blocks, 154 = 2 blocks, 73 = 1 block
 
 //LDPC params
 #define CODEWRD_L 1296

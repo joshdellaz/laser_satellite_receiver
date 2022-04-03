@@ -70,7 +70,7 @@ void initMLS(void){
 //Frees input pointer
 float * resampleInput(float* samplesin, int length_samples_in, int * length_samples_out) {
 
-    float        r = 4;   // resampling rate (output/input) [TODO eliminate magic number]
+    float        r = num_banks;   // resampling rate (output/input) [TODO eliminate magic number]
     float        bw = 0.45f;  // resampling filter bandwidth (HMM)
     unsigned int npfb = 64;     // number of filters in bank (timing resolution)
     float slsl = 60;          // resampling filter sidelobe suppression level

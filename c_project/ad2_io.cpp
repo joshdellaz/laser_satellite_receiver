@@ -17,6 +17,7 @@ Scope scope;
 HDWF hdwf;
 char szError[512] = {0};
 int bufoutlen;
+int triglen = 1;
 
 
 //Because output repeats uncontrollably, a trigger condition is inserted at the start of each frame.
@@ -120,8 +121,8 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     int channel = 1;
     FUNC function = funcCustom;
     double offset = 0;
-    double txfreq_hz = 5000000.0/4.0;
-    double txfrequency = (txfreq_hz)/((double)length + 1.0);//+1 for trigger bit
+    double txfreq_hz = 5000000.0/2.0;
+    double txfrequency = (txfreq_hz)/((double)length + triglen);//+1 for trigger bit
     double amplitude = 5;
     double symmetry = 0;
     double wait = 0;
@@ -130,13 +131,15 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     vector<double> vect;
     
     scope_data rxdata;
-    double rxfrequency = 5000000.0/4.0;
+    double rxfrequency = 5000000.0/2.0;
     int rxbuffersize = (int)(((float)length))*(rxfrequency/txfreq_hz);
     double amplitude_range = 1.0;
 
     //add start condition then delay
-    vect.push_back(1);
-    for(int i = 0; i<delaylength; i++){
+    for(int i = 0; i < triglen; i++){
+        vect.push_back(1);
+    }
+    for(int i = 0; i<delaylength - triglen + 1; i++){
         vect.push_back(0);
     }
 
@@ -149,7 +152,7 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
         }
     }
 
-    float triggerlevel = 0.05;
+    float triggerlevel = 0.045;
     bool edge_rising = true;
     double timeout = 0.0;
 
@@ -196,7 +199,7 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     if (inputlen != 8000){
         *outputlen = inputlen;
     } else {
-        *outputlen = inputlen + 1;
+        *outputlen = inputlen + triglen;
     }
     
 
@@ -224,11 +227,11 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
     //     printf("%.2f ", input[i]);
     // }
     // printf("\n");
-    bufoutlen = (8000+1);//yuck
+    bufoutlen = (8000+triglen);//yuck
     int maxbufinlen = 8000;
     int bufinlen;
     int repititions = inputlen/maxbufinlen + 1;
-    *outputlen = inputlen + 1*(repititions-1);
+    *outputlen = inputlen + triglen*(repititions-1);
     float * output = (float *)malloc(sizeof(float)*(*outputlen));
 
     for(int i = 0; i < repititions; i++){

@@ -61,7 +61,7 @@ void applyLDPC(uint8_t* input) {
         std::vector<uint8_t> coded_bits = ldpc_code.encode(info_bits);
 
         uint8_t output_byte = 0;
-        for (unsigned i_bit = 0; i_bit < CODEWRD_L*(1-CODEWRD_R); ++i_bit) { // converting bit stream to uint8_t array
+        for (unsigned i_bit = CODEWRD_L*CODEWRD_R; i_bit < CODEWRD_L; ++i_bit) { // converting bit stream to uint8_t array
             if (coded_bits.at(i_bit)) {
                 // could do this more cleanly by converting the sum of 2^(i_bit % 8) over every 8 bits
                 if ((i_bit % 8) == 0) {
@@ -88,7 +88,7 @@ void applyLDPC(uint8_t* input) {
             }
             if ((i_bit % 8) == 7) {
                 if (coded_bits.at(i_bit)) {output_byte = output_byte | 0x01;}
-                input[int(NUM_BLOCKS_PCKT*CODEWRD_R*CODEWRD_L/8) + int(i_block*CODEWRD_L*(1-CODEWRD_R)/8) + (i_bit/8)] = output_byte;
+                input[int(NUM_BLOCKS_PCKT*CODEWRD_R*CODEWRD_L/8) + int(i_block*CODEWRD_L*(1-CODEWRD_R)/8) + int((i_bit-CODEWRD_L*CODEWRD_R)/8)] = output_byte;
                 output_byte = (uint8_t) 0;
             }
         }
@@ -102,7 +102,7 @@ void decodeLDPC(uint8_t* rxinput) {
 
     std::cout << "Starting LDPC decoding...\n";
 
-    LdpcCode ldpc_code(0, 0);
+    //LdpcCode ldpc_code(0, 0);
 
     unsigned block_length = CODEWRD_L; // parametarize this
 
@@ -118,7 +118,7 @@ void decodeLDPC(uint8_t* rxinput) {
         return;
     }
     
-    ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
+    //ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
 
     unsigned info_len = ldpc_code.get_info_length();
     // cout << "Checking info length \nLDPC info length: " << info_len/8 << endl;
@@ -132,7 +132,7 @@ void decodeLDPC(uint8_t* rxinput) {
             if (i_bit < CODEWRD_L*CODEWRD_R)  {
                 out_bit = rxinput[(int) (i_block*CODEWRD_L*CODEWRD_R/8) + (i_bit/8)];
             } else {
-                out_bit = rxinput[int(NUM_BLOCKS_PCKT*CODEWRD_R*CODEWRD_L/8) + int(i_block*CODEWRD_L*(1-CODEWRD_R)/8) + (i_bit/8)];
+                out_bit = rxinput[int(NUM_BLOCKS_PCKT*CODEWRD_R*CODEWRD_L/8) + int(i_block*CODEWRD_L*(1-CODEWRD_R)/8) + int((i_bit-CODEWRD_L*CODEWRD_R)/8)];
             }
             
             out_bit >>= (7 - (i_bit % 8));

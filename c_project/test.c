@@ -674,6 +674,21 @@ bool imageSendTest(char * filename) {
 		int samples_recv_length = 0;
 		samples_recv = sendAnalogLoopback(samples, numsamples, &samples_recv_length);
 
+		//Prepend a buncha zero samples (randomly generated amount between 4 and 1000)
+		int stuffing_len = 100*4;
+		//int stuffing_len = (rand() % (1000 - 4 + 1)) + 4;
+		int j = samples_recv_length;
+		float buffer;
+		samples_recv_length += stuffing_len;
+		samples_recv = (float *)realloc(samples_recv, samples_recv_length*sizeof(float));//Assuming this appends extra size allocated
+		for(j; j >= 0; j--){
+			buffer = samples_recv[j];
+			samples_recv[stuffing_len + j] = buffer;
+		}
+		for(j = 0; j < stuffing_len; j++){
+			samples_recv[j] = 0;
+		}
+
 #else
 		//receive samples via power detection
 		int frame_start_index_guess = 0;//start of MLS preamble guess
@@ -682,11 +697,11 @@ bool imageSendTest(char * filename) {
 
 #endif
 
-		printf("Before Upsample:\n");
-		for (unsigned int i = 0; i < 400; i++) {
-			printf("%.2f  ", samples_recv[i]);
-		}
-		printf("\n\n");
+		// printf("Before Upsample:\n");
+		// for (unsigned int i = 0; i < 400; i++) {
+		// 	printf("%.2f  ", samples_recv[i]);
+		// }
+		// printf("\n\n");
 		//resample
 		int numsamples_upsampled = 0;
 		float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);

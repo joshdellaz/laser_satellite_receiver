@@ -16,7 +16,7 @@ Wavegen wavegen;
 Scope scope;
 HDWF hdwf;
 char szError[512] = {0};
-int bufoutlen = (8000+1);//yuck
+int bufoutlen;
 
 
 //Because output repeats uncontrollably, a trigger condition is inserted at the start of each frame.
@@ -181,6 +181,7 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     rxdata = scope.record(hdwf, channel, rxfrequency, rxbuffersize);
 
     scope.close(hdwf);
+    wavegen.close(hdwf);
 
     // printf("Rx buffer = \n\n");
     // for (auto i: rxdata.buffer){
@@ -192,8 +193,12 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     //     printf("%.2f ", rxdata.buffer[j]);
     // }
     
-
-    *outputlen = (maxinputlen+1);
+    if (inputlen != 8000){
+        *outputlen = inputlen;
+    } else {
+        *outputlen = inputlen + 1;
+    }
+    
 
     float scaling_coef = 0.04;
 
@@ -211,6 +216,7 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
 
 }
 
+//frees input
 float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
 
     // printf("DAC data = \n\n");
@@ -218,14 +224,15 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
     //     printf("%.2f ", input[i]);
     // }
     // printf("\n");
-
+    bufoutlen = (8000+1);//yuck
     int maxbufinlen = 8000;
     int bufinlen;
     int repititions = inputlen/maxbufinlen + 1;
-    *outputlen = bufoutlen*repititions;
+    *outputlen = inputlen + 1*(repititions-1);
     float * output = (float *)malloc(sizeof(float)*(*outputlen));
 
     for(int i = 0; i < repititions; i++){
+
         if((inputlen - (i)*maxbufinlen) < maxbufinlen){//if only filling part of buffer, pass that size to loopbackOneBuffer()
             bufinlen = inputlen - (i)*maxbufinlen;
         } else {
@@ -241,7 +248,7 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
         float * bufout = NULL;
         bufout = loopbackOneBuffer(input + maxbufinlen*i, bufinlen, &bufoutlen);
         for(int j = 0; j < bufoutlen; j++){
-            output[i*bufoutlen + j] = bufout[j];
+            output[i*maxbufinlen + j] = bufout[j];
         }
         if(i == 0){
             printf("\n\noutput\n");
@@ -262,7 +269,7 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
     //     printf("%.2f ", input[i]);
     // }
     // printf("\n");
-
+    free(input);
     return output;
 }
 

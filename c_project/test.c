@@ -14,7 +14,7 @@
 extern int mls_total_preamble_length_bits;
 extern int number_of_mls_repititions;
 #define PI 3.142857
-//#define AD2_DEMO
+#define AD2_DEMO
 //#define LDPC_ENABLED
 //#define CHANNEL_ENABLED
 //#define INTRLV_SCRMBL_ENABLED
@@ -662,11 +662,6 @@ bool imageSendTest(char * filename) {
 		float phase = 0;
 		float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
-			printf("sample stream\n");
-		for (unsigned int i = 0; i < 400; i++) {
-			printf("%.2f ", samples[i]);
-		}
-		printf("\n\n");
 
 #ifdef CHANNEL_ENABLED
 		applyChannelToSamples(samples, numsamples);
@@ -687,10 +682,20 @@ bool imageSendTest(char * filename) {
 
 #endif
 
+		printf("Before Upsample:\n");
+		for (unsigned int i = 0; i < 400; i++) {
+			printf("%.2f  ", samples_recv[i]);
+		}
+		printf("\n\n");
 		//resample
 		int numsamples_upsampled = 0;
 		float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
 		frame_start_index_guess *= 4;
+		printf("Upsampled:\n");
+		for (unsigned int i = 0; i < 400; i++) {
+			printf("%.2f  ", samples_upsampled[i]);
+		}
+		printf("\n\n");
 
 
 
@@ -711,6 +716,12 @@ bool imageSendTest(char * filename) {
 #endif
 		disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
 		printf("> Packet %d received\n", rxpacket_data.current_packet_num);
+		printf("tx'd user data:\n");
+		printBitsfromBytes(packet_data.data, 40);
+		printf("\n\n");
+		printf("received user data:\n");
+		printBitsfromBytes(rxpacket_data.data, 40);
+		printf("\n\n");
 
 		if (checkCRC(&rxpacket_data)) {
 			printf("CRC Doesn't Match!\n\n");

@@ -9,7 +9,7 @@ extern float * MLS_array;
 
 int main(void) {
 
-	//initAD2();
+	initAD2();
 	//sendInfWaveform();
 
 

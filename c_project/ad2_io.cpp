@@ -45,7 +45,7 @@ void sendInfWaveform(void){
     double offset = 0;
     double txfreq_hz = 5000000.0/4.0;
     double txfrequency = (txfreq_hz)/((double)length + 1.0);//+1 for trigger bit
-    double amplitude = 3.3;
+    double amplitude = 5;
     double symmetry = 0;
     double wait = 0;
     double run_time = 0;
@@ -53,28 +53,29 @@ void sendInfWaveform(void){
     vector<double> vect;
     
     scope_data rxdata;
-    double rxfrequency = 1000000.0;
+    double rxfrequency = 5000000.0/4.0;
     int rxbuffersize = (int)(((float)length))*(rxfrequency/txfreq_hz);
-    double amplitude_range = 6.0;
+    double amplitude_range = 1.0;
 
     // //add start condition then delay
     // vect.push_back(1);
     // for(int i = 0; i<delaylength; i++){
     //     vect.push_back(0);
-    // }
+    // }s
 
 
 
     //populate data
-    for(int i = 0; i < length; i++){
+    vect.push_back(1);
+    for(int i = 0; i < length - 1; i++){
         if(i % 2 == 0){
-            vect.push_back(1);//scaled to 0-1 range
+            vect.push_back(2.5/5.0);//scaled to 0-1 range
         } else {
             vect.push_back(0);
         }
     }
 
-    float triggerlevel = 4.5;
+    float triggerlevel = 0.05;
     bool edge_rising = true;
     double timeout = 0.0;
 
@@ -83,7 +84,7 @@ void sendInfWaveform(void){
     scope.trigger(hdwf, true, scope.trigger_source.analog, channel, timeout, edge_rising, triggerlevel);
 
     wavegen.generate(hdwf,channel, function, offset, txfrequency, amplitude, symmetry, wait, run_time, repeat, vect);
-    while(1);
+    //while(1);
 
     rxdata = scope.record(hdwf, channel, rxfrequency, rxbuffersize);
 
@@ -119,7 +120,7 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     int channel = 1;
     FUNC function = funcCustom;
     double offset = 0;
-    double txfreq_hz = 5000000.0;
+    double txfreq_hz = 5000000.0/4.0;
     double txfrequency = (txfreq_hz)/((double)length + 1.0);//+1 for trigger bit
     double amplitude = 5;
     double symmetry = 0;
@@ -129,9 +130,9 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     vector<double> vect;
     
     scope_data rxdata;
-    double rxfrequency = 5000000.0;
+    double rxfrequency = 5000000.0/4.0;
     int rxbuffersize = (int)(((float)length))*(rxfrequency/txfreq_hz);
-    double amplitude_range = 6.0;
+    double amplitude_range = 1.0;
 
     //add start condition then delay
     vect.push_back(1);
@@ -142,13 +143,13 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     //populate data
     for(int i = 0; i < maxinputlen; i++){
         if(i < inputlen){
-            vect.push_back((double)(input[i])*3.3/5.0);
+            vect.push_back((double)(input[i])*2.5/5.0);
         } else {
             vect.push_back(0);
         }
     }
 
-    float triggerlevel = 4.5;
+    float triggerlevel = 0.05;
     bool edge_rising = true;
     double timeout = 0.0;
 
@@ -194,13 +195,15 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
 
     *outputlen = (maxinputlen+1);
 
+    float scaling_coef = 0.04;
+
     float * rxdata_trimmed = (float *)malloc(sizeof(float)*(*outputlen));
     for(int i = 0; i < *outputlen; i++){//+1 to account for imperfect offset
-        rxdata_trimmed[i] = (float)(rxdata.buffer[i]);
+        rxdata_trimmed[i] = (float)(rxdata.buffer[i])/scaling_coef;
     }
 
     // printf("\n\noutput after variable changen");
-    // for(int j = 0; j < 100; j++){
+    // for(int j = 0; j < 1000; j++){
     //     printf("%.2f ", rxdata_trimmed[j]);
     // }
 
@@ -229,7 +232,7 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
             bufinlen = maxbufinlen;
         }
         
-        if(i == 2){
+        if(i == 0){
             printf("input\n");
             for(int j = 0; j < 100; j++){
                 printf("%.2f ", input[maxbufinlen*i + j]);
@@ -240,7 +243,7 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
         for(int j = 0; j < bufoutlen; j++){
             output[i*bufoutlen + j] = bufout[j];
         }
-        if(i == 2){
+        if(i == 0){
             printf("\n\noutput\n");
             for(int j = 0; j < 100; j++){
                 printf("%.2f ", output[i*bufoutlen + j]);
@@ -249,10 +252,10 @@ float * sendAnalogLoopback(float * input, int inputlen, int * outputlen){
         free(bufout);
     }
 
-    //normalize
-    for(int i = 0; i < *outputlen; i++){
-        output[i] /= 3.3;
-    }
+    // //normalize
+    // for(int i = 0; i < *outputlen; i++){
+    //     output[i] /= 3.3;
+    // }
 
     // printf("DAC data = \n\n");
     // for (int i = 0; i < inputlen; i++){

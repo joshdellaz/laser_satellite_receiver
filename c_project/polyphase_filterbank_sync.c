@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "samples_to_bits.h"
+//#include "packet_frame.h"
 
 
 #include <complex.h>
@@ -85,7 +86,7 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
 
     //unsigned int num_written = 0;   // number of values written to buffer this iteration
     unsigned int num_written_total = 0;
-    int repititions = 2;
+    int repititions = 1;
     unsigned int temp = 0;
     for(int i = 0; i < repititions; i++){
         resamp_crcf_execute_block(q, (cfloat *)samplesin, length_samples_in/repititions, &(complexbuffer[i*length_samples_in/repititions]), &temp);

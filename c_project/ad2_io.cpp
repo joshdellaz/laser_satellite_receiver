@@ -121,9 +121,9 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     int channel = 1;
     FUNC function = funcCustom;
     double offset = 0;
-    double txfreq_hz = 5000000.0/2.0;
+    double txfreq_hz = 5000000.0/4.0;
     double txfrequency = (txfreq_hz)/((double)length + triglen);//+1 for trigger bit
-    double amplitude = 5;
+    double amplitude = 5.5;
     double symmetry = 0;
     double wait = 0;
     double run_time = 0;
@@ -131,7 +131,7 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     vector<double> vect;
     
     scope_data rxdata;
-    double rxfrequency = 5000000.0/2.0;
+    double rxfrequency = 5000000.0/4.0;
     int rxbuffersize = (int)(((float)length))*(rxfrequency/txfreq_hz);
     double amplitude_range = 1.0;
 
@@ -146,13 +146,13 @@ float * loopbackOneBuffer(float * input, int inputlen, int * outputlen){
     //populate data
     for(int i = 0; i < maxinputlen; i++){
         if(i < inputlen){
-            vect.push_back((double)(input[i])*2.5/5.0);
+            vect.push_back((double)(input[i])*2.35/5.0);
         } else {
             vect.push_back(0);
         }
     }
 
-    float triggerlevel = 0.045;
+    float triggerlevel = 0.04;
     bool edge_rising = true;
     double timeout = 0.0;
 

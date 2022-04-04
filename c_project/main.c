@@ -23,7 +23,7 @@ int main(void) {
 	}
 	
 	
-	imageSendTest("sample.ppm");
+	imageSendTest("engphys.ppm");
 
 
 	//softwareDACandADC();

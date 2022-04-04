@@ -9,7 +9,7 @@
 #define FADE_VALUE 0
 #define SNR_DB	50 // for AWGN noise
 #define FADE_FREQ 770 // per second, estimation based on KT06-04 results around 25 degree elevation = 3 or 4
-#define FADE_LEN 100 // in us (equals bits at 1 Mbps)
+#define FADE_LEN 300 // in us (equals bits at 1 Mbps)
 
 #define BIT_FLIP_FREQ 5 // increase to reduce probability of the bit flippage
 

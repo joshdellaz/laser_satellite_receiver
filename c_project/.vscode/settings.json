@@ -42,6 +42,7 @@
         "utility": "cpp",
         "laser_comms.h": "c",
         "channel.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "ad2_io.hpp": "c"
     }
 }

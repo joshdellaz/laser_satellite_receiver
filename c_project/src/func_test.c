@@ -2,6 +2,7 @@
 #include "channel.h"
 #include "samples_to_bits.h"
 #include "laser_comms.h"
+//#include "ad2_io.hpp"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -13,7 +14,10 @@
 extern int mls_total_preamble_length_bits;
 extern int number_of_mls_repititions;
 #define PI 3.142857
-
+//#define AD2_DEMO
+#define LDPC_ENABLED
+#define CHANNEL_ENABLED
+#define INTRLV_SCRMBL_ENABLED
 
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec_bytes
 uint8_t * generateRandPacket(void) {
@@ -46,7 +50,8 @@ void printBitsfromBytes(uint8_t * data, unsigned int lengthbytestoprint){
 void getFECDataLengths(void) {
 
 	// create arrays
-	packet_data_length_with_fec_bytes = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
+	//packet_data_length_with_fec_bytes = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
+	packet_data_length_with_fec_bytes = (CODEWRD_L / 8)*NUM_BLOCKS_PCKT;
 }
 
 void simulatedAutocorSyncTest(void){
@@ -159,7 +164,7 @@ void simulatedAutocorSyncTest(void){
 		int j = numsamples;
 		float buffer;
 		numsamples += stuffing_len;
-		samples = realloc(samples, numsamples*sizeof(float));//Assuming this appends extra size allocated
+		samples = (float *)realloc(samples, numsamples*sizeof(float));//Assuming this appends extra size allocated
 		for(j; j >= 0; j--){
 			buffer = samples[j];
 			samples[stuffing_len + j] = buffer;
@@ -361,7 +366,8 @@ bool fullSendTest(void) {
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
 		printf("%d", packet_data.data[i]);
 	}
-	printBitsfromBytes(packet_data.data, 10);
+	printf("\n\n");
+	printBitsfromBytes(packet_data.data, 20);
 	printf("\n\n");
 
 	printf("getting CRC\n");
@@ -373,14 +379,19 @@ bool fullSendTest(void) {
 
 	printf("assembling packet \n");
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
+#ifdef INTRLV_SCRMBL_ENABLED
 	printf("applying interleaving \n");
 	applyInterleaving(packet_vector, packet_length);
-	//printf("scrambling eggs \n");
-	//applyScrambling(&packet_vector, packet_length);
+	printf("scrambling eggs \n");
+	applyScrambling(&packet_vector, packet_length);
+#endif
 	
 	printf("assembling frame \n");
 	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
 	unsigned int preamble_length = frame_length - packet_length;
+	printf("\nMLS bits\n");
+	printBitsfromBytes(frame_vector, 20);
+	printf("\n\n");
 
 	// printf("Orignal frame:\n");
 	// for (unsigned int i = 0; i < frame_length; i++) {
@@ -406,43 +417,77 @@ bool fullSendTest(void) {
 
 
 	//Turn to samples
-	unsigned int numsamples = 0;
+	int numsamples = 0;
 	float phase = 0;
 	float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
 
-	applyChannelToSamples(samples, numsamples); // confirm this is where channel should be applied
-	// need to soften the burst erasures for demo (by changing the transition probabilities defined in channel.h)
+#ifdef CHANNEL_ENABLED
+	applyChannelToSamples(samples, numsamples);
+#endif	//need to soften the burst erasures for demo (by changing the transition probabilities defined in channel.h)
 
 
+//TODO figure out length and naming...
+#ifdef AD2_DEMO
+
+	// printf("DAC Out:\n");
+	// for (unsigned int i = 0; i < numsamples/4; i++) {
+	// 	printf("%.2f ", samples[i]);
+	// }
+	// printf("\n\n");
+	
+	float *samples_recv = NULL;
+	int frame_start_index_guess = 0;//consider stting this in loopback function if not working well
+	int samples_recv_length = 0;
+	samples_recv = sendAnalogLoopback(samples, numsamples, &samples_recv_length);
+
+	printf("ADC In:\n");
+	for (unsigned int i = 0; i < 100; i++) {
+		printf("%.2f ", samples_recv[i]);
+	}
+	printf("\n\n");
+
+#else
 	//receive samples via power detection
 	int frame_start_index_guess = 0;//start of MLS preamble guess
-	int samples_shifted_length = 0;
-	float * samples_shifted = getIncomingSignalData(samples, &frame_start_index_guess, &samples_shifted_length);
+	int samples_recv_length = 0;
+	float * samples_recv= getIncomingSignalData(samples, &frame_start_index_guess, &samples_recv_length);
+
+#endif
 
 	//resample
 	int numsamples_upsampled = 0;
-	float * samples_upsampled = resampleInput(samples_shifted, samples_shifted_length, &numsamples_upsampled);
+	float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
 	frame_start_index_guess *= 4;
+
+	printf("Post-upsample:\n");
+	for (unsigned int i = 0; i < 400; i++) {
+		printf("%.2f ", samples_upsampled[mls_total_preamble_length_bits*4*4 + i]);
+	}
+	printf("\n\n");
 
 	//Init "rx" stuff
 	packet_t rxpacket_data;//malloc this?
 	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
 	uint8_t* rxpacket_vector = NULL;
-	unsigned int rxpacket_length = 0;
+	int rxpacket_length = 0;
 
 	//sync & demodulate
 	rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
+	// printf("\nData after syncFrame\n");
+	// printBitsfromBytes(rxpacket_vector, 20);
+	// printf("\n\n");
 
 
 	// printf("disassembling frame \n");
 	// disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
-
-	//printf("removing eggs\n");
-	//removeScrambling(&rxpacket_vector, packet_length);
+#ifdef INTRLV_SCRMBL_ENABLED
+	printf("removing eggs\n");
+	removeScrambling(&rxpacket_vector, packet_length);
 
 	printf("removing interleaving \n");
 	removeInterleaving(rxpacket_vector, packet_length);
+#endif
 
 	printf("disassembling packet \n");
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
@@ -453,7 +498,8 @@ bool fullSendTest(void) {
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
 		printf("%d", rxpacket_data.data[i]);
 	}
-	//printBitsfromBytes(rxpacket_data.data, 10);
+	printf("\n\n");
+	printBitsfromBytes(rxpacket_data.data, 40);
 	printf("\n\n");
 
 	if (checkCRC(&rxpacket_data)) {
@@ -481,3 +527,236 @@ bool fullSendTest(void) {
 // 	findAutocorrelation(uint8_t * samples){
 
 // }
+
+// //TODO
+// //Reads from file. Should write file with identical contents if everything goes well!
+// //Consider adding code to check that file contents match...
+// bool fullSendTest_FileIO(void){
+
+// 	int input_file_len = 0;
+// 	uint8_t * inputdata;
+// 	readFiletoArray("test_input.txt", inputdata, &input_file_len);
+// 	int tx_frames_len = 0;
+// 	uint8_t * tx_frames;
+// 	fragmentDataBufferIntoFrames(inputdata, input_file_len, tx_frames, &tx_frames_len);
+
+// 	//Consider adding channel and/or all analog stuff here...
+
+// 	int output_file_len = 0;
+// 	uint8_t * rxdata;
+// 	assembleFramesIntoDataBuffer(tx_frames, tx_frames_len, rxdata, &output_file_len);
+// 	writeArraytoFile("test_output.txt", rxdata, output_file_len);
+// }
+
+bool imageSendTest(char * filename) {
+	
+	char buff[16];
+	FILE *fp_origin, *fp_damaged, *fp_corrected;
+	int x,y, rgb_comp_color;
+
+	//open PPM file for reading
+	fp_origin = fopen(filename, "rb");
+	if (!fp_origin) {
+		fprintf(stderr, "Unable to open file '%s'\n", filename);
+		exit(1);
+	}
+	//read image format
+	if (!fgets(buff, sizeof(buff), fp_origin)) {
+		perror(filename);
+		exit(1);
+	}
+	//check the image format
+    if (buff[0] != 'P' || buff[1] != '6') {
+         fprintf(stderr, "Invalid image format (must be 'P6')\n");
+         exit(1);
+    }
+	//read image size information
+    if (fscanf(fp_origin, "%d %d", &x, &y) != 2) {
+         fprintf(stderr, "Invalid image size (error loading '%s')\n", filename);
+         exit(1);
+    }
+	printf("x, y: %d, %d\n",x,y);
+	//read rgb component
+    if (fscanf(fp_origin, "%d", &rgb_comp_color) != 1) {
+         fprintf(stderr, "Invalid rgb component (error loading '%s')\n", filename);
+         exit(1);
+    }
+    //check rgb component depth
+    if (rgb_comp_color!= 255) {
+         fprintf(stderr, "'%s' does not have 8-bits components\n", filename);
+         exit(1);
+    }
+
+
+	//open PPM file for writing
+	fp_damaged = fopen("damaged.ppm", "wb");
+	if (!fp_damaged) {
+		fprintf(stderr, "Unable to open file damaged.ppm\n");
+		exit(1);
+	}
+	//write the header file
+    //image format
+    fprintf(fp_damaged, "P6\n");
+    //image size
+    fprintf(fp_damaged, "%d %d\n",x,y);
+    // rgb component depth
+    fprintf(fp_damaged, "%d",255);//no newline, since it is transmitted from file
+
+
+	//open PPM file for writing
+	fp_corrected = fopen("corrected.ppm", "wb");
+	if (!fp_corrected) {
+		fprintf(stderr, "Unable to open file corrected.ppm\n");
+		exit(1);
+	}
+	//write the header file
+    //image format
+    fprintf(fp_corrected, "P6\n");
+    //image size
+    fprintf(fp_corrected, "%d %d\n",x,y);
+    // rgb component depth
+    fprintf(fp_corrected, "%d",255);//no newline, since it is transmitted from file
+
+	
+	packet_t packet_data;
+	packet_data.total_num_packets = (uint16_t) 3*x*y/PACKET_DATA_LENGTH_NO_FEC;
+	packet_data.total_num_packets = packet_data.total_num_packets + ((3*x*y) % PACKET_DATA_LENGTH_NO_FEC ? 1 : 0);
+	unsigned int last_packet_data_length = (3*x*y) % PACKET_DATA_LENGTH_NO_FEC;
+	packet_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
+	packet_data.selected_fec_scheme = LDPC;
+
+	uint8_t* packet_vector = NULL; //malloced in assemblePacket
+	unsigned int packet_length;
+	unsigned int frame_length;
+	uint8_t* frame_vector = NULL;//malloced in assembleFrame
+
+	packet_t rxpacket_data;
+	rxpacket_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
+	uint8_t* rxpacket_vector = NULL; //malloced in samplesToBytes
+	int rxpacket_length = 0;
+
+	for (int i = 0; i < packet_data.total_num_packets; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
+		
+		if (fread(packet_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_origin) != 1){
+			fprintf(stderr, "Error loading image '%s'\n", filename);
+         	exit(1);
+		}
+
+		packet_data.current_packet_num = (uint16_t) i;
+		getCRC(&packet_data);
+		printf(">>>> Packet %d being transmitted", i);
+
+		assemblePacket(&packet_data, &packet_vector, &packet_length);
+#ifdef LDPC_ENABLED
+		applyLDPC(packet_vector);
+#endif
+#ifdef INTRLV_SCRMBL_ENABLED
+		printf("applying interleaving \n");
+		applyInterleaving(packet_vector, packet_length);
+		printf("scrambling eggs \n");
+		applyScrambling(&packet_vector, packet_length);
+#endif
+		assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
+
+		int numsamples = 0;
+		float phase = 0;
+		float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
+
+
+#ifdef CHANNEL_ENABLED
+		applyChannelToSamples(samples, numsamples);
+#endif
+
+#ifdef AD2_DEMO
+
+		float *samples_recv = NULL;
+		int frame_start_index_guess = 0;//consider stting this in loopback function if not working well
+		int samples_recv_length = 0;
+		samples_recv = sendAnalogLoopback(samples, numsamples, &samples_recv_length);
+
+		//Prepend a buncha zero samples (randomly generated amount between 4 and 1000)
+		int stuffing_len = 100*4;
+		//int stuffing_len = (rand() % (1000 - 4 + 1)) + 4;
+		int j = samples_recv_length;
+		float buffer;
+		samples_recv_length += stuffing_len;
+		samples_recv = (float *)realloc(samples_recv, samples_recv_length*sizeof(float));//Assuming this appends extra size allocated
+		for(j; j >= 0; j--){
+			buffer = samples_recv[j];
+			samples_recv[stuffing_len + j] = buffer;
+		}
+		for(j = 0; j < stuffing_len; j++){
+			samples_recv[j] = 0;
+		}
+
+#else
+		//receive samples via power detection
+		int frame_start_index_guess = 0;//start of MLS preamble guess
+		int samples_recv_length = 0;
+		float * samples_recv= getIncomingSignalData(samples, &frame_start_index_guess, &samples_recv_length);
+
+#endif
+
+		// printf("Before Upsample:\n");
+		// for (unsigned int i = 0; i < 400; i++) {
+		// 	printf("%.2f  ", samples_recv[i]);
+		// }
+		// printf("\n\n");
+		//resample
+		int numsamples_upsampled = 0;
+		float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
+		frame_start_index_guess *= 4;
+		printf("Upsampled:\n");
+		for (unsigned int i = 0; i < 400; i++) {
+			printf("%.2f  ", samples_upsampled[i]);
+		}
+		printf("\n\n");
+
+
+
+		rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
+
+
+#ifdef INTRLV_SCRMBL_ENABLED
+		printf("removing eggs\n");
+		removeScrambling(&rxpacket_vector, packet_length);
+
+		printf("removing interleaving \n");
+		removeInterleaving(rxpacket_vector, packet_length);
+#endif
+
+		fwrite(&rxpacket_vector[2 * NUM_PACKETS_LENGTH_BYTES], PACKET_DATA_LENGTH_NO_FEC, 1, fp_damaged); // write to damaged file
+#ifdef LDPC_ENABLED
+		decodeLDPC(rxpacket_vector);
+#endif
+		disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
+		printf("> Packet %d received\n", rxpacket_data.current_packet_num);
+		printf("tx'd user data:\n");
+		printBitsfromBytes(packet_data.data, 40);
+		printf("\n\n");
+		printf("received user data:\n");
+		printBitsfromBytes(rxpacket_data.data, 40);
+		printf("\n\n");
+
+		if (checkCRC(&rxpacket_data)) {
+			printf("CRC Doesn't Match!\n\n");
+		}
+		else {
+			printf("CRC Matches!\n\n");
+		}
+		fwrite(rxpacket_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_corrected); // write to corrected file
+		
+		printf("freeing the children \n");
+		free(packet_vector);
+		free(frame_vector);
+		free(rxpacket_vector);
+	}
+
+	fclose(fp_origin);
+	fclose(fp_damaged);
+	fclose(fp_corrected);
+	free(packet_data.data);
+	free(rxpacket_data.data);
+
+	return 0;
+}

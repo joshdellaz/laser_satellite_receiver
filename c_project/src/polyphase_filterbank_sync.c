@@ -3,16 +3,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "samples_to_bits.h"
+//#include "packet_frame.h"
+
+
 #include <complex.h>
 #include <liquid/liquid.h>
+
+#ifdef  __cplusplus
+   using cfloat = std::complex<float>;
+#else
+   typedef float complex cfloat;
+#endif
 
 
 #define PI 3.142857
 #define IS_SIMULATION
-#define MLS_LENGTH 4095
+#define MLS_LENGTH 511
 
 int num_banks = 4;
-int mls_total_preamble_length_bits = 4095+1;// + is to make it a multiple of 8. TODO: Make dependent on MLS order/
+int mls_total_preamble_length_bits = 511+1;// + is to make it a multiple of 8. TODO: Make dependent on MLS order/
 int N = 4;
 extern int packet_data_length_with_fec_bytes;
 
@@ -24,11 +33,11 @@ void initMLS(void){
 
 	//options
 	//TODO: Pick a good value for m
-	unsigned int m = 12;   // shift register length, n=2^m - 1
+	unsigned int m = 9;   // shift register length, n=2^m - 1
 	unsigned int mls_preamble_length_bits = (pow(2,m) - 1); // preamble length
 
 	// create and initialize m-sequence
-	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M12);//Fix these struct name definitions... Liquid maybe borked?
+	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M9);//Fix these struct name definitions... Liquid maybe borked?
 	//msequence_print(ms);
 	unsigned int n = msequence_get_length(ms);
 
@@ -37,9 +46,16 @@ void initMLS(void){
 	bsequence_init_msequence(mls, ms);
 
     MLS_array = (float *)malloc(MLS_LENGTH*sizeof(float));
+    //non-flipped
     for (unsigned int i = 0; i < n; i++) {
         MLS_array[i] = (float)bsequence_index(mls, i);
     }
+    //FLIP IT
+    // for (unsigned int i = 0; i < n; i++) {
+    //     MLS_array[n - 1 - i] = (float)bsequence_index(mls, i);
+    // }
+
+
 	// printf("Generated MLS bits\n");
 	// for(int i = 0; i < 50; i++){
 	// 	printf("%d ", bitbuffer[i]);
@@ -54,14 +70,14 @@ void initMLS(void){
 //Frees input pointer
 float * resampleInput(float* samplesin, int length_samples_in, int * length_samples_out) {
 
-    float        r = 4;   // resampling rate (output/input) [TODO eliminate magic number]
+    float        r = num_banks;   // resampling rate (output/input) [TODO eliminate magic number]
     float        bw = 0.45f;  // resampling filter bandwidth (HMM)
     unsigned int npfb = 64;     // number of filters in bank (timing resolution)
     float slsl = 60;          // resampling filter sidelobe suppression level
     unsigned int h_len = 16;  // filter semi-length (filter delay)
     int filter_delay = 122;
 
-    float complex* complexbuffer = (float complex*)malloc(length_samples_in*r*sizeof(float complex)); 
+    cfloat * complexbuffer = (cfloat*)malloc(length_samples_in*r*sizeof(cfloat)); 
 
 
     // create resampler
@@ -70,8 +86,13 @@ float * resampleInput(float* samplesin, int length_samples_in, int * length_samp
 
     //unsigned int num_written = 0;   // number of values written to buffer this iteration
     unsigned int num_written_total = 0;
+    int repititions = 1;
+    unsigned int temp = 0;
+    for(int i = 0; i < repititions; i++){
+        resamp_crcf_execute_block(q, (cfloat *)samplesin, length_samples_in/repititions, &(complexbuffer[i*length_samples_in/repititions]), &temp);
+        num_written_total += temp;
+    }
 
-    resamp_crcf_execute_block(q, samplesin, length_samples_in, complexbuffer, &num_written_total);
 
     *length_samples_out = length_samples_in*r;
     if (num_written_total != *length_samples_out) {
@@ -201,7 +222,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     float max_autocorr = 0;
     int best_bank = 0;
     int best_shift_bits = 0;
-    int max_shiftleft_bits = 1300;
+    int max_shiftleft_bits = 100;
     int max_shiftright_bits = 200;
     int downhill_counter = 0;
     //printf("\nautocorrelation vals:\n");
@@ -209,7 +230,6 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     for(int i = 0; i<num_banks*N; i++){
         prev_autocorr = 0;
         for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){
-            //ADD THRESHOLD SO THAT ENTIRE RANGE DOESN'T NEED TO BE SEARCHED?
 
             for(int k = 0; k < mls_total_preamble_length_bits - 1; k++){// -2 because variable is meant to be multiple of 8
                 buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*num_banks];
@@ -225,9 +245,11 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
             // }
 
             if(new_autocorr > max_autocorr){
-                max_autocorr = new_autocorr;
-                best_bank = i;//best_sample_in_bit?
-                best_shift_bits = j;
+                if(new_autocorr < MLS_LENGTH){//crude fix for ~inf autocor values. find root cause and improve fix
+                    max_autocorr = new_autocorr;
+                    best_bank = i;//best_sample_in_bit?
+                    best_shift_bits = j;
+                }
             }
 
             if(new_autocorr < prev_autocorr){
@@ -252,11 +274,11 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
         buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
     }
 
-    // printf("\nBest MLS samples\n");
-    // for(int i = 0; i<50; i++){
-    //     printf("%.1f ", buffer[i]);
-    // }
-    // printf("\n");
+    printf("\nBest user data samples\n");
+    for(int i = 0; i<100; i++){
+        printf("%.1f ", buffer[mls_total_preamble_length_bits + i]);
+    }
+    printf("\n");
 
     chopFront(&buffer, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out

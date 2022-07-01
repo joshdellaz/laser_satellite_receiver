@@ -50,6 +50,7 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
     for (int i = 0; i < *length_samples; i++){
         samples[i] = temp[i*num_repititons + phaseshift_number];
     }
+    free(temp);
 
     // printf("Samples after phase shift:\n");
     // for (unsigned int i = 0; i < 100; i++) {
@@ -58,7 +59,7 @@ float * bytestreamToSamplestream(uint8_t* data, int length_bytes, int *length_sa
     // printf("\n\n");
 
     //free(data);
-    free(temp);
+    
     return samples;
 }
 

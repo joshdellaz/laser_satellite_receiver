@@ -144,12 +144,12 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 
 	//options
 	//TODO: Pick a good value for m
-	unsigned int m = 12;   // shift register length, n=2^m - 1
+	unsigned int m = 9;   // shift register length, n=2^m - 1
 	unsigned int repititions = 1;	//Number of MLS repititions in preamble
 	unsigned int mls_preamble_length_bits = (pow(2,m) - 1)*repititions; // preamble length
 
 	// create and initialize m-sequence
-	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M12);//Fix these struct name definitions... Liquid maybe borked?
+	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M9);//Fix these struct name definitions... Liquid maybe borked?
 	//msequence_print(ms);
 	unsigned int n = msequence_get_length(ms);
 
@@ -252,22 +252,22 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 	*packet_length = packet_data_length_with_fec_bytes;
 	*packet = (uint8_t*)malloc((*packet_length)* sizeof(uint8_t));
 
-	(*packet)[0] = packet_data->selected_fec_scheme;
+	//(*packet)[0] = packet_data->selected_fec_scheme;//commented out for demo
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		(*packet)[1 + i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES - 1 - i));
+		(*packet)[i] = 0xFF & (packet_data->total_num_packets >> 8*(NUM_PACKETS_LENGTH_BYTES - 1 - i));
 	}
 	
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
-		(*packet)[1 + NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));
+		(*packet)[NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));
 	}
 
-	for (int i = 0; i < packet_data_length_with_fec_bytes - 1 - 2 * NUM_PACKETS_LENGTH_BYTES; i++) {
-		(*packet)[1 + 2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
+	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+		(*packet)[2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
 	}
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		(*packet)[packet_data_length_with_fec_bytes - CRC_DATA_LENGTH_BYTES + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
+		(*packet)[2 * NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_NO_FEC + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
 	}
 
 	return 0;
@@ -287,28 +287,29 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
 		mask32 = 0;
 		mask32 = 0xFF << 8*i;
-		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[packet_length - 1 - i] << 8*i));
+		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES - 1 - i] << 8*i));
 	}
 	packet_data->crc = temp_32;
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
 
 		mask16 = 0;
-		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -i);
-		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[i - 1] << 8 * i));
+		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -1 -i);
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[i] << 8 * (NUM_PACKETS_LENGTH_BYTES -1 -i)));
 	}
 	packet_data->total_num_packets = temp_16;
+	temp_16 = 0;
 
 	for (int i = 0; i < NUM_PACKETS_LENGTH_BYTES; i++) {
 
 		mask16 = 0;
-		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES - i);
-		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i  - 1] << 8*i));
+		mask16 = 0xFF << 8 * (NUM_PACKETS_LENGTH_BYTES -1 - i);
+		temp_16 = temp_16 | (mask16 & ((uint16_t)packet[NUM_PACKETS_LENGTH_BYTES + i] << 8 * (NUM_PACKETS_LENGTH_BYTES -1 -i)));
 	}
 	packet_data->current_packet_num = temp_16;
 
-	for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
-		(packet_data->data)[i] = packet[2*NUM_PACKETS_LENGTH_BYTES +1 + i];
+	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+		(packet_data->data)[i] = packet[2*NUM_PACKETS_LENGTH_BYTES + i];
 	}
 
 	return 0;
@@ -331,3 +332,88 @@ bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uin
 
 	return 0;
 }
+
+
+//TODO
+//Takes "input" data buffer of length "input_length", fragments it into packets, turns those packets into frames, 
+//and assembles frames into single "output" buffer of "output_length" that can be easily transmitted
+// bool fragmentDataBufferIntoFrames(uint8_t * input, unsigned int input_length, uint8_t * output, unsigned int * output_length) {
+
+// 	int numpackets = input_length/packet_data_length_no_fec + 1;
+// 	*output_length = numpackets*frame_length_bytes;
+// 	uint8_t * output = (uint8_t *)malloc(*output_length*sizeof(uint8_t));
+// 	packet_t temp_packet;
+// 	temp_packet.data = (uint8_t*)malloc(packet_data_length_no_fec);
+// 	int current_index = 0;
+
+// 	//for each frame:
+// 	for (int i = 0; i < numpackets; i++){
+// 		//populate all struct fields
+// 		temp_packet.total_num_packets = numpackets;
+// 		temp_packet.current_packet_num = i+1;
+
+// 		for(int j = 0; j < packet_data_length_no_fec; j++){
+// 			if(current_index > input_length){
+// 				temp_packet.data[j] = 0;//stuffing rear-end with zeroes
+// 			}
+// 			temp_packet.data[j] = input[current_index];
+// 			current_index++;
+// 		}
+
+// 		getCRC(&temp_packet);
+
+// 		//TODO: call all the tx stuff in fullsend testing order and put data into *output
+// 		//NOT COMPLETING UNTIL FULLSEND TEST HAS UNDERGONE REFACTOR
+
+// 	}
+
+// 	return 0;
+// }
+
+// //TODO
+// //Inverse of fragmentDataBufferIntoFrames.
+// //Takes "input" data buffer of length "input_length", strips its frame and packet encapsulation, 
+// //and assembles data fields of frames into a single "output" buffer of length "output_length" that can be easily saved
+// bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int * output_length) {
+	
+// 	//do reverse of above function
+
+// 	int numpackets = input_length/frame_length_bytes;
+// 	*output_length = numpackets*packet_data_length_no_fec;
+// 	uint8_t * output = (uint8_t *)malloc(*output_length*sizeof(uint8_t));
+// 	packet_t temp_packet;
+// 	temp_packet.data = (uint8_t*)malloc(packet_data_length_no_fec);
+// 	int current_index = 0;
+// 	int prev_frameno = 0;
+// 	int cur_frameno = 0;
+
+// 	//for each frame:
+// 	for (int i = 0; i < numpackets; i++){
+
+// 		//TODO: call all the rx stuff in fullsend testing order
+// 		//The todo code's output will be 
+// 		//NOT COMPLETING UNTIL FULLSEND TEST HAS UNDERGONE REFACTOR
+
+// 		prev_frameno = cur_frameno;
+// 		cur_frameno = temp_packet.current_packet_num;
+
+// 		if(cur_frameno > numpackets){
+// 			printf("Frame number indicator %d larger than numpackets in transmission\n", cur_frameno);
+// 			while(1);//TODO integrate better error handling
+// 		}
+// 		if(cur_frameno <= prev_frameno){
+// 			printf("Frame sequence error at frame %d\n", cur_frameno);
+// 			while(1);//TODO integrate better error handling
+// 		}
+// 		if(current_index > output_length){
+// 			printf("Output buffer overflow");
+// 			while(1);//TODO integrate better error handling
+// 		}
+// 		for(int j = 0; j < packet_data_length_no_fec; j++){
+// 			output[current_index] = temp_packet.data[j];
+// 			current_index++;
+// 		}
+// 	}
+
+// 	return 0;
+// }

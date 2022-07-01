@@ -7,9 +7,16 @@
 #include <iomanip> 
 #include <math.h>
 #include <vector>
+#include "dev_utils.h"
 
 
 using namespace std;
+
+#ifdef VERBOSE_ENABLED
+#define dev_printf(...) printf(__VA_ARGS__)
+#else
+#define dev_printf(...) stub()
+#endif
 
 LdpcCode ldpc_code(0,0);
 
@@ -20,7 +27,6 @@ void initLDPC(void) {
 }
 
 void applyLDPC(uint8_t* input) {
-    std::cout << "Starting LDPC encoding...\n";
     
     unsigned block_length = CODEWRD_L; // parametarize this
 
@@ -35,14 +41,14 @@ void applyLDPC(uint8_t* input) {
         cout << "The chosen code rate (" << CODEWRD_R << ") is not supported." << endl;
         return;
     }
-    cout << "The chosen code rate is " << CODEWRD_R << endl;
-    cout << "The code rate index is " << rate_index << endl;
+    dev_printf("The chosen code rate is %d\n", CODEWRD_R);
+    dev_printf("The code rate index is %d\n", rate_index);
     
     unsigned info_len = ldpc_code.get_info_length();
     if (info_len/8 != (PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES)) {
-        cout << "The chosen data length is not compatible with the picked LDPC scheme ..." << endl;
-        cout << "Length of data to be encoded (with CRC): " << PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES << endl;
-        cout << "LDPC input length: " << (CODEWRD_L * CODEWRD_R)/8 << endl; // TODO needs correction 
+        dev_printf("The chosen data length is not compatible with the picked LDPC scheme ...\n");
+        dev_printf("Length of data to be encoded (with CRC): %d\n", PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES);
+        dev_printf("LDPC input length: %d\n", (CODEWRD_L * CODEWRD_R)/8);// TODO needs correction 
         //return;
     }
     // cout << "Checking info length \nLDPC info length: " << info_len/8 << endl;
@@ -92,15 +98,12 @@ void applyLDPC(uint8_t* input) {
                 output_byte = (uint8_t) 0;
             }
         }
-        printf("\n");
     }
 }
 
 
 void decodeLDPC(uint8_t* rxinput) {
     // ignoring burst positions in LDPC for now
-
-    std::cout << "Starting LDPC decoding...\n";
 
     //LdpcCode ldpc_code(0, 0);
 
@@ -144,7 +147,6 @@ void decodeLDPC(uint8_t* rxinput) {
             }
             //printf("%f,", llr.at(i_bit));
         }
-        printf("\n");
         
         std::vector<uint8_t> decoded_cw = ldpc_code.decode(llr, MAX_DECODE_ITERS, MIN_SUM);
 
@@ -187,5 +189,4 @@ void decodeLDPC(uint8_t* rxinput) {
             }
         }
     }
-    //printf("\n");
 }

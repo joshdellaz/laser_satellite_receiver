@@ -197,9 +197,7 @@ bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * pack
 	unsigned int mls_preamble_length = 0;
 	uint8_t* mls_preamble = NULL;
 
-	printf("get MLS preamble \n");
 	getMaximumLengthSequencePreamble(&mls_preamble, &mls_preamble_length);
-	printf("MLS preamble received \n");
 
 	int stuffing_length = 8;//stuffing needed for sync to work properly
 	*frame_length = mls_preamble_length + packet_length + stuffing_length;

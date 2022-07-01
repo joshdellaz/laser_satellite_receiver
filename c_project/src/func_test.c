@@ -643,6 +643,8 @@ bool imageSendTest(char * filename) {
 	rxpacket_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
 	uint8_t* rxpacket_vector = NULL; //malloced in samplesToBytes
 	int rxpacket_length = 0;
+	double total_processing_time = 0;
+	double pckt_processing_time = 0;
 
 	for (int i = 0; i < packet_data.total_num_packets; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
 		
@@ -700,6 +702,7 @@ bool imageSendTest(char * filename) {
 
 #else
 		//receive samples via power detection
+		pckt_processing_time = (double)clock()/CLOCKS_PER_SEC;
 		int frame_start_index_guess = 0;//start of MLS preamble guess
 		int samples_recv_length = 0;
 		float * samples_recv= getIncomingSignalData(samples, &frame_start_index_guess, &samples_recv_length);
@@ -712,8 +715,10 @@ bool imageSendTest(char * filename) {
 		// }
 		// printf("\n\n");
 		//resample
+		
 		int numsamples_upsampled = 0;
 		float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
+
 		frame_start_index_guess *= 4;
 		dev_printf("Upsampled:\n");
 		for (unsigned int i = 0; i < 400; i++) {
@@ -721,10 +726,7 @@ bool imageSendTest(char * filename) {
 		}
 		dev_printf("\n\n");
 
-
-
 		rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
-
 
 #ifdef INTRLV_SCRMBL_ENABLED
 		dev_printf("removing eggs\n");
@@ -733,12 +735,15 @@ bool imageSendTest(char * filename) {
 		dev_printf("removing interleaving \n");
 		removeInterleaving(rxpacket_vector, packet_length);
 #endif
-
 		fwrite(&rxpacket_vector[2 * NUM_PACKETS_LENGTH_BYTES], PACKET_DATA_LENGTH_NO_FEC, 1, fp_damaged); // write to damaged file
 #ifdef LDPC_ENABLED
 		decodeLDPC(rxpacket_vector);
 #endif
 		disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
+		pckt_processing_time = (double)clock()/CLOCKS_PER_SEC - pckt_processing_time;
+		dev_printf("Packet processing time = %f ms\n", pckt_processing_time*1000);
+		total_processing_time += pckt_processing_time;
+		
 		dev_printf("> Packet %d received\n", rxpacket_data.current_packet_num);
 		dev_printf("tx'd user data:\n");
 		printBitsfromBytes(packet_data.data, 40);
@@ -760,6 +765,8 @@ bool imageSendTest(char * filename) {
 		free(frame_vector);
 		free(rxpacket_vector);
 	}
+
+	dev_printf("Total processing time = %f ms\n", total_processing_time*1000);
 
 	fclose(fp_origin);
 	fclose(fp_damaged);

@@ -557,7 +557,9 @@ bool fullSendTest(void) {
 // 	writeArraytoFile("test_output.txt", rxdata, output_file_len);
 // }
 
-bool imageSendTest(char * filename) {
+
+//Returns % of successful (crc matching) packets
+float imageSendTest(char * filename) {
 	
 	char buff[16];
 	FILE *fp_origin, *fp_damaged, *fp_corrected;
@@ -629,7 +631,7 @@ bool imageSendTest(char * filename) {
 	
 	packet_t packet_data;
 	packet_data.total_num_packets = (uint16_t) 3*x*y/PACKET_DATA_LENGTH_NO_FEC;
-	packet_data.total_num_packets = packet_data.total_num_packets + ((3*x*y) % PACKET_DATA_LENGTH_NO_FEC ? 1 : 0);
+	packet_data.total_num_packets = packet_data.total_num_packets + ((3*x*y) % PACKET_DATA_LENGTH_NO_FEC ? 1 : 0) - 1;
 	unsigned int last_packet_data_length = (3*x*y) % PACKET_DATA_LENGTH_NO_FEC;
 	packet_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
 	packet_data.selected_fec_scheme = LDPC;
@@ -645,6 +647,7 @@ bool imageSendTest(char * filename) {
 	int rxpacket_length = 0;
 	double total_processing_time = 0;
 	double pckt_processing_time = 0;
+	float incorrect_crcs = 0;
 
 	for (int i = 0; i < packet_data.total_num_packets; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
 		
@@ -754,6 +757,7 @@ bool imageSendTest(char * filename) {
 
 		if (checkCRC(&rxpacket_data)) {
 			printf("CRC Doesn't Match!\n\n");
+			incorrect_crcs++;
 		}
 		else {
 			printf("CRC Matches!\n\n");
@@ -774,5 +778,48 @@ bool imageSendTest(char * filename) {
 	free(packet_data.data);
 	free(rxpacket_data.data);
 
-	return 0;
+	return incorrect_crcs/((float)(packet_data.total_num_packets));
+}
+
+
+int findNumOfDifferentBits(uint8_t a, uint8_t b){
+	int count = 0;
+    for (int i = 0; i < 8; i++) {
+
+        // right shift both the numbers by 'i' and
+        // check if the bit at the 0th position is different
+        if (((a >> i) & 1) != ((b >> i) & 1)) {
+            count++;
+        }
+    }
+	return count;
+}
+//returns % as decimal of incorrect bits
+//Checks it on the classic engpyhs image
+float checkEfficacy(void){
+	FILE * fp_origin = fopen("../testdata/engphys.ppm", "rb");
+	FILE * fp_endpoint = fopen("../testdata/corrected.ppm", "rb");
+	char buff[16];
+	int x,y, rgb_comp_color;
+
+	//read image format
+	fgets(buff, sizeof(buff), fp_origin);
+	//read image size information
+    scanf(fp_origin, "%d %d", &x, &y);
+	//read rgb component
+    fscanf(fp_origin, "%d", &rgb_comp_color);
+	int total_num_packets = (int)3*x*y/PACKET_DATA_LENGTH_NO_FEC - 1;//-1 prevents overread
+	int total_len_bytes = PACKET_DATA_LENGTH_NO_FEC*total_num_packets;
+	uint8_t * sourcedata = (uint8_t*)malloc((total_len_bytes)* sizeof(uint8_t)); //malloced
+	uint8_t * rxdata = (uint8_t*)malloc((total_len_bytes)* sizeof(uint8_t)); //malloced
+
+	fread(sourcedata, total_len_bytes, 1, fp_origin);
+	fread(rxdata, total_len_bytes, 1, fp_endpoint);
+
+	float num_biterrors = 0;
+	for(int i = 0; i < total_len_bytes; i++){
+		num_biterrors += findNumOfDifferentBits(sourcedata[i], rxdata[i]);
+	}
+
+	return num_biterrors/((float)(8*total_len_bytes));
 }

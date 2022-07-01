@@ -4,15 +4,11 @@
 //#include "ad2_io.hpp"
 #include "laser_comms.h"
 #include <time.h>
+#include "plot.h"
 int packet_data_length_with_fec_bytes = 0;
 extern float * MLS_array;
 
 int main(void) {
-
-	//initAD2();
-	//sendInfWaveform();
-
-
 
 	getFECDataLengths();
 	initMLS();
@@ -30,10 +26,6 @@ int main(void) {
 	//simulatedAutocorSyncTest();
 
 	//testMLSAutoCorrelation();
-	//printf("starting the fullsend test shit\n");
-	//fullSendTest();
-	//Aah!
-	//free(MLS_array);
 
 	return 0;
 }

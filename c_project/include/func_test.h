@@ -7,4 +7,5 @@ void simulatedAutocorSyncTest(void);
 bool fullSendTest(void);
 void testMLSAutoCorrelation(void);
 bool fullSendTest_FileIO(void);
-bool imageSendTest(char * filename);
+float imageSendTest(char * filename);
+float checkEfficacy(void)

@@ -4,10 +4,17 @@
 #include <stdlib.h>
 #include "samples_to_bits.h"
 //#include "packet_frame.h"
+#include "dev_utils.h"
 
 
 #include <complex.h>
 #include <liquid/liquid.h>
+
+#ifdef VERBOSE_ENABLED
+#define dev_printf(...) printf(__VA_ARGS__)
+#else
+#define dev_printf(...) stub()
+#endif
 
 #ifdef  __cplusplus
    using cfloat = std::complex<float>;
@@ -264,7 +271,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
         }
     }
 
-    printf("Max autocorrelation = %f\n", max_autocorr);
+    dev_printf("Max autocorrelation = %f\n", max_autocorr);
 
 
 
@@ -274,11 +281,11 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
         buffer[i] = samples[frame_start_index_guess + best_bank + (best_shift_bits + i)*num_banks*N];
     }
 
-    printf("\nBest user data samples\n");
+    dev_printf("\nBest user data samples\n");
     for(int i = 0; i<100; i++){
-        printf("%.1f ", buffer[mls_total_preamble_length_bits + i]);
+        dev_printf("%.1f ", buffer[mls_total_preamble_length_bits + i]);
     }
-    printf("\n");
+    dev_printf("\n");
 
     chopFront(&buffer, mls_total_preamble_length_bits, length_samples_in/(N*num_banks));
     //length of samples should now be = length_bits_out
@@ -370,11 +377,11 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     free(buffer);
     free(ADC_output_float);
 
-    printf("Samples after power detector :\n");
+    dev_printf("Samples after power detector :\n");
     for (unsigned int i = 0; i < 50*3; i++) {
-        printf("%.0f", data[stuffing_len + i]);
+        dev_printf("%.0f", data[stuffing_len + i]);
     }
-    printf("\n");
+    dev_printf("\n");
 
     return data;
 }

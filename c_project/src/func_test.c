@@ -3,6 +3,7 @@
 #include "samples_to_bits.h"
 #include "laser_comms.h"
 //#include "ad2_io.hpp"
+#include "dev_utils.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -11,13 +12,21 @@
 #include <math.h>
 #include <time.h>
 
+
 extern int mls_total_preamble_length_bits;
 extern int number_of_mls_repititions;
 #define PI 3.142857
 //#define AD2_DEMO
 #define LDPC_ENABLED
-#define CHANNEL_ENABLED
+//define CHANNEL_ENABLED
 #define INTRLV_SCRMBL_ENABLED
+//#define VERBOSE_ENABLED //prints literally everything
+
+#ifdef VERBOSE_ENABLED
+#define dev_printf(...) printf(__VA_ARGS__)
+#else
+#define dev_printf(...) stub()
+#endif
 
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec_bytes
 uint8_t * generateRandPacket(void) {
@@ -31,7 +40,7 @@ uint8_t * generateRandPacket(void) {
 void printBitsfromBytes(uint8_t * data, unsigned int lengthbytestoprint){
 	for(int i = 0; i<lengthbytestoprint; i++){
 		for(int j = 0; j<8; j++){
-			printf("%d ", (data[i] >> (7-j)) & 0b1);
+			dev_printf("%d ", (data[i] >> (7-j)) & 0b1);
 		}
 	}
 }
@@ -589,7 +598,7 @@ bool imageSendTest(char * filename) {
 
 
 	//open PPM file for writing
-	fp_damaged = fopen("damaged.ppm", "wb");
+	fp_damaged = fopen("../testdata/damaged.ppm", "wb");
 	if (!fp_damaged) {
 		fprintf(stderr, "Unable to open file damaged.ppm\n");
 		exit(1);
@@ -604,7 +613,7 @@ bool imageSendTest(char * filename) {
 
 
 	//open PPM file for writing
-	fp_corrected = fopen("corrected.ppm", "wb");
+	fp_corrected = fopen("../testdata/corrected.ppm", "wb");
 	if (!fp_corrected) {
 		fprintf(stderr, "Unable to open file corrected.ppm\n");
 		exit(1);
@@ -644,16 +653,16 @@ bool imageSendTest(char * filename) {
 
 		packet_data.current_packet_num = (uint16_t) i;
 		getCRC(&packet_data);
-		printf(">>>> Packet %d being transmitted", i);
+		printf(">>>> Packet %d being transmitted\n", i);
 
 		assemblePacket(&packet_data, &packet_vector, &packet_length);
 #ifdef LDPC_ENABLED
 		applyLDPC(packet_vector);
 #endif
 #ifdef INTRLV_SCRMBL_ENABLED
-		printf("applying interleaving \n");
+		dev_printf("applying interleaving \n");
 		applyInterleaving(packet_vector, packet_length);
-		printf("scrambling eggs \n");
+		dev_printf("scrambling eggs \n");
 		applyScrambling(&packet_vector, packet_length);
 #endif
 		assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
@@ -706,11 +715,11 @@ bool imageSendTest(char * filename) {
 		int numsamples_upsampled = 0;
 		float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
 		frame_start_index_guess *= 4;
-		printf("Upsampled:\n");
+		dev_printf("Upsampled:\n");
 		for (unsigned int i = 0; i < 400; i++) {
-			printf("%.2f  ", samples_upsampled[i]);
+			dev_printf("%.2f  ", samples_upsampled[i]);
 		}
-		printf("\n\n");
+		dev_printf("\n\n");
 
 
 
@@ -718,10 +727,10 @@ bool imageSendTest(char * filename) {
 
 
 #ifdef INTRLV_SCRMBL_ENABLED
-		printf("removing eggs\n");
+		dev_printf("removing eggs\n");
 		removeScrambling(&rxpacket_vector, packet_length);
 
-		printf("removing interleaving \n");
+		dev_printf("removing interleaving \n");
 		removeInterleaving(rxpacket_vector, packet_length);
 #endif
 
@@ -730,13 +739,13 @@ bool imageSendTest(char * filename) {
 		decodeLDPC(rxpacket_vector);
 #endif
 		disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
-		printf("> Packet %d received\n", rxpacket_data.current_packet_num);
-		printf("tx'd user data:\n");
+		dev_printf("> Packet %d received\n", rxpacket_data.current_packet_num);
+		dev_printf("tx'd user data:\n");
 		printBitsfromBytes(packet_data.data, 40);
-		printf("\n\n");
-		printf("received user data:\n");
+		dev_printf("\n\n");
+		dev_printf("received user data:\n");
 		printBitsfromBytes(rxpacket_data.data, 40);
-		printf("\n\n");
+		dev_printf("\n\n");
 
 		if (checkCRC(&rxpacket_data)) {
 			printf("CRC Doesn't Match!\n\n");
@@ -746,7 +755,7 @@ bool imageSendTest(char * filename) {
 		}
 		fwrite(rxpacket_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_corrected); // write to corrected file
 		
-		printf("freeing the children \n");
+		dev_printf("freeing the children \n");
 		free(packet_vector);
 		free(frame_vector);
 		free(rxpacket_vector);

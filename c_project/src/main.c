@@ -1,7 +1,7 @@
 #include "test.h"
 #include "samples_to_bits.h"
 #include <stdlib.h>
-#include "ad2_io.hpp"
+//#include "ad2_io.hpp"
 #include "laser_comms.h"
 
 int packet_data_length_with_fec_bytes = 0;
@@ -9,7 +9,7 @@ extern float * MLS_array;
 
 int main(void) {
 
-	initAD2();
+	//initAD2();
 	//sendInfWaveform();
 
 

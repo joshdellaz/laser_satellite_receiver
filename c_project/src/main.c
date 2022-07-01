@@ -3,7 +3,7 @@
 #include <stdlib.h>
 //#include "ad2_io.hpp"
 #include "laser_comms.h"
-
+#include <time.h>
 int packet_data_length_with_fec_bytes = 0;
 extern float * MLS_array;
 

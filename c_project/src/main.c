@@ -1,4 +1,4 @@
-#include "test.h"
+#include "func_test.h"
 #include "samples_to_bits.h"
 #include <stdlib.h>
 //#include "ad2_io.hpp"
@@ -23,7 +23,7 @@ int main(void) {
 	}
 	
 	
-	imageSendTest("engphys.ppm");
+	imageSendTest("../testdata/engphys.ppm");
 
 
 	//softwareDACandADC();

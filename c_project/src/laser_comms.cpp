@@ -1,8 +1,8 @@
 #include "laser_comms.h"
 #include "packet_frame.h"
 #include <iostream>
-#include "tavildarLDPC/LdpcC/LdpcCode.h"
-#include "tavildarLDPC/LdpcC/Constellation.h"
+#include "LdpcCode.h"
+#include "Constellation.h"
 #include <random>
 #include <iomanip> 
 #include <math.h>

@@ -7,10 +7,10 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
+                "-I../include",
+                "-I../lib/tavildarLDPC/LdpcC",
                 "${fileDirname}/*.c",
                 "${fileDirname}/*.cpp",
-                "${fileDirname}/*.h",
-                "${fileDirname}/*.hpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lliquid",

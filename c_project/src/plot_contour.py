@@ -5,17 +5,23 @@ import csv
 
 #add metadata functionality (title) via new csv
 file = open('title.csv')
-title = next(csv.reader(file))
-x = next(csv.reader(file))
-y = next(csv.reader(file))
-scale = next(csv.reader(file))
-xlist = np.linspace(0, x*scale, scale)
-ylist = np.linspace(0, y*scale, scale)
+reader = csv.reader(file)
+[title, x, y, scale] = next(reader)
+x = int(x)
+y = int(y)
+scale = int(scale)
+xlist = np.linspace(0, x*scale, x)
+ylist = np.linspace(0, y*scale, y)
 X, Y = np.meshgrid(xlist, ylist)
+Z = np.empty((x,y))
 
 data = genfromtxt('output.csv', delimiter=',')
 
-cp = plt.contourf(X, Y, data)
+for i in range(x):
+    for j in range(y):
+        Z[i,j] = data[i*y + j]
+
+cp = plt.contourf(X, Y, Z)
 plt.colorbar(cp)
 plt.title(title)
 plt.show()

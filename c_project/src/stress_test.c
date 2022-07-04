@@ -38,10 +38,10 @@ void testSNR(){
 //Compare plot to actual data rate
 void testFades(){
     int min_len = 1;//us
-    int max_len = 1200;
+    int max_len = 500;
     int min_freq = 100;
-    int max_freq = 1000;
-    int iterations = 8;
+    int max_freq = 600;
+    int iterations = 5;
     int index = 0;
     float * dropped_packets_percent = (float *)malloc((max_len/iterations)*(max_freq/iterations)*sizeof(float));//matrix where each row = max_len/iterations long
     float * bad_bits_percent = (float *)malloc((max_len/iterations)*(max_freq/iterations)*sizeof(float));
@@ -55,7 +55,7 @@ void testFades(){
         }
     }
     plotContour(dropped_packets_percent, iterations, iterations, max_len/iterations, "Fraction of Dropped Packets vs Fade Len and Freq");
-    plotContour(bad_bits_percent, iterations, iterations, max_len/iterations, "Fraction of Dropped Packets vs Fade Len and Freq");
+    plotContour(bad_bits_percent, iterations, iterations, max_len/iterations, "Fraction of Incorrect Bits vs Fade Len and Freq");
     free(dropped_packets_percent);
     free(bad_bits_percent);
 }

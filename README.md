@@ -1,14 +1,16 @@
-# N.O.S.O.C.S (Nearly Operational Satellite Optical Comminications System)
+# S.O.C.S (Satellite Optical Comminications System)
 Code for transmitting and receiving data to/from a satellite using laser light via on-off keying (OOK). Current project scope includes:
 * Physical Layer
-  * Interface with Eclypse Z7 + Zmod ADC and DAC modules
   * OOK modulation and demodulation
   * Synchronization using integrated maximum length sequence autocorrelator and polyphase filterbank
-  * Automatic gain control
+  * Automatic gain control (to be implemented)
+  * Interface with Eclypse Z7 + Zmod ADC and DAC modules (obselete)
 * Data Link Layer
   * Forward Error Correction (low density parity check)
   * Cyclic redundancy check
   * Scrambling, interleaving, packetizing
+
+All code is written in C(++) f
 
 ## matlab_files
 contains a range of matlab and associated files used for basic testing

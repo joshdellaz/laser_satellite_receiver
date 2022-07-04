@@ -6,3 +6,5 @@ walking_skeleton/laser_comms/.vs/laser_comms/v16/Browse.VC.db-shm
 *
 !/**/
 !*.*
+c_project/testdata/corrected.ppm
+c_project/testdata/damaged.ppm

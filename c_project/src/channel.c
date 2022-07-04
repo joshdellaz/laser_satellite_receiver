@@ -13,9 +13,11 @@
 #define FADE_VALUE 0
 
 
-int snr_db = 10; // for AWGN noise
-int fade_freq = 770; // per second, estimation based on KT06-04 results around 25 degree elevation = 3 or 4
-int fade_len = 700; // in us
+int snr_db = 20; // for AWGN noise
+int fade_freq = 100; // per second, estimation based on KT06-04 results around 25 degree elevation = 3 or 4 //770 used originally
+int fade_len = 1; // in us 700 originally TODO make this dependent on bitrate!
+int burst_freq = 100;//get better default val
+int burst_len = 1;//get better default val
 
 
 void _createBursts(bool *, unsigned);
@@ -29,10 +31,12 @@ float __AWGN_generator(void);
 float __randF(void); // rand float between 0 and 1
 int __randNum(int, int); // rand number between lower and upper inclusive
 
-void configChannel(int snr, int f_freq, int f_len){
+void configChannel(int snr, int f_freq, int f_len, int b_freq, int b_len){
 	snr_db = snr;
 	fade_freq = f_freq;
 	fade_len = f_len;
+	burst_freq = b_freq;
+	burst_len = b_len;
 }
 
 bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr_packet_num)

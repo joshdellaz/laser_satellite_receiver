@@ -18,7 +18,7 @@ extern int number_of_mls_repititions;
 #define PI 3.142857
 //#define AD2_DEMO
 #define LDPC_ENABLED
-//define CHANNEL_ENABLED
+#define CHANNEL_ENABLED
 #define INTRLV_SCRMBL_ENABLED
 //#define VERBOSE_ENABLED //prints literally everything
 
@@ -63,7 +63,7 @@ void getFECDataLengths(void) {
 	packet_data_length_with_fec_bytes = (CODEWRD_L / 8)*NUM_BLOCKS_PCKT;
 }
 
-void simulatedAutocorSyncTest(void){
+void testSyncEdgeCases(void){
     //full MLS & randomly generated payload data.
 	int mls_total_preamble_length_bytes = mls_total_preamble_length_bits/8;
 
@@ -107,14 +107,12 @@ void simulatedAutocorSyncTest(void){
 		// }
 		// printf("\n\n");
 
-
-
 		switch (rnd){
 			case 0://Basic test
 				phase = 0;
 				//done
 				break;
-			case 1://Next tests: same as above, but with phase offset of pi/4, pi/2, 3pi/4, pi, 5pi/4, 3pi/2, 7pi/4, and 2pi.
+			case 1://Next tests: same as above, but with phase offsets
 				phase = PI/4.0;				
 				break;
 			case 2:
@@ -804,10 +802,14 @@ float checkEfficacy(void){
 
 	//read image format
 	fgets(buff, sizeof(buff), fp_origin);
+	fgets(buff, sizeof(buff), fp_endpoint);
 	//read image size information
-    scanf(fp_origin, "%d %d", &x, &y);
+	fscanf(fp_endpoint, "%d %d", &x, &y);
+    fscanf(fp_origin, "%d %d", &x, &y);
 	//read rgb component
+	fscanf(fp_endpoint, "%d", &rgb_comp_color);
     fscanf(fp_origin, "%d", &rgb_comp_color);
+
 	int total_num_packets = (int)3*x*y/PACKET_DATA_LENGTH_NO_FEC - 1;//-1 prevents overread
 	int total_len_bytes = PACKET_DATA_LENGTH_NO_FEC*total_num_packets;
 	uint8_t * sourcedata = (uint8_t*)malloc((total_len_bytes)* sizeof(uint8_t)); //malloced

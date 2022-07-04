@@ -3,9 +3,9 @@
 
 void getFECDataLengths(void);
 void softwareDACandADC(void);
-void simulatedAutocorSyncTest(void);
+void testSyncEdgeCases(void);
 bool fullSendTest(void);
 void testMLSAutoCorrelation(void);
 bool fullSendTest_FileIO(void);
 float imageSendTest(char * filename);
-float checkEfficacy(void)
+float checkEfficacy(void);

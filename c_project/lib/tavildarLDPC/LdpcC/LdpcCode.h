@@ -193,15 +193,15 @@ public:
                         _Z = (unsigned int) (block_length / 52);
                         std::cout << _Z << std::endl;
                         break;
-                    case 1296:
-                        h_pointer = & WiFiLDPC::H_1296_5_6[0][0];
-                        break;
-                    case 1944:
-                        h_pointer = & WiFiLDPC::H_1944_5_6[0][0];
-                        break;
-                    default:
-                        h_pointer = & WiFiLDPC::H_648_1_2[0][0];
-                        break;
+                    // case 1296:
+                    //     h_pointer = & WiFiLDPC::H_1296_5_6[0][0];
+                    //     break;
+                    // case 1944:
+                    //     h_pointer = & WiFiLDPC::H_1944_5_6[0][0];
+                    //     break;
+                    // default:
+                    //     h_pointer = & WiFiLDPC::H_648_1_2[0][0];
+                    //     break;
                 }
                 break;
             default: // Not supported
@@ -217,6 +217,8 @@ public:
             case 1296: _Z = 54;
                 break;
             case 1944: _Z = 81;
+                break;
+            case 6656: _Z = 128;
                 break;
             default: std::cout << "Block length value not supported for WiFi LDPC" << std::endl;
         }

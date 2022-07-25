@@ -23,7 +23,8 @@ int main(void) {
 	}
 	
 	//testSNR();
-	testFades();
+	//testFades();
+	testLDPC();
 	//testSpecialCases();
 	//imageSendTest("../testdata/engphys.ppm");
 

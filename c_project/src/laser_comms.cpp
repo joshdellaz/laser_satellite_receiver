@@ -22,6 +22,16 @@ LdpcCode ldpc_code(0,0);
 
 void initLDPC(void) {
     unsigned rate_index = 0; 
+    if (CODEWRD_R == 0.5) { rate_index = 0; }
+    else if (CODEWRD_R == 0.66) { rate_index = 1; }
+    else if (CODEWRD_R == 0.75) { rate_index = 2; }
+    else if (CODEWRD_R == 0.8) { rate_index = 3; }
+    else if (CODEWRD_R == 0.33) { rate_index = 4; }
+    else if (CODEWRD_R == 0.2) { rate_index = 5; }
+    else {
+        cout << "The chosen code rate (" << CODEWRD_R << ") is not supported." << endl;
+        return;
+    }
     //LdpcCode ldpc_code(0, 0);
     ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
 }
@@ -29,6 +39,7 @@ void initLDPC(void) {
 void applyLDPC(uint8_t* input) {
     
     unsigned block_length = CODEWRD_L; // parametarize this
+    double actual_rate = CODEWRD_R;
 
     unsigned rate_index;  // parametarize this
     if (CODEWRD_R == 0.5) { rate_index = 0; }
@@ -36,7 +47,10 @@ void applyLDPC(uint8_t* input) {
     else if (CODEWRD_R == 0.75) { rate_index = 2; }
     else if (CODEWRD_R == 0.8) { rate_index = 3; }
     else if (CODEWRD_R == 0.33) { rate_index = 4; }
-    else if (CODEWRD_R == 0.2) { rate_index = 5; }
+    else if (CODEWRD_R == 0.2) { 
+        rate_index = 5; 
+        actual_rate = 1.0 - 42.0/52.0; // gotta figure out a cleaner way
+        }
     else {
         cout << "The chosen code rate (" << CODEWRD_R << ") is not supported." << endl;
         return;
@@ -57,17 +71,21 @@ void applyLDPC(uint8_t* input) {
         std::vector<uint8_t> info_bits(info_len, 0); // converting the packet_data.data array to usable format for enbcoding
         uint8_t input_bit; // used for extracting each bit from the packet data array
         uint16_t input_preamb;
+        printf("Printing info bits bit by bit: \n");
         for (unsigned i_bit = 0; i_bit < info_len; ++i_bit) { // bit extraction
             input_bit = input[(int) (i_block*CODEWRD_L*CODEWRD_R/8) + (i_bit/8)];
             input_bit >>= (7 - (i_bit % 8));
             info_bits.at(i_bit) = (uint8_t) (input_bit & 0X01);
-            //printf("%i", info_bits.at(i_bit));
+            printf("%i,", info_bits.at(i_bit));
         }
 
         std::vector<uint8_t> coded_bits = ldpc_code.encode(info_bits);
 
+        printf("\nPrinting codeword: \n");
+        printf("Starting from index %i \n", (unsigned) CODEWRD_L*actual_rate);
         uint8_t output_byte = 0;
-        for (unsigned i_bit = CODEWRD_L*CODEWRD_R; i_bit < CODEWRD_L; ++i_bit) { // converting bit stream to uint8_t array
+        for (unsigned i_bit = CODEWRD_L*actual_rate; i_bit < CODEWRD_L; ++i_bit) { // converting bit stream to uint8_t array
+            printf("%i,", coded_bits.at(i_bit));
             if (coded_bits.at(i_bit)) {
                 // could do this more cleanly by converting the sum of 2^(i_bit % 8) over every 8 bits
                 if ((i_bit % 8) == 0) {

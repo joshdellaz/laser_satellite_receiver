@@ -20,7 +20,7 @@ extern int number_of_mls_repititions;
 #define LDPC_ENABLED
 #define CHANNEL_ENABLED
 #define INTRLV_SCRMBL_ENABLED
-//#define VERBOSE_ENABLED //prints literally everything
+#define VERBOSE_ENABLED //prints literally everything
 
 #ifdef VERBOSE_ENABLED
 #define dev_printf(...) printf(__VA_ARGS__)
@@ -371,7 +371,7 @@ bool fullSendTest(void) {
 
 	printf("Original Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-		printf("%d", packet_data.data[i]);
+		printf("%d,", packet_data.data[i]);
 	}
 	printf("\n\n");
 	printBitsfromBytes(packet_data.data, 20);
@@ -379,6 +379,7 @@ bool fullSendTest(void) {
 
 	printf("getting CRC\n");
 	getCRC(&packet_data);
+	dev_printf("CRC: %li\n", packet_data.crc);
 
 	//Commented out functions are not yet implemented, so cannot be tested
 	//printf("applying FEC \n");
@@ -386,6 +387,21 @@ bool fullSendTest(void) {
 
 	printf("assembling packet \n");
 	assemblePacket(&packet_data, &packet_vector, &packet_length);
+
+	dev_printf("$$$$$ Before encoding:\n");
+	for (unsigned int i = 0; i < packet_length; i++) {
+		dev_printf("%d,", packet_vector[i]);
+	}
+	dev_printf("\n\n");
+
+	applyLDPC(packet_vector);
+
+	dev_printf("$$$$$ After encoding:\n");
+	for (unsigned int i = 0; i < packet_length; i++) {
+		dev_printf("%d,", packet_vector[i]);
+	}
+	dev_printf("\n\n");
+
 #ifdef INTRLV_SCRMBL_ENABLED
 	printf("applying interleaving \n");
 	applyInterleaving(packet_vector, packet_length);
@@ -430,7 +446,7 @@ bool fullSendTest(void) {
 
 
 #ifdef CHANNEL_ENABLED
-	applyChannelToSamples(samples, numsamples);
+	//applyChannelToSamples(samples, numsamples);
 #endif	//need to soften the burst erasures for demo (by changing the transition probabilities defined in channel.h)
 
 

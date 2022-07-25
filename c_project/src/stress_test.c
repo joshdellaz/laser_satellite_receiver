@@ -90,3 +90,8 @@ void testBursts(){
 void testSpecialCases(){
     testSyncEdgeCases();
 }
+
+void testLDPC(){
+    getFECDataLengths();
+    fullSendTest();
+}

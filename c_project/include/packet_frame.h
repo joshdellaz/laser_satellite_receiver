@@ -3,12 +3,12 @@
 #include <liquid/liquid.h>
 
 //LDPC params
-#define CODEWRD_L 1296
-#define NUM_BLOCKS_PCKT 28
-#define CODEWRD_R 0.5 // for 1/3 write 0.33
-#define MAX_DECODE_ITERS 35 //25
+#define CODEWRD_L 6656
+#define NUM_BLOCKS_PCKT 1
+#define CODEWRD_R 0.2 // for 1/3 write 0.33
+#define MAX_DECODE_ITERS 25
 #define MIN_SUM false
-#define BLOCK_SIZE 81
+#define BLOCK_SIZE 160 // length of encodable in Bytes
 
 
 //Macros indicating size of various packet fields. Framing and packetizing code should be able to handle

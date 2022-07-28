@@ -288,6 +288,61 @@ public:
             }
         }
 
+        printf("Codeword:\n");
+        for (unsigned i = 0; i < _N; i++){
+            printf("%i,", codeword.at(i));
+        }
+
+         return codeword;
+    };
+
+
+    // Encoding defintion for 5G matrices
+    std::vector<uint8_t> encode_modern(std::vector<uint8_t> info_bits) {
+        // Does encoding by back substitution
+        // Assumes a very specific structure on the partiy check matrix
+        std::vector<uint8_t > codeword(_N, 0);
+        std::copy(info_bits.begin(), info_bits.end(), codeword.begin());
+
+        std::vector<uint8_t > parity(_M, 0);
+
+        for(unsigned i_row = 0; i_row < 4*_Z; ++i_row) {
+            for(unsigned i_col = 0; i_col < _row_mat.at(i_row).size(); ++i_col) {
+                if (_row_mat.at(i_row).at(i_col) < _K)
+                    parity.at(i_row) += codeword.at(_row_mat.at(i_row).at(i_col));
+            }
+            parity.at(i_row) = (uint8_t) (parity.at(i_row) % 2);
+        }
+
+        for (unsigned i_col = 0; i_col < _Z; ++i_col) {
+            for (unsigned i_row = i_col; i_row < 4*_Z; i_row = i_row + _Z) {
+                codeword.at(_K + i_col + 1) += parity.at(i_row);
+            }
+            codeword.at(_K + i_col + 1) = (uint8_t ) (codeword.at(_K + i_col + 1) % 2);
+        }
+
+        for(unsigned i_row = 0; i_row < 4*_Z; ++i_row) {
+            for(unsigned i_col = 0; i_col < _row_mat.at(i_row).size(); ++i_col) {
+                if ((_row_mat.at(i_row).at(i_col) >= _K) && (_row_mat.at(i_row).at(i_col) < _K + _Z))
+                    parity.at(i_row) += codeword.at(_row_mat.at(i_row).at(i_col));
+            }
+            parity.at(i_row) = (uint8_t) (parity.at(i_row) % 2);
+        }
+
+        for (unsigned i_col = _K + _Z; i_col < _K + 4*_Z; i_col = i_col + _Z  ) {
+            for (unsigned i_row = 0; i_row < _Z; ++i_row) {
+                codeword.at(i_col + i_row) = parity.at(i_col + i_row - _K - _Z);
+                parity.at(i_col + i_row - _K ) = (uint8_t) (( parity.at(i_col + i_row - _K) + parity.at(i_col + i_row - _K - _Z)) %2);
+            }
+        }
+
+        printf("Modern codeword:\n");
+        for (unsigned i = 0; i < _N; i++){
+            printf("%i,", codeword.at(i));
+        }
+
+        printf("\n\n%i\n", check_codeword(codeword));
+
         return codeword;
     };
 

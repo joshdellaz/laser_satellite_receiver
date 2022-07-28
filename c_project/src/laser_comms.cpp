@@ -79,12 +79,17 @@ void applyLDPC(uint8_t* input) {
             printf("%i,", info_bits.at(i_bit));
         }
 
-        std::vector<uint8_t> coded_bits = ldpc_code.encode(info_bits);
+        std::vector<uint8_t> coded_bits;
+        if (rate_index == 5) {
+            coded_bits = ldpc_code.encode_modern(info_bits);
+        } else {
+            coded_bits = ldpc_code.encode(info_bits);
+        }
 
         printf("\nPrinting codeword: \n");
-        printf("Starting from index %i \n", (unsigned) CODEWRD_L*actual_rate);
+        printf("Starting from index %i \n", int(CODEWRD_L*actual_rate));
         uint8_t output_byte = 0;
-        for (unsigned i_bit = CODEWRD_L*actual_rate; i_bit < CODEWRD_L; ++i_bit) { // converting bit stream to uint8_t array
+        for (unsigned i_bit = 1280; i_bit < CODEWRD_L; ++i_bit) { // converting bit stream to uint8_t array
             printf("%i,", coded_bits.at(i_bit));
             if (coded_bits.at(i_bit)) {
                 // could do this more cleanly by converting the sum of 2^(i_bit % 8) over every 8 bits

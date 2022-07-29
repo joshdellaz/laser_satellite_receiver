@@ -365,7 +365,7 @@ bool fullSendTest(void) {
 	uint8_t* packet_vector = NULL;
 	unsigned int packet_length;
 	unsigned int frame_length;
-	uint8_t* frame_vector = NULL;//malloc? yes
+	//uint8_t* frame_vector = NULL;//malloc? yes
 
 	packet_data.data = generateRandPacket();
 
@@ -396,7 +396,7 @@ bool fullSendTest(void) {
 
 	applyLDPC(packet_vector);
 
-	dev_printf("$$$$$ After encoding:\n");
+	dev_printf("\n$$$$$ After encoding:\n");
 	for (unsigned int i = 0; i < packet_length; i++) {
 		dev_printf("%d,", packet_vector[i]);
 	}
@@ -405,16 +405,16 @@ bool fullSendTest(void) {
 #ifdef INTRLV_SCRMBL_ENABLED
 	printf("applying interleaving \n");
 	applyInterleaving(packet_vector, packet_length);
-	printf("scrambling eggs \n");
-	applyScrambling(&packet_vector, packet_length);
+	//printf("scrambling eggs \n");
+	//applyScrambling(&packet_vector, packet_length);
 #endif
 	
-	printf("assembling frame \n");
-	assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
-	unsigned int preamble_length = frame_length - packet_length;
-	printf("\nMLS bits\n");
-	printBitsfromBytes(frame_vector, 20);
-	printf("\n\n");
+	// printf("assembling frame \n");
+	// assembleFrame(&frame_vector, &frame_length, packet_vector, packet_length);
+	// unsigned int preamble_length = frame_length - packet_length;
+	// printf("\nMLS bits\n");
+	// printBitsfromBytes(frame_vector, 20);
+	// printf("\n\n");
 
 	// printf("Orignal frame:\n");
 	// for (unsigned int i = 0; i < frame_length; i++) {
@@ -440,9 +440,9 @@ bool fullSendTest(void) {
 
 
 	//Turn to samples
-	int numsamples = 0;
-	float phase = 0;
-	float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
+	//int numsamples = 0;
+	//float phase = 0;
+	//float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
 
 
 #ifdef CHANNEL_ENABLED
@@ -472,31 +472,34 @@ bool fullSendTest(void) {
 
 #else
 	//receive samples via power detection
-	int frame_start_index_guess = 0;//start of MLS preamble guess
-	int samples_recv_length = 0;
-	float * samples_recv= getIncomingSignalData(samples, &frame_start_index_guess, &samples_recv_length);
+	// int frame_start_index_guess = 0;//start of MLS preamble guess
+	// int samples_recv_length = 0;
+	// float * samples_recv= getIncomingSignalData(samples, &frame_start_index_guess, &samples_recv_length);
 
 #endif
 
 	//resample
-	int numsamples_upsampled = 0;
-	float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
-	frame_start_index_guess *= 4;
+	// int numsamples_upsampled = 0;
+	// float * samples_upsampled = resampleInput(samples_recv, samples_recv_length, &numsamples_upsampled);
+	// frame_start_index_guess *= 4;
 
-	printf("Post-upsample:\n");
-	for (unsigned int i = 0; i < 400; i++) {
-		printf("%.2f ", samples_upsampled[mls_total_preamble_length_bits*4*4 + i]);
-	}
-	printf("\n\n");
+	// printf("Post-upsample:\n");
+	// for (unsigned int i = 0; i < 400; i++) {
+	// 	printf("%.2f ", samples_upsampled[mls_total_preamble_length_bits*4*4 + i]);
+	// }
+	// printf("\n\n");
 
-	//Init "rx" stuff
+	// //Init "rx" stuff
 	packet_t rxpacket_data;//malloc this?
 	rxpacket_data.data = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
 	uint8_t* rxpacket_vector = NULL;
-	int rxpacket_length = 0;
+	int rxpacket_length = packet_length;
+	rxpacket_vector = packet_vector;
+
+	applyBitFlips(rxpacket_vector, packet_length);
 
 	//sync & demodulate
-	rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
+	//rxpacket_vector = syncFrame(samples_upsampled, numsamples_upsampled, &rxpacket_length, frame_start_index_guess);
 	// printf("\nData after syncFrame\n");
 	// printBitsfromBytes(rxpacket_vector, 20);
 	// printf("\n\n");
@@ -505,21 +508,29 @@ bool fullSendTest(void) {
 	// printf("disassembling frame \n");
 	// disassembleFrame(frame_vector, &rxpacket_vector, frame_length);
 #ifdef INTRLV_SCRMBL_ENABLED
-	printf("removing eggs\n");
-	removeScrambling(&rxpacket_vector, packet_length);
+	// printf("removing eggs\n");
+	// removeScrambling(&rxpacket_vector, packet_length);
 
 	printf("removing interleaving \n");
 	removeInterleaving(rxpacket_vector, packet_length);
 #endif
+
+	printf("Received Data:\n");
+	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+		printf("%d,", rxpacket_vector[i]);
+	}
+	printf("\n\n");
+	
+	decodeLDPC(rxpacket_vector);
 
 	printf("disassembling packet \n");
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
 	//printf("removing FEC \n");
 	//removeFEC(rxpacket_data.data);
 
-	printf("Received Data:\n");
+	printf("Decoded Data:\n");
 	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-		printf("%d", rxpacket_data.data[i]);
+		printf("%d,", rxpacket_data.data[i]);
 	}
 	printf("\n\n");
 	printBitsfromBytes(rxpacket_data.data, 40);
@@ -538,7 +549,7 @@ bool fullSendTest(void) {
 	free(packet_data.data);
 	free(rxpacket_data.data);
 	free(packet_vector);
-	free(frame_vector);
+	//free(frame_vector);
 	free(rxpacket_vector);
 	return 0;
 }

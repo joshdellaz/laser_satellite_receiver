@@ -306,6 +306,8 @@ public:
 
         std::vector<uint8_t > parity(_M, 0);
 
+        // Finding the first 4*_Z parity bits (done separately because of the staircase structure)
+
         for(unsigned i_row = 0; i_row < 4*_Z; ++i_row) {
             for(unsigned i_col = 0; i_col < _row_mat.at(i_row).size(); ++i_col) {
                 if (_row_mat.at(i_row).at(i_col) < _K)
@@ -334,6 +336,15 @@ public:
                 codeword.at(i_col + i_row) = parity.at(i_col + i_row - _K - _Z);
                 parity.at(i_col + i_row - _K ) = (uint8_t) (( parity.at(i_col + i_row - _K) + parity.at(i_col + i_row - _K - _Z)) %2);
             }
+        }
+
+        // Finding the rest of the parity bits
+        for(unsigned i_row = 4*_Z; i_row < _M; ++i_row) {
+            for(unsigned i_col = 0; i_col < _row_mat.at(i_row).size(); ++i_col) {
+                parity.at(i_row) += codeword.at(_row_mat.at(i_row).at(i_col));
+            }
+            parity.at(i_row) = (uint8_t) (parity.at(i_row) % 2);
+            codeword.at(_K + i_row) = parity.at(i_row);
         }
 
         printf("Modern codeword:\n");

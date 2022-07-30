@@ -298,6 +298,7 @@ void _applyFades(uint8_t *input_data, unsigned int input_data_length)
 	}
 }
 
+
 bool applyBitFlips(uint8_t *input_data, unsigned int input_data_length) // works with bit stream (not samples)
 {
 	for (unsigned int i = 0; i < input_data_length; i++)

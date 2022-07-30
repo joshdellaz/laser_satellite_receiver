@@ -1,4 +1,4 @@
-#include "laser_comms.h"
+#include "ldpc_implementation.h"
 #include "packet_frame.h"
 #include <iostream>
 #include "LdpcCode.h"
@@ -51,18 +51,15 @@ void applyLDPC(uint8_t* input) {
         dev_printf("LDPC input length: %d\n", info_len/8);// TODO needs correction 
         //return;
     }
-    // cout << "Checking info length \nLDPC info length: " << info_len/8 << endl;
-    // cout << "Macro defined length: " << PACKET_DATA_LENGTH_NO_FEC << endl;
+
     for (int i_block = 0; i_block < NUM_BLOCKS_PCKT; i_block++){
         std::vector<uint8_t> info_bits(info_len, 0); // converting the packet_data.data array to usable format for enbcoding
         uint8_t input_bit; // used for extracting each bit from the packet data array
         uint16_t input_preamb;
-        //printf("Printing info bits bit by bit: \n");
         for (unsigned i_bit = 0; i_bit < info_len; ++i_bit) { // bit extraction
             input_bit = input[(int) (i_block*info_len/8) + (i_bit/8)];
             input_bit >>= (7 - (i_bit % 8));
             info_bits.at(i_bit) = (uint8_t) (input_bit & 0X01);
-            //printf("%i,", info_bits.at(i_bit));
         }
 
         std::vector<uint8_t> coded_bits;
@@ -72,11 +69,8 @@ void applyLDPC(uint8_t* input) {
             coded_bits = ldpc_code.encode(info_bits);
         }
 
-        //printf("\nPrinting codeword: \n");
-        //printf("Starting from index %i \n", int(info_len));
         uint8_t output_byte = 0;
         for (unsigned i_bit = 1280; i_bit < CODEWRD_L; ++i_bit) { // converting bit stream to uint8_t array
-            //printf("%i,", coded_bits.at(i_bit));
             if (coded_bits.at(i_bit)) {
                 // could do this more cleanly by converting the sum of 2^(i_bit % 8) over every 8 bits
                 if ((i_bit % 8) == 0) {
@@ -113,8 +107,6 @@ void applyLDPC(uint8_t* input) {
 
 void decodeLDPC(uint8_t* rxinput) {
     // ignoring burst positions in LDPC for now
-
-    //cout << "\n The llr vector: " << endl;
     for (int i_block = 0; i_block < NUM_BLOCKS_PCKT; i_block++){
         std::vector<double> llr(CODEWRD_L, 0);
         uint8_t out_bit; // used for extracting each bit from the packet data array
@@ -132,18 +124,10 @@ void decodeLDPC(uint8_t* rxinput) {
             else {
                 llr.at(i_bit) = log(9);
             }
-            //printf("%f,", llr.at(i_bit));
         }
         
         std::vector<uint8_t> decoded_cw = ldpc_code.decode(llr, MAX_DECODE_ITERS, MIN_SUM);
 
-        // cout << "\n The received coded bits: " << endl;
-        // for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) {
-        //     printf("%i", decoded_cw.at(i_bit));
-        // }
-        // printf("\n");
-
-        //printf("\nDecoded message bits:\n");
         uint8_t out_byte = 0;
         for (unsigned i_bit = 0; i_bit < info_len; ++i_bit) { // converting bit stream to uint8_t array
             //printf("%i,", decoded_cw.at(i_bit));

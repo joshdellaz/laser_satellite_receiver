@@ -193,15 +193,9 @@ public:
                         _Z = (unsigned int) (block_length / 52);
                         std::cout << _Z << std::endl;
                         break;
-                    // case 1296:
-                    //     h_pointer = & WiFiLDPC::H_1296_5_6[0][0];
-                    //     break;
-                    // case 1944:
-                    //     h_pointer = & WiFiLDPC::H_1944_5_6[0][0];
-                    //     break;
-                    // default:
-                    //     h_pointer = & WiFiLDPC::H_648_1_2[0][0];
-                    //     break;
+                    default:
+                        std::cout << "Block length value not supported" << std::endl;
+                        return;
                 }
                 break;
             default: // Not supported
@@ -287,12 +281,6 @@ public:
                 parity.at(i_col + i_row - _K ) = (uint8_t) (( parity.at(i_col + i_row - _K) + parity.at(i_col + i_row - _K - _Z)) %2);
             }
         }
-
-        // printf("Codeword:\n");
-        // for (unsigned i = 0; i < _N; i++){
-        //     printf("%i,", codeword.at(i));
-        // }
-
         return codeword;
     };
 
@@ -346,14 +334,6 @@ public:
             parity.at(i_row) = (uint8_t) (parity.at(i_row) % 2);
             codeword.at(_K + i_row) = parity.at(i_row);
         }
-
-        // printf("Modern codeword:\n");
-        // for (unsigned i = 0; i < _N; i++){
-        //     printf("%i,", codeword.at(i));
-        // }
-
-        // printf("\n\n%i\n", check_codeword(codeword));
-
         return codeword;
     };
 

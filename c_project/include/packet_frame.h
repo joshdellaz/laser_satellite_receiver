@@ -1,26 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <liquid/liquid.h>
-
-//LDPC params
-#define CODEWRD_L 6656
-#define NUM_BLOCKS_PCKT 2
-#define CODEWRD_R 0.2 // for 1/3 write 0.33
-#define MAX_DECODE_ITERS 25
-#define MIN_SUM false
-#define BLOCK_SIZE 160 // length of encodable in Bytes
-
-
-//Macros indicating size of various packet fields. Framing and packetizing code should be able to handle
-//different field lengths without any issues
-#define NUM_PACKETS_LENGTH_BYTES 2
-#define CRC_DATA_LENGTH_BYTES 4
-#define FRAME_LENGTH_BYTES //TODO determine proper value
-#define FEC_TYPE LIQUID_FEC_HAMMING74 //Other options = 
-#define PACKET_DATA_LENGTH_NO_FEC (BLOCK_SIZE*NUM_BLOCKS_PCKT -  CRC_DATA_LENGTH_BYTES - 2*NUM_PACKETS_LENGTH_BYTES)
-//^ 316 = 4 blocks 235 = 3 blocks, 154 = 2 blocks, 73 = 1 block
-
-
+#include "config.h"
 
 extern int packet_data_length_with_fec_bytes;
 

@@ -8,11 +8,13 @@
 #include <math.h>
 #include <vector>
 #include "dev_utils.h"
+#include "config.h"
 
+#define MIN_SUM false
 
 using namespace std;
 
-#ifdef VERBOSE_ENABLED
+#if VERBOSE_ENABLED == 1
 #define dev_printf(...) printf(__VA_ARGS__)
 #else
 #define dev_printf(...) stub()

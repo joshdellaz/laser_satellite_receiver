@@ -3,14 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "samples_to_bits.h"
-//#include "packet_frame.h"
 #include "dev_utils.h"
+#include "config.h"
 
 
 #include <complex.h>
 #include <liquid/liquid.h>
 
-#ifdef VERBOSE_ENABLED
+#if VERBOSE_ENABLED == 1
 #define dev_printf(...) printf(__VA_ARGS__)
 #else
 #define dev_printf(...) stub()

@@ -4,10 +4,10 @@
 #include "plot.h"
 
 extern int snr_db;
-extern int fade_freq;
-extern int fade_len;
-extern int burst_freq;
-extern int burst_len;
+extern int fade_freq_hz;
+extern int fade_len_usec;
+extern int burst_freq_hz;
+extern int burst_len_usec;
 
 //TODO List
 //Should all of these tests have dynamic phase between packets? How to implement that...
@@ -47,8 +47,8 @@ void testFades(){
     float * bad_bits_percent = (float *)malloc((max_len/iterations)*(max_freq/iterations)*sizeof(float));
     for(int i = min_len; i < max_len; i += max_len/iterations){
         for(int j = min_freq; j < max_freq; j += max_freq/iterations){
-            fade_len = i;
-            fade_freq = j;
+            fade_len_usec = i;
+            fade_freq_hz = j;
             dropped_packets_percent[index] = imageSendTest("../testdata/engphys.ppm");
             bad_bits_percent[index] = checkEfficacy();
             index++;
@@ -73,8 +73,8 @@ void testBursts(){
     float * bad_bits_percent = (float *)malloc((max_len/iterations)*(max_freq/iterations)*sizeof(float));
     for(int i = min_len; i < max_len; i + max_len/iterations){
         for(int j = min_freq; j < max_freq; j + max_freq/iterations){
-            burst_len = i;
-            burst_freq = j;
+            burst_len_usec = i;
+            burst_freq_hz = j;
             dropped_packets_percent[index] = imageSendTest("../testdata/engphys.ppm");
             bad_bits_percent[index] = checkEfficacy();
             index++;

@@ -40,9 +40,25 @@
         "tuple": "cpp",
         "typeinfo": "cpp",
         "utility": "cpp",
-        "laser_comms.h": "c",
+        "ldpc_implementation.h": "c",
         "channel.h": "c",
         "stdio.h": "c",
-        "ad2_io.hpp": "c"
+        "ad2_io.hpp": "c",
+        "atomic": "cpp",
+        "bit": "cpp",
+        "complex": "cpp",
+        "cstdarg": "cpp",
+        "cstddef": "cpp",
+        "ctime": "cpp",
+        "deque": "cpp",
+        "algorithm": "cpp",
+        "functional": "cpp",
+        "iterator": "cpp",
+        "memory": "cpp",
+        "memory_resource": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "iomanip": "cpp",
+        "cinttypes": "cpp"
     }
 }

@@ -24,9 +24,9 @@ int main(void) {
 	
 	//testSNR();
 	//testFades();
-	testLDPC();
+	//testLDPC();
 	//testSpecialCases();
-	//imageSendTest("../testdata/engphys.ppm");
+	imageSendTest("../testdata/engphys.ppm");
 
 
 	//softwareDACandADC();

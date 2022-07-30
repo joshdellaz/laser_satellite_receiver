@@ -288,12 +288,12 @@ public:
             }
         }
 
-        printf("Codeword:\n");
-        for (unsigned i = 0; i < _N; i++){
-            printf("%i,", codeword.at(i));
-        }
+        // printf("Codeword:\n");
+        // for (unsigned i = 0; i < _N; i++){
+        //     printf("%i,", codeword.at(i));
+        // }
 
-         return codeword;
+        return codeword;
     };
 
 
@@ -347,12 +347,12 @@ public:
             codeword.at(_K + i_row) = parity.at(i_row);
         }
 
-        printf("Modern codeword:\n");
-        for (unsigned i = 0; i < _N; i++){
-            printf("%i,", codeword.at(i));
-        }
+        // printf("Modern codeword:\n");
+        // for (unsigned i = 0; i < _N; i++){
+        //     printf("%i,", codeword.at(i));
+        // }
 
-        printf("\n\n%i\n", check_codeword(codeword));
+        // printf("\n\n%i\n", check_codeword(codeword));
 
         return codeword;
     };

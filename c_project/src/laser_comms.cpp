@@ -20,6 +20,10 @@ using namespace std;
 
 LdpcCode ldpc_code(0,0);
 
+unsigned block_length = CODEWRD_L;
+unsigned info_len = 0;
+unsigned parity_len = 0;
+
 void initLDPC(void) {
     unsigned rate_index = 0; 
     if (CODEWRD_R == 0.5) { rate_index = 0; }
@@ -34,35 +38,17 @@ void initLDPC(void) {
     }
     //LdpcCode ldpc_code(0, 0);
     ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
+    info_len = ldpc_code.get_info_length();
+    parity_len = CODEWRD_L - info_len;
+
 }
 
 void applyLDPC(uint8_t* input) {
     
-    unsigned block_length = CODEWRD_L; // parametarize this
-    double actual_rate = CODEWRD_R;
-
-    unsigned rate_index;  // parametarize this
-    if (CODEWRD_R == 0.5) { rate_index = 0; }
-    else if (CODEWRD_R == 0.66) { rate_index = 1; }
-    else if (CODEWRD_R == 0.75) { rate_index = 2; }
-    else if (CODEWRD_R == 0.8) { rate_index = 3; }
-    else if (CODEWRD_R == 0.33) { rate_index = 4; }
-    else if (CODEWRD_R == 0.2) { 
-        rate_index = 5; 
-        actual_rate = 1.0 - 42.0/52.0; // gotta figure out a cleaner way
-        }
-    else {
-        cout << "The chosen code rate (" << CODEWRD_R << ") is not supported." << endl;
-        return;
-    }
-    dev_printf("The chosen code rate is %d\n", CODEWRD_R);
-    dev_printf("The code rate index is %d\n", rate_index);
-    
-    unsigned info_len = ldpc_code.get_info_length();
     if (info_len/8 != (PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES)) {
         dev_printf("The chosen data length is not compatible with the picked LDPC scheme ...\n");
         dev_printf("Length of data to be encoded (with CRC): %d\n", PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES);
-        dev_printf("LDPC input length: %d\n", (CODEWRD_L * CODEWRD_R)/8);// TODO needs correction 
+        dev_printf("LDPC input length: %d\n", info_len/8);// TODO needs correction 
         //return;
     }
     // cout << "Checking info length \nLDPC info length: " << info_len/8 << endl;
@@ -71,26 +57,26 @@ void applyLDPC(uint8_t* input) {
         std::vector<uint8_t> info_bits(info_len, 0); // converting the packet_data.data array to usable format for enbcoding
         uint8_t input_bit; // used for extracting each bit from the packet data array
         uint16_t input_preamb;
-        printf("Printing info bits bit by bit: \n");
+        //printf("Printing info bits bit by bit: \n");
         for (unsigned i_bit = 0; i_bit < info_len; ++i_bit) { // bit extraction
-            input_bit = input[(int) (i_block*CODEWRD_L*CODEWRD_R/8) + (i_bit/8)];
+            input_bit = input[(int) (i_block*info_len/8) + (i_bit/8)];
             input_bit >>= (7 - (i_bit % 8));
             info_bits.at(i_bit) = (uint8_t) (input_bit & 0X01);
-            printf("%i,", info_bits.at(i_bit));
+            //printf("%i,", info_bits.at(i_bit));
         }
 
         std::vector<uint8_t> coded_bits;
-        if (rate_index == 5) {
+        if (CODEWRD_L == 6656) {
             coded_bits = ldpc_code.encode_modern(info_bits);
         } else {
             coded_bits = ldpc_code.encode(info_bits);
         }
 
-        printf("\nPrinting codeword: \n");
-        printf("Starting from index %i \n", int(CODEWRD_L*actual_rate));
+        //printf("\nPrinting codeword: \n");
+        //printf("Starting from index %i \n", int(info_len));
         uint8_t output_byte = 0;
         for (unsigned i_bit = 1280; i_bit < CODEWRD_L; ++i_bit) { // converting bit stream to uint8_t array
-            printf("%i,", coded_bits.at(i_bit));
+            //printf("%i,", coded_bits.at(i_bit));
             if (coded_bits.at(i_bit)) {
                 // could do this more cleanly by converting the sum of 2^(i_bit % 8) over every 8 bits
                 if ((i_bit % 8) == 0) {
@@ -117,7 +103,7 @@ void applyLDPC(uint8_t* input) {
             }
             if ((i_bit % 8) == 7) {
                 if (coded_bits.at(i_bit)) {output_byte = output_byte | 0x01;}
-                input[int(NUM_BLOCKS_PCKT*actual_rate*CODEWRD_L/8) + int(i_block*CODEWRD_L*(1-actual_rate)/8) + int((i_bit-CODEWRD_L*actual_rate)/8)] = output_byte;
+                input[int(NUM_BLOCKS_PCKT*info_len/8) + int(i_block*parity_len/8) + int((i_bit-info_len)/8)] = output_byte;
                 output_byte = (uint8_t) 0;
             }
         }
@@ -128,33 +114,6 @@ void applyLDPC(uint8_t* input) {
 void decodeLDPC(uint8_t* rxinput) {
     // ignoring burst positions in LDPC for now
 
-    //LdpcCode ldpc_code(0, 0);
-
-    unsigned block_length = CODEWRD_L; // parametarize this
-    double actual_rate = CODEWRD_R;
-
-    unsigned rate_index;  // parametarize this
-    if (CODEWRD_R == 0.5) { rate_index = 0; }
-    else if (CODEWRD_R == 0.66) { rate_index = 1; }
-    else if (CODEWRD_R == 0.75) { rate_index = 2; }
-    else if (CODEWRD_R == 0.8) { rate_index = 3; }
-    else if (CODEWRD_R == 0.33) { rate_index = 4; }
-    else if (CODEWRD_R == 0.2) { 
-        rate_index = 5; 
-        actual_rate = 1.0 - 42.0/52.0; // gotta figure out a cleaner way
-    }
-    else {
-        cout << "The chosen code rate (" << CODEWRD_R << ") is not supported." << endl;
-        return;
-    }
-    
-    //ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
-
-    unsigned info_len = ldpc_code.get_info_length();
-    unsigned parity_len = CODEWRD_L - info_len;
-    // cout << "Checking info length \nLDPC info length: " << info_len/8 << endl;
-    // cout << "Macro defined length: " << PACKET_DATA_LENGTH_NO_FEC << endl;
-    
     //cout << "\n The llr vector: " << endl;
     for (int i_block = 0; i_block < NUM_BLOCKS_PCKT; i_block++){
         std::vector<double> llr(CODEWRD_L, 0);
@@ -184,10 +143,10 @@ void decodeLDPC(uint8_t* rxinput) {
         // }
         // printf("\n");
 
-        printf("\nDecoded message bits:\n");
+        //printf("\nDecoded message bits:\n");
         uint8_t out_byte = 0;
         for (unsigned i_bit = 0; i_bit < info_len; ++i_bit) { // converting bit stream to uint8_t array
-            printf("%i,", decoded_cw.at(i_bit));
+            //printf("%i,", decoded_cw.at(i_bit));
             if (decoded_cw.at(i_bit)) {
                 // could do this more cleanly by converting the sum of 2^(i_bit % 8) over every 8 bits
                 if ((i_bit % 8) == 0) {

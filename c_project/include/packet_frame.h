@@ -4,7 +4,7 @@
 
 //LDPC params
 #define CODEWRD_L 6656
-#define NUM_BLOCKS_PCKT 1
+#define NUM_BLOCKS_PCKT 2
 #define CODEWRD_R 0.2 // for 1/3 write 0.33
 #define MAX_DECODE_ITERS 25
 #define MIN_SUM false

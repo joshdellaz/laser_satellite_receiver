@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #define PI 3.1415926536
 
@@ -12,6 +13,8 @@
 #define FADE_VALUE 0
 
 //Default channel characteristices
+//TODO make this a struct instead... mayble?
+int bit_rate_mbps = 1;
 int snr_db = 20; // for AWGN noise
 int fade_freq_hz = 100; // Estimation based on KT06-04 results around 25 degree elevation = 3 or 4 //770 used originally
 int fade_len_usec = 1; // 700 originally TODO make this dependent on bitrate!
@@ -36,6 +39,24 @@ void configChannel(int snr, int f_freq, int f_len, int b_freq, int b_len){
 	fade_len_usec = f_len;
 	burst_freq_hz = b_freq;
 	burst_len_usec = b_len;
+}
+
+void setBitRateMbps(int bitrate){
+	bit_rate_mbps = bitrate;
+}
+
+//based on F. Moll, “Experimental analysis of channel coherence time and fading behavior in the LEO-ground link
+void setFadeParamsBasedOnElevationAngle(float elevation_angle){
+	if(elevation_angle < 7.5){//outside of studied dataset; assume constant outside of range
+		fade_freq_hz = 20;
+		fade_len_usec = 1300;
+	} else if(elevation_angle > 27){//outside of studied dataset; assume constant outside of range
+		fade_freq_hz = 20;
+		fade_len_usec = 1300;
+	} else {//roughly estimated curve fits
+		fade_freq_hz = pow(10,(2.75-elevation_angle/13.0));
+		fade_len_usec = 1.7 - 0.05*elevation_angle;
+	}
 }
 
 bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr_packet_num)
@@ -70,7 +91,7 @@ bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr
 
 void _createBursts(bool *Bursts, unsigned input_data_length)
 {
-	unsigned int bits_per_cyc = BIT_RATE * CHNL_CYC; // non-zero integer
+	unsigned int bits_per_cyc = bit_rate_mbps * CHNL_CYC; // non-zero integer
 	chnl_state chnl_st;								 // current state of the channel
 	float init_st = __randF();
 
@@ -136,9 +157,9 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 void _applyFadesToSamples(float *samples, unsigned smpls_len)
 {
 	float fade_certain_period = 1e6 / fade_freq_hz; // [us] period of time in which there should be a fade
-	int total_fades = (int) floor(smpls_len / (fade_certain_period*BIT_RATE*SAMP_PER_BIT)); 
+	int total_fades = (int) floor(smpls_len / (fade_certain_period*bit_rate_mbps*SAMP_PER_BIT)); 
 	int N = smpls_len / total_fades;
-	int M = fade_len_usec * BIT_RATE * SAMP_PER_BIT; // in every N samples there's a fade of length M
+	int M = fade_len_usec * bit_rate_mbps * SAMP_PER_BIT; // in every N samples there's a fade of length M
 	for (unsigned i = 0; i < total_fades; i++){
 		int fade_start = (i*N) + __randNum(0,N-M-1);
 		//printf("testing fade_start: %d\n", fade_start);
@@ -279,9 +300,9 @@ void _applyBursts(bool *Bursts, uint8_t *input_data, unsigned int input_data_len
 void _applyFades(uint8_t *input_data, unsigned int input_data_length)
 {
 	float fade_certain_period = 1e6 / fade_freq_hz; // [us] period of time in which there should be a fade
-	int total_fades = (int) floor(8*input_data_length / (fade_certain_period*BIT_RATE)); 
+	int total_fades = (int) floor(8*input_data_length / (fade_certain_period*bit_rate_mbps)); 
 	int N = (int) floor(8*input_data_length / total_fades); // in bits
-	int M = fade_len_usec * BIT_RATE; // in bits
+	int M = fade_len_usec * bit_rate_mbps; // in bits
 	printf("Fades:\n");
 	for (unsigned i = 0; i < total_fades; i++){
 		int fade_start = (i*N) + __randNum(0,N-M-1);

@@ -9,6 +9,7 @@
 #include <vector>
 #include "dev_utils.h"
 #include "config.h"
+#include "packet_frame.h"
 
 #define MIN_SUM false
 
@@ -47,14 +48,14 @@ void initLDPC(void) {
 
 void applyLDPC(uint8_t* input) {
     
-    if (info_len/8 != (PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES)) {
+    if (info_len/8 != (packet_data_length_without_fec_bytes + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES)) {
         dev_printf("The chosen data length is not compatible with the picked LDPC scheme ...\n");
-        dev_printf("Length of data to be encoded (with CRC): %d\n", PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES);
+        dev_printf("Length of data to be encoded (with CRC): %d\n", packet_data_length_without_fec_bytes + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES);
         dev_printf("LDPC input length: %d\n", info_len/8);// TODO needs correction 
         //return;
     }
 
-    for (int i_block = 0; i_block < NUM_BLOCKS_PCKT; i_block++){
+    for (int i_block = 0; i_block < getNumBlocksPerPacket(); i_block++){
         std::vector<uint8_t> info_bits(info_len, 0); // converting the packet_data.data array to usable format for enbcoding
         uint8_t input_bit; // used for extracting each bit from the packet data array
         uint16_t input_preamb;
@@ -99,7 +100,7 @@ void applyLDPC(uint8_t* input) {
             }
             if ((i_bit % 8) == 7) {
                 if (coded_bits.at(i_bit)) {output_byte = output_byte | 0x01;}
-                input[int(NUM_BLOCKS_PCKT*info_len/8) + int(i_block*parity_len/8) + int((i_bit-info_len)/8)] = output_byte;
+                input[int(getNumBlocksPerPacket()*info_len/8) + int(i_block*parity_len/8) + int((i_bit-info_len)/8)] = output_byte;
                 output_byte = (uint8_t) 0;
             }
         }
@@ -109,14 +110,14 @@ void applyLDPC(uint8_t* input) {
 
 void decodeLDPC(uint8_t* rxinput) {
     // ignoring burst positions in LDPC for now
-    for (int i_block = 0; i_block < NUM_BLOCKS_PCKT; i_block++){
+    for (int i_block = 0; i_block < getNumBlocksPerPacket(); i_block++){
         std::vector<double> llr(CODEWRD_L, 0);
         uint8_t out_bit; // used for extracting each bit from the packet data array
         for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) { // bit extraction
             if (i_bit < info_len)  {
                 out_bit = rxinput[(int) (i_block*info_len/8) + (i_bit/8)];
             } else {
-                out_bit = rxinput[int(NUM_BLOCKS_PCKT*info_len/8) + int(i_block*parity_len/8) + int((i_bit-info_len)/8)];
+                out_bit = rxinput[int(getNumBlocksPerPacket()*info_len/8) + int(i_block*parity_len/8) + int((i_bit-info_len)/8)];
             }
             
             out_bit >>= (7 - (i_bit % 8));
@@ -164,4 +165,8 @@ void decodeLDPC(uint8_t* rxinput) {
             }
         }
     }
+}
+
+int getBlockSizeBits(){//double get! agh!
+    return info_len;
 }

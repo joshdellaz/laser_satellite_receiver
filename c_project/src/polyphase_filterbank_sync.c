@@ -2,13 +2,14 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <complex.h>
+#include <liquid/liquid.h>
+
 #include "samples_to_bits.h"
 #include "dev_utils.h"
 #include "config.h"
 
-
-#include <complex.h>
-#include <liquid/liquid.h>
+#include "packet_frame.h"
 
 #if VERBOSE_ENABLED == 1
 #define dev_printf(...) printf(__VA_ARGS__)
@@ -38,6 +39,7 @@ float * MLS_array = NULL;
 //consider integrating with preamble get function in packet_frame.c to avoid duplicate code
 void initMLS(void){
 
+    setMLSOrderBasedOnChannel();
 	//options
 	//TODO: Pick a good value for m
 	unsigned int m = 9;   // shift register length, n=2^m - 1

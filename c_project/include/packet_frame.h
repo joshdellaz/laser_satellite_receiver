@@ -1,9 +1,13 @@
+#ifndef PACKET_FRAME_H
+#define PACKET_FRAME_H
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <liquid/liquid.h>
 #include "config.h"
 
 extern int packet_data_length_with_fec_bytes;
+extern int packet_data_length_without_fec_bytes;
 
 //Enum type to avoid magic numbers
 //TODO evaluate if needed for design
@@ -42,5 +46,14 @@ bool assembleFrame(uint8_t** frame, unsigned int* frame_length, uint8_t* packet,
 bool disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_length);
 bool assemblePacket(packet_t* packet_data, uint8_t** packet, unsigned int* packet_length);
 bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int packet_length);
+int getNumBlocksPerPacket();
+void setFrameLengthBasedOnElevation(int elevation_angle_degrees);
+int getMLSOrder();
+int getPassLengthInSeconds(unsigned min_elevation_degrees);
+float getFreqStabilityInPPMUsingElevation(int elevation_angle_degrees);
+int getMaxFrameLengthInBits(float total_freq_stability_ppm);
+void setMLSOrderBasedOnChannel();
 bool fragmentDataBufferIntoFrames(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length);
 bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length);
+
+#endif

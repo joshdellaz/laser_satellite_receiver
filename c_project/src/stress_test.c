@@ -2,11 +2,13 @@
 #include "func_test.h"
 #include <stdlib.h>
 #include "plot.h"
+#include <math.h>
+#include "config.h"
+#define PI 3.1415926536
 
 extern int snr_db;
 extern int fade_freq_hz;
 extern int fade_len_usec;
-extern int burst_freq_hz;
 extern int burst_len_usec;
 
 //TODO List
@@ -15,7 +17,6 @@ extern int burst_len_usec;
 //How might I simulate clock drift over time...
 //Ensure all phases can sync properly in func_test.c
 //Probably do all tests @ 2 samp/bit? Any advantage to 4?
-
 
 //Transfer test image repeatedly, varying SNR by 1dB until no more data received
 void testSNR(){
@@ -72,9 +73,8 @@ void testBursts(){
     float * dropped_packets_percent = (float *)malloc((max_len/iterations)*(max_freq/iterations)*sizeof(float));//matrix where each row = max_len/iterations long
     float * bad_bits_percent = (float *)malloc((max_len/iterations)*(max_freq/iterations)*sizeof(float));
     for(int i = min_len; i < max_len; i + max_len/iterations){
-        for(int j = min_freq; j < max_freq; j + max_freq/iterations){
+        for(int j = min_freq; j < max_freq; j + max_freq/iterations){//This is a pointless loop...
             burst_len_usec = i;
-            burst_freq_hz = j;
             dropped_packets_percent[index] = imageSendTest("../testdata/engphys.ppm");
             bad_bits_percent[index] = checkEfficacy();
             index++;

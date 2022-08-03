@@ -14,12 +14,11 @@
 
 //Default channel characteristices
 //TODO make this a struct instead... mayble?
-int bit_rate_mbps = 1;
+int bit_rate_mbps = 10;
 int snr_db = 20; // for AWGN noise
 int fade_freq_hz = 100; // Estimation based on KT06-04 results around 25 degree elevation = 3 or 4 //770 used originally
 int fade_len_usec = 1; // 700 originally TODO make this dependent on bitrate!
-int burst_freq_hz = 100;//get better default val
-int burst_len_usec = 1;//get better default val
+int burst_len_usec = 50; //typical based on Y. Yamashita et al. "n Efficient LDGM Coding Scheme for Optical Satellite-to-Ground Link Based on a New Channel Model"
 
 
 void _createBursts(bool *, unsigned);
@@ -33,20 +32,35 @@ float __AWGN_generator(void);
 float __randF(void); // rand float between 0 and 1
 int __randNum(int, int); // rand number between lower and upper inclusive
 
-void configChannel(int snr, int f_freq, int f_len, int b_freq, int b_len){
+void configChannel(int snr, int f_freq, int f_len, int b_len){
 	snr_db = snr;
 	fade_freq_hz = f_freq;
 	fade_len_usec = f_len;
-	burst_freq_hz = b_freq;
 	burst_len_usec = b_len;
+}
+
+int getFadeLenUsec(){
+	return fade_len_usec;
+}
+
+int getFadeFreqHz(){
+	return fade_freq_hz;
+}
+
+int getBurstLenUsec(){
+	return burst_len_usec;
 }
 
 void setBitRateMbps(int bitrate){
 	bit_rate_mbps = bitrate;
 }
 
+int getBitRateMbps(){
+	return bit_rate_mbps;
+}
+
 //based on F. Moll, “Experimental analysis of channel coherence time and fading behavior in the LEO-ground link
-void setFadeParamsBasedOnElevationAngle(float elevation_angle){
+void setFadeParamsBasedOnElevation(float elevation_angle){
 	if(elevation_angle < 7.5){//outside of studied dataset; assume constant outside of range
 		fade_freq_hz = 20;
 		fade_len_usec = 1300;
@@ -62,17 +76,10 @@ void setFadeParamsBasedOnElevationAngle(float elevation_angle){
 bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr_packet_num)
 {
 	bool *bursts = (bool *)calloc(smpls_len / SAMP_PER_BIT, sizeof(bool));
-	//_createBursts(bursts, smpls_len / (8*SAMP_PER_BIT));
-	//_applyBurstsToSamples(bursts, samples, smpls_len);
+	_createBursts(bursts, smpls_len / (8*SAMP_PER_BIT));
+	_applyBurstsToSamples(bursts, samples, smpls_len);
 
 	_applyFadesToSamples(samples, smpls_len);
-
-	// printf("Note: samples of bursts are replaced by %d and faded ones by %d \n", BURST_VALUE, FADE_VALUE);
-	// printf("Samples before AWGN:\n");
-	// for (unsigned i = 0; i < smpls_len; i++) {
-	// 	printf("%.0f", samples[i]);
-	// }
-	// printf("\n\n");
 
 	//float current_packet_snr = _calcSNR(curr_packet_num);
 
@@ -207,7 +214,7 @@ int __randNum(int lower, int upper)
 }
 
 float __AWGN_generator(void)
-{ // feels like overkill but fuck it
+{ // feels like overkill but screw it
 	// from https://www.embeddedrelated.com/showcode/311.php
 	/* Generates additive white Gaussian Noise samples with zero mean and a standard deviation of 1. */
 	double temp1;
@@ -330,4 +337,11 @@ bool applyBitFlips(uint8_t *input_data, unsigned int input_data_length) // works
 		}
 	}
 	return true;
+}
+
+int getBurstLengthBits(){
+	return burst_len_usec * bit_rate_mbps;
+}
+int getFadeLengthBits(){
+	return fade_len_usec * bit_rate_mbps;
 }

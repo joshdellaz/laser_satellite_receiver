@@ -25,7 +25,7 @@ extern int number_of_mls_repititions;
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec_bytes
 uint8_t * generateRandPacket(void) {
 	uint8_t* data = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
-	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (int i = 0; i < packet_data_length_without_fec_bytes; i++) {
 		data[i] = rand() & 0xff;
 	}
 	return data;
@@ -43,8 +43,8 @@ void printBitsfromBytes(uint8_t * data, unsigned int lengthbytestoprint){
 void getFECDataLengths(void) {
 
 	// create arrays
-	//packet_data_length_with_fec_bytes = fec_get_enc_msg_length(FEC_TYPE, PACKET_DATA_LENGTH_NO_FEC);
-	packet_data_length_with_fec_bytes = (CODEWRD_L / 8)*NUM_BLOCKS_PCKT;
+	//packet_data_length_with_fec_bytes = fec_get_enc_msg_length(FEC_TYPE, packet_data_length_without_fec_bytes);
+	packet_data_length_with_fec_bytes = (CODEWRD_L / 8)*getNumBlocksPerPacket();
 }
 
 void testSyncEdgeCases(void){
@@ -351,7 +351,7 @@ bool sendAndReceiveRandomlyGeneratedPacket(void) {
 	packet_data.data = generateRandPacket();
 
 	dev_printf("Original Data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (unsigned int i = 0; i < packet_data_length_without_fec_bytes; i++) {
 		dev_printf("%d,", packet_data.data[i]);
 	}
 	dev_printf("\n\n");
@@ -466,7 +466,7 @@ bool sendAndReceiveRandomlyGeneratedPacket(void) {
 #endif
 
 	dev_printf("Received Data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (unsigned int i = 0; i < packet_data_length_without_fec_bytes; i++) {
 		dev_printf("%d,", rxpacket_vector[i]);
 	}
 	dev_printf("\n\n");
@@ -479,7 +479,7 @@ bool sendAndReceiveRandomlyGeneratedPacket(void) {
 	disassemblePacket(&rxpacket_data, rxpacket_vector, packet_length);
 
 	dev_printf("Decoded Data:\n");
-	for (unsigned int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (unsigned int i = 0; i < packet_data_length_without_fec_bytes; i++) {
 		dev_printf("%d,", rxpacket_data.data[i]);
 	}
 	dev_printf("\n\n");
@@ -504,7 +504,6 @@ bool sendAndReceiveRandomlyGeneratedPacket(void) {
 
 //Returns % of successful (crc matching) packets
 float imageSendTest(char * filename) {
-	
 	char buff[16];
 	FILE *fp_origin, *fp_damaged, *fp_corrected;
 	int x,y, rgb_comp_color;
@@ -574,10 +573,10 @@ float imageSendTest(char * filename) {
 
 	
 	packet_t packet_data;
-	packet_data.total_num_packets = (uint16_t) 3*x*y/PACKET_DATA_LENGTH_NO_FEC;
-	packet_data.total_num_packets = packet_data.total_num_packets + ((3*x*y) % PACKET_DATA_LENGTH_NO_FEC ? 1 : 0) - 1;
-	unsigned int last_packet_data_length = (3*x*y) % PACKET_DATA_LENGTH_NO_FEC;
-	packet_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
+	packet_data.total_num_packets = (uint16_t) 3*x*y/packet_data_length_without_fec_bytes;
+	packet_data.total_num_packets = packet_data.total_num_packets + ((3*x*y) % packet_data_length_without_fec_bytes ? 1 : 0) - 1;
+	unsigned int last_packet_data_length = (3*x*y) % packet_data_length_without_fec_bytes;
+	packet_data.data = (uint8_t*)malloc((packet_data_length_without_fec_bytes)* sizeof(uint8_t)); //malloced
 	packet_data.selected_fec_scheme = LDPC;
 
 	uint8_t* packet_vector = NULL; //malloced in assemblePacket
@@ -586,7 +585,7 @@ float imageSendTest(char * filename) {
 	uint8_t* frame_vector = NULL;//malloced in assembleFrame
 
 	packet_t rxpacket_data;
-	rxpacket_data.data = (uint8_t*)malloc((PACKET_DATA_LENGTH_NO_FEC)* sizeof(uint8_t)); //malloced
+	rxpacket_data.data = (uint8_t*)malloc((packet_data_length_without_fec_bytes)* sizeof(uint8_t)); //malloced
 	uint8_t* rxpacket_vector = NULL; //malloced in samplesToBytes
 	int rxpacket_length = 0;
 	double total_processing_time = 0;
@@ -595,7 +594,7 @@ float imageSendTest(char * filename) {
 
 	for (int i = 0; i < packet_data.total_num_packets; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
 		
-		if (fread(packet_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_origin) != 1){
+		if (fread(packet_data.data, packet_data_length_without_fec_bytes, 1, fp_origin) != 1){
 			fprintf(stderr, "Error loading image '%s'\n", filename);
          	exit(1);
 		}
@@ -681,7 +680,7 @@ float imageSendTest(char * filename) {
 		dev_printf("removing interleaving \n");
 		removeInterleaving(rxpacket_vector, packet_length);
 #endif
-		fwrite(&rxpacket_vector[2 * NUM_PACKETS_LENGTH_BYTES], PACKET_DATA_LENGTH_NO_FEC, 1, fp_damaged); // write to damaged file
+		fwrite(&rxpacket_vector[2 * NUM_PACKETS_LENGTH_BYTES], packet_data_length_without_fec_bytes, 1, fp_damaged); // write to damaged file
 #if LDPC_ENABLED == 1
 		decodeLDPC(rxpacket_vector);
 #endif
@@ -705,7 +704,7 @@ float imageSendTest(char * filename) {
 		else {
 			printf("CRC Matches!\n\n");
 		}
-		fwrite(rxpacket_data.data, PACKET_DATA_LENGTH_NO_FEC, 1, fp_corrected); // write to corrected file
+		fwrite(rxpacket_data.data, packet_data_length_without_fec_bytes, 1, fp_corrected); // write to corrected file
 		
 		dev_printf("freeing the children \n");
 		free(packet_vector);
@@ -755,8 +754,8 @@ float checkEfficacy(void){
 	fscanf(fp_endpoint, "%d", &rgb_comp_color);
     fscanf(fp_origin, "%d", &rgb_comp_color);
 
-	int total_num_packets = (int)3*x*y/PACKET_DATA_LENGTH_NO_FEC - 1;//-1 prevents overread
-	int total_len_bytes = PACKET_DATA_LENGTH_NO_FEC*total_num_packets;
+	int total_num_packets = (int)3*x*y/packet_data_length_without_fec_bytes - 1;//-1 prevents overread
+	int total_len_bytes = packet_data_length_without_fec_bytes*total_num_packets;
 	uint8_t * sourcedata = (uint8_t*)malloc((total_len_bytes)* sizeof(uint8_t)); //malloced
 	uint8_t * rxdata = (uint8_t*)malloc((total_len_bytes)* sizeof(uint8_t)); //malloced
 

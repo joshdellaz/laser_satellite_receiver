@@ -3,71 +3,29 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
-
-#include "packet_frame.h"
-//#include <complex>
 #include <liquid/liquid.h>
 
-//Move these into separate file? Considering having "utils" file containing smaller functions, and keeping the higher-level stuff here
+#include "packet_frame.h"
+#include "ldpc_implementation.h"
+#include "config.h"
+#include "channel.h"
+
+#define PI 3.1415926536
+
+int mls_order = 9;
+int num_blocks_pckt = 0;
+
+extern int packet_data_length_with_fec_bytes;
+extern int packet_data_length_without_fec_bytes;
 
 //Unless otherwise indicated, functions return 0 upon success and 1 upon failure
-
-//TODO
-//Applies FEC to input buffer. Type of FEC depends on type selected.
-bool applyFEC(uint8_t* input) {
-	
-	// options
-	unsigned int n = PACKET_DATA_LENGTH_NO_FEC;
-	fec_scheme fs = FEC_TYPE;   // error-correcting scheme
-
-	// create object
-	fec q = fec_create(fs, NULL);
-	uint8_t* msg_enc = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
-
-	// encode message
-	fec_encode(q, n, input, msg_enc);//fix lengths
-
-	for (int i = 0; i < packet_data_length_with_fec_bytes; i++) {
-		input[i] = msg_enc[i];
-	}
-
-	free(msg_enc);
-
-	fec_destroy(q);
-
-	return 0;
-}
-
-//TODO
-//Removes FEC from the input buffer. Type of FEC depends on type selected.
-bool removeFEC(uint8_t * input) {
-
-	unsigned int n = PACKET_DATA_LENGTH_NO_FEC;
-	fec_scheme fs = FEC_TYPE;   // error-correcting scheme
-
-	// create object
-	fec q = fec_create(fs, NULL);
-	
-	unsigned char msg_enc[PACKET_DATA_LENGTH_NO_FEC];
-
-	// decode message
-	fec_decode(q, n, input, msg_enc);//fix lengths
-
-	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
-		input[i] = msg_enc[i];
-	}
-
-	fec_destroy(q);
-
-	return 0;
-}
 
 //Calculates the crc of the "data" field of the input packet and compares it against the "crc" field
 //Returns 1 if crcs not equal, 0 if equal
 bool checkCRC(packet_t* received_packet) {
 
 	crc_scheme   check = LIQUID_CRC_32; // error-detection scheme
-	uint32_t calcd_crc = (uint32_t)crc_generate_key(check, received_packet->data, PACKET_DATA_LENGTH_NO_FEC);
+	uint32_t calcd_crc = (uint32_t)crc_generate_key(check, received_packet->data, packet_data_length_without_fec_bytes);
 
 	if (received_packet->crc != calcd_crc) {
 		return 1;
@@ -82,7 +40,7 @@ bool checkCRC(packet_t* received_packet) {
 bool getCRC(packet_t * packet) {//Note that deviating from crc32 size would require code to be changed across project. Not adaptable currently
 
 	crc_scheme   check = LIQUID_CRC_32; // error-detection scheme
-	packet->crc = (uint32_t)crc_generate_key(check, packet->data, PACKET_DATA_LENGTH_NO_FEC);
+	packet->crc = (uint32_t)crc_generate_key(check, packet->data, packet_data_length_without_fec_bytes);
 
 	return 0;
 }
@@ -144,7 +102,7 @@ bool getMaximumLengthSequencePreamble(uint8_t ** mls_preamble, unsigned int *mls
 
 	//options
 	//TODO: Pick a good value for m
-	unsigned int m = 9;   // shift register length, n=2^m - 1
+	unsigned int m = mls_order;   // shift register length, n=2^m - 1
 	unsigned int repititions = 1;	//Number of MLS repititions in preamble
 	unsigned int mls_preamble_length_bits = (pow(2,m) - 1)*repititions; // preamble length
 
@@ -203,8 +161,6 @@ bool assembleFrame(uint8_t ** frame, unsigned int * frame_length, uint8_t * pack
 	*frame_length = mls_preamble_length + packet_length + stuffing_length;
 	*frame = (uint8_t*)malloc((*frame_length) * sizeof(uint8_t));
 
-	//Add rest of preamble to start of frame
-	//TODO change to MLS preamble
 	for (unsigned int i = 0; i < mls_preamble_length; i++) {
 		(*frame)[i] = mls_preamble[i];
 	}
@@ -260,12 +216,12 @@ bool assemblePacket(packet_t *packet_data, uint8_t **packet, unsigned int *packe
 		(*packet)[NUM_PACKETS_LENGTH_BYTES + i] = 0xFF & (packet_data->current_packet_num >> 8 * (NUM_PACKETS_LENGTH_BYTES - 1 - i));
 	}
 
-	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (int i = 0; i < packet_data_length_without_fec_bytes; i++) {
 		(*packet)[2 * NUM_PACKETS_LENGTH_BYTES + i] = (packet_data->data)[i];
 	}
 
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
-		(*packet)[2 * NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_NO_FEC + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
+		(*packet)[2 * NUM_PACKETS_LENGTH_BYTES + packet_data_length_without_fec_bytes + i] = 0xFF & (packet_data->crc >> 8 * (CRC_DATA_LENGTH_BYTES -1 - i));
 	}
 
 	return 0;
@@ -285,7 +241,7 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 	for (int i = 0; i < CRC_DATA_LENGTH_BYTES; i++) {
 		mask32 = 0;
 		mask32 = 0xFF << 8*i;
-		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[2*NUM_PACKETS_LENGTH_BYTES + PACKET_DATA_LENGTH_NO_FEC + CRC_DATA_LENGTH_BYTES - 1 - i] << 8*i));
+		temp_32 = temp_32 | (mask32 & ((uint32_t)packet[2*NUM_PACKETS_LENGTH_BYTES + packet_data_length_without_fec_bytes + CRC_DATA_LENGTH_BYTES - 1 - i] << 8*i));
 	}
 	packet_data->crc = temp_32;
 
@@ -306,13 +262,74 @@ bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int pack
 	}
 	packet_data->current_packet_num = temp_16;
 
-	for (int i = 0; i < PACKET_DATA_LENGTH_NO_FEC; i++) {
+	for (int i = 0; i < packet_data_length_without_fec_bytes; i++) {
 		(packet_data->data)[i] = packet[2*NUM_PACKETS_LENGTH_BYTES + i];
 	}
 
 	return 0;
 }
 
+void setNumBlocksPerPacket(int numblocks){
+	num_blocks_pckt = numblocks;
+}
+
+int getNumBlocksPerPacket(){
+	return num_blocks_pckt;
+}
+
+void setFrameLengthBasedOnElevation(int elevation_angle_degrees){
+
+	float freq_stability_ppm = getFreqStabilityInPPMUsingElevation(elevation_angle_degrees);
+	int max_frame_bits = getMaxFrameLengthInBits(freq_stability_ppm);
+
+	int num_blocks_per_packet = ((float)max_frame_bits)/((float)getBlockSizeBits());//TODO verify proper rounding
+	setNumBlocksPerPacket(num_blocks_per_packet);
+	packet_data_length_without_fec_bytes = (getBlockSizeBits()*num_blocks_per_packet -  CRC_DATA_LENGTH_BYTES - 2*NUM_PACKETS_LENGTH_BYTES);
+}
+
+void setMLSOrderBasedOnChannel(){
+	int fade_length_bits = getFadeLengthBits();
+	mls_order = ceil(log2(fade_length_bits/FRACTION_OF_MLS_INTACT));
+	int mls_length = pow(2,mls_order) - 1;
+
+	//verify this next inequality...
+	//Is this what we want our comparison to be? Or do we want different relative size between mls and packet...?
+	if(mls_length > packet_data_length_without_fec_bytes){//fades too long compared with frame length, so accept risk and use bursts to dictate MLS order instead
+		int burst_length_bits = getBurstLengthBits();
+		mls_order = ceil(log2(burst_length_bits/FRACTION_OF_MLS_INTACT));
+	}
+
+}
+
+int getMLSOrder(){
+	return mls_order;
+}
+
+//Very approximate linear assumption
+int getPassLengthInSeconds(unsigned min_elevation_degrees){
+	if(min_elevation_degrees > 90){
+		printf("pick an angle under 90 degrees\n");
+		exit(1);
+	}
+	unsigned max_elevation_degrees = 90;
+	int max_pass_length = 5*60;//5 mins from google :)
+	return max_pass_length*(max_elevation_degrees - min_elevation_degrees)/max_elevation_degrees;
+}
+
+float getFreqStabilityInPPMUsingElevation(int elevation_angle_degrees){
+    
+    float elevation_angle_rads = (float)elevation_angle_degrees*2*PI/360;
+    float cubesat_speed_km_per_s = 8;
+    float light_speed_km_per_s = 3*pow(10,5);
+
+    float beta = cubesat_speed_km_per_s/light_speed_km_per_s;
+    return (1-(sqrt(1-pow(beta,2))/(1+beta*cos(elevation_angle_rads))))*pow(10,6) + CLOCK_STABILITY_PPM;
+}
+
+//Number of bits until loss of sync (shift by 0.5 bit)
+int getMaxFrameLengthInBits(float total_freq_stability_ppm){
+    return (0.5*pow(10,6))/(total_freq_stability_ppm);
+}
 
 //TODO
 //Takes "input" data buffer of length "input_length", fragments it into packets, turns those packets into frames, 
@@ -337,11 +354,11 @@ bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uin
 //and assembles frames into single "output" buffer of "output_length" that can be easily transmitted
 // bool fragmentDataBufferIntoFrames(uint8_t * input, unsigned int input_length, uint8_t * output, unsigned int * output_length) {
 
-// 	int numpackets = input_length/packet_data_length_no_fec + 1;
+// 	int numpackets = input_length/packet_data_length_without_fec_bytes + 1;
 // 	*output_length = numpackets*frame_length_bytes;
 // 	uint8_t * output = (uint8_t *)malloc(*output_length*sizeof(uint8_t));
 // 	packet_t temp_packet;
-// 	temp_packet.data = (uint8_t*)malloc(packet_data_length_no_fec);
+// 	temp_packet.data = (uint8_t*)malloc(packet_data_length_without_fec_bytes);
 // 	int current_index = 0;
 
 // 	//for each frame:
@@ -350,7 +367,7 @@ bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uin
 // 		temp_packet.total_num_packets = numpackets;
 // 		temp_packet.current_packet_num = i+1;
 
-// 		for(int j = 0; j < packet_data_length_no_fec; j++){
+// 		for(int j = 0; j < packet_data_length_without_fec_bytes; j++){
 // 			if(current_index > input_length){
 // 				temp_packet.data[j] = 0;//stuffing rear-end with zeroes
 // 			}
@@ -377,10 +394,10 @@ bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uin
 // 	//do reverse of above function
 
 // 	int numpackets = input_length/frame_length_bytes;
-// 	*output_length = numpackets*packet_data_length_no_fec;
+// 	*output_length = numpackets*packet_data_length_without_fec_bytes;
 // 	uint8_t * output = (uint8_t *)malloc(*output_length*sizeof(uint8_t));
 // 	packet_t temp_packet;
-// 	temp_packet.data = (uint8_t*)malloc(packet_data_length_no_fec);
+// 	temp_packet.data = (uint8_t*)malloc(packet_data_length_without_fec_bytes);
 // 	int current_index = 0;
 // 	int prev_frameno = 0;
 // 	int cur_frameno = 0;
@@ -407,7 +424,7 @@ bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uin
 // 			printf("Output buffer overflow");
 // 			while(1);//TODO integrate better error handling
 // 		}
-// 		for(int j = 0; j < packet_data_length_no_fec; j++){
+// 		for(int j = 0; j < packet_data_length_without_fec_bytes; j++){
 // 			output[current_index] = temp_packet.data[j];
 // 			current_index++;
 // 		}

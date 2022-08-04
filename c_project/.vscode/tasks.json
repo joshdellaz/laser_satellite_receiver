@@ -19,7 +19,6 @@
                 "-lstdc++",
                 "-lm",
                 "-lliquid",
-                "-ldwf"
             ],
             "options": {
                 "cwd": "${fileDirname}"

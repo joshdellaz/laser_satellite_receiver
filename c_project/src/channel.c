@@ -17,12 +17,11 @@
 int bit_rate_mbps = 10;
 int snr_db = 20; // for AWGN noise
 int fade_freq_hz = 100; // Estimation based on KT06-04 results around 25 degree elevation = 3 or 4 //770 used originally
-int fade_len_usec = 1; // 700 originally TODO make this dependent on bitrate!
+int fade_len_usec = 700; // Same, for 25 degree elevation
 int burst_len_usec = 50; //typical based on Y. Yamashita et al. "n Efficient LDGM Coding Scheme for Optical Satellite-to-Ground Link Based on a New Channel Model"
 
 
 void _createBursts(bool *, unsigned);
-//void _createFades(bool *, unsigned);
 void _applyBursts(bool *, uint8_t *, unsigned);
 void _applyFades(uint8_t *, unsigned);
 void _applyBurstsToSamples(bool *, float *, unsigned);
@@ -79,7 +78,7 @@ bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr
 	_createBursts(bursts, smpls_len / (8*SAMP_PER_BIT));
 	_applyBurstsToSamples(bursts, samples, smpls_len);
 
-	_applyFadesToSamples(samples, smpls_len);
+	//_applyFadesToSamples(samples, smpls_len);
 
 	//float current_packet_snr = _calcSNR(curr_packet_num);
 
@@ -155,6 +154,30 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 	}
 }
 
+int state_at_start_of_frame = 0;
+int samples_left_in_current_fade;
+
+void _applyFadesToSamplesWithStateMachine(float *samples, unsigned smpls_len){
+
+if(state_at_start_of_frame == 0){//resting state
+	samples_left_in_current_fade = getFadeLengthBits()*SAMP_PER_BIT;
+	int start_of_fade_index = 0;//use fade freq here...
+	int fade_len_in_current_frame = smpls_len - start_of_fade_index;//make 2 cases depending if fade ends in same or next frame
+	for(int i = 0; i< fade_len_in_current_frame; i++){
+		samples[start_of_fade_index + i] = (float)FADE_VALUE;
+		samples_left_in_current_fade--;
+	}
+	state_at_start_of_frame = 1;
+}
+if(state_at_start_of_frame == 1){
+	for(int i = 0; i < samples_left_in_current_fade; i++){
+		samples[i] = (float)FADE_VALUE;
+	}
+	state_at_start_of_frame = 0;
+}
+// //what if fade longer than frame? What if frame longer than fade?
+// Do bursts work this way too with state transitions across multiple packets?
+}
 
 void _applyFadesToSamples(float *samples, unsigned smpls_len)
 {

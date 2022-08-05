@@ -27,7 +27,7 @@ int main(void) {
 	setBitRateMbps(10);
 	setFadeParamsBasedOnElevation(elevation_angle_deg);//must be called before next function. Indicate this more clearly somehow...
 	setFrameLengthBasedOnElevation(elevation_angle_deg);
-	getFECDataLengths();
+	setPacketDataLengthInclFEC();
 	initMLS();
 	
 
@@ -60,9 +60,10 @@ void printAllStatistics(){
 	float ppm = getFreqStabilityInPPMUsingElevation(elevation_angle_deg);
 	printf("Frequency instability due to doppler = %.2f ppm\n", ppm);
 	printf("Number of bits untill loss of sync = %d bits\n", getMaxFrameLengthInBits(ppm));
+	printf("Block size = %d bits \n", getBlockSizeBits());
 	printf("Number of blocks per packet = %d\n", getNumBlocksPerPacket());
-	printf("Frame user data length excl. FEC = %d bits\n", packet_data_length_without_fec_bytes);
-	printf("Frame user data length incl. FEC = %d bits\n", packet_data_length_with_fec_bytes);
+	printf("Frame user data length excl. FEC = %d bits\n", 8*packet_data_length_without_fec_bytes);
+	printf("Frame user data length incl. FEC = %d bits\n", 8*packet_data_length_with_fec_bytes);
 	printf("MLS order = %d (%d bits)\n", getMLSOrder(), (int)(pow(2,getMLSOrder()) - 1));
 	printf("Pass length =  %d seconds\n", getPassLengthInSeconds(elevation_angle_deg));
 	printf("Bit rate = %d Mbps\n", getBitRateMbps());

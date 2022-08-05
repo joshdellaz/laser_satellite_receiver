@@ -40,10 +40,7 @@ void printBitsfromBytes(uint8_t * data, unsigned int lengthbytestoprint){
 }
 
 
-void getFECDataLengths(void) {
-
-	// create arrays
-	//packet_data_length_with_fec_bytes = fec_get_enc_msg_length(FEC_TYPE, packet_data_length_without_fec_bytes);
+void setPacketDataLengthInclFEC(void) {
 	packet_data_length_with_fec_bytes = (CODEWRD_L / 8)*getNumBlocksPerPacket();
 }
 

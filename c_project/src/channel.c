@@ -118,9 +118,7 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 		chnl_st = GOOD_UNS;
 		Bursts[0] = false;
 	}
-	//chnl_st = GOOD_S; 
-	printf("\n\n initial state: %d \n\n", chnl_st);
-	printf("Bursts: \n");
+	//chnl_st = GOOD_S;
 	for (unsigned int i = 1; i < 8 * input_data_length; i++)
 	{
 		if (i % bits_per_cyc == 0)
@@ -149,15 +147,12 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 		{
 			// insert 1 into array of bursts if the current state is bad
 			Bursts[i] = true;
-			printf("1");
 		}
 		else
 		{
 			Bursts[i] = false;
-			printf("0");
 		}
 	}
-	printf("\n\n");
 }
 
 
@@ -169,7 +164,6 @@ void _applyFadesToSamples(float *samples, unsigned smpls_len)
 	int M = fade_len_usec * bit_rate_mbps * SAMP_PER_BIT; // in every N samples there's a fade of length M
 	for (unsigned i = 0; i < total_fades; i++){
 		int fade_start = (i*N) + __randNum(0,N-M-1);
-		//printf("testing fade_start: %d\n", fade_start);
 		for (int j = fade_start; j < fade_start + M; j++){
 			samples[j] = (float) FADE_VALUE;
 		}
@@ -310,14 +304,12 @@ void _applyFades(uint8_t *input_data, unsigned int input_data_length)
 	int total_fades = (int) floor(8*input_data_length / (fade_certain_period*bit_rate_mbps)); 
 	int N = (int) floor(8*input_data_length / total_fades); // in bits
 	int M = fade_len_usec * bit_rate_mbps; // in bits
-	printf("Fades:\n");
 	for (unsigned i = 0; i < total_fades; i++){
 		int fade_start = (i*N) + __randNum(0,N-M-1);
 		int leadingZeros = (fade_start % 8) ? 8 - (fade_start % 8) : 0;
 		int trailingZeros = (fade_start + M) % 8;
 		for (int j = fade_start/8; j < (fade_start + M)/8; j++){
 			input_data[j] = input_data[j] & 0x00;
-			printf("0");
 		}
 		printf("\n\n");
 		input_data[fade_start/8] &= (uint8_t) (255 - pow(2,(leadingZeros-1)));

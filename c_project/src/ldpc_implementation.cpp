@@ -24,7 +24,7 @@ using namespace std;
 LdpcCode ldpc_code(0,0);
 
 unsigned block_length = CODEWRD_L;
-unsigned info_len = 0;
+unsigned info_len_bits = 0;
 unsigned parity_len = 0;
 
 void initLDPC(void) {
@@ -41,26 +41,26 @@ void initLDPC(void) {
     }
     //LdpcCode ldpc_code(0, 0);
     ldpc_code.load_wifi_ldpc((unsigned int) CODEWRD_L, rate_index);
-    info_len = ldpc_code.get_info_length();
-    parity_len = CODEWRD_L - info_len;
+    info_len_bits = ldpc_code.get_info_length();
+    parity_len = CODEWRD_L - info_len_bits;
 
 }
 
 void applyLDPC(uint8_t* input) {
     
-    if (info_len/8 != (packet_data_length_without_fec_bytes + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES)) {
+    if (0 != (packet_data_length_without_fec_bytes + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES) % (info_len_bits/8)) {
         dev_printf("The chosen data length is not compatible with the picked LDPC scheme ...\n");
         dev_printf("Length of data to be encoded (with CRC): %d\n", packet_data_length_without_fec_bytes + CRC_DATA_LENGTH_BYTES + 2*NUM_PACKETS_LENGTH_BYTES);
-        dev_printf("LDPC input length: %d\n", info_len/8);// TODO needs correction 
-        //return;
+        dev_printf("LDPC input length: %d\n", info_len_bits/8);// TODO needs correction 
+        //exit(1);
     }
 
     for (int i_block = 0; i_block < getNumBlocksPerPacket(); i_block++){
-        std::vector<uint8_t> info_bits(info_len, 0); // converting the packet_data.data array to usable format for enbcoding
+        std::vector<uint8_t> info_bits(info_len_bits, 0); // converting the packet_data.data array to usable format for enbcoding
         uint8_t input_bit; // used for extracting each bit from the packet data array
         uint16_t input_preamb;
-        for (unsigned i_bit = 0; i_bit < info_len; ++i_bit) { // bit extraction
-            input_bit = input[(int) (i_block*info_len/8) + (i_bit/8)];
+        for (unsigned i_bit = 0; i_bit < info_len_bits; ++i_bit) { // bit extraction
+            input_bit = input[(int) (i_block*info_len_bits/8) + (i_bit/8)];
             input_bit >>= (7 - (i_bit % 8));
             info_bits.at(i_bit) = (uint8_t) (input_bit & 0X01);
         }
@@ -100,7 +100,7 @@ void applyLDPC(uint8_t* input) {
             }
             if ((i_bit % 8) == 7) {
                 if (coded_bits.at(i_bit)) {output_byte = output_byte | 0x01;}
-                input[int(getNumBlocksPerPacket()*info_len/8) + int(i_block*parity_len/8) + int((i_bit-info_len)/8)] = output_byte;
+                input[int(getNumBlocksPerPacket()*info_len_bits/8) + int(i_block*parity_len/8) + int((i_bit-info_len_bits)/8)] = output_byte;
                 output_byte = (uint8_t) 0;
             }
         }
@@ -114,10 +114,10 @@ void decodeLDPC(uint8_t* rxinput) {
         std::vector<double> llr(CODEWRD_L, 0);
         uint8_t out_bit; // used for extracting each bit from the packet data array
         for (unsigned i_bit = 0; i_bit < CODEWRD_L; ++i_bit) { // bit extraction
-            if (i_bit < info_len)  {
-                out_bit = rxinput[(int) (i_block*info_len/8) + (i_bit/8)];
+            if (i_bit < info_len_bits)  {
+                out_bit = rxinput[(int) (i_block*info_len_bits/8) + (i_bit/8)];
             } else {
-                out_bit = rxinput[int(getNumBlocksPerPacket()*info_len/8) + int(i_block*parity_len/8) + int((i_bit-info_len)/8)];
+                out_bit = rxinput[int(getNumBlocksPerPacket()*info_len_bits/8) + int(i_block*parity_len/8) + int((i_bit-info_len_bits)/8)];
             }
             
             out_bit >>= (7 - (i_bit % 8));
@@ -132,7 +132,7 @@ void decodeLDPC(uint8_t* rxinput) {
         std::vector<uint8_t> decoded_cw = ldpc_code.decode(llr, MAX_DECODE_ITERS, MIN_SUM);
 
         uint8_t out_byte = 0;
-        for (unsigned i_bit = 0; i_bit < info_len; ++i_bit) { // converting bit stream to uint8_t array
+        for (unsigned i_bit = 0; i_bit < info_len_bits; ++i_bit) { // converting bit stream to uint8_t array
             //printf("%i,", decoded_cw.at(i_bit));
             if (decoded_cw.at(i_bit)) {
                 // could do this more cleanly by converting the sum of 2^(i_bit % 8) over every 8 bits
@@ -160,7 +160,7 @@ void decodeLDPC(uint8_t* rxinput) {
             }
             if ((i_bit % 8) == 7) {
                 if (decoded_cw.at(i_bit)) {out_byte = out_byte | 0x01;}
-                rxinput[(int) (i_block*info_len/8) + (i_bit/8)] = out_byte;
+                rxinput[(int) (i_block*info_len_bits/8) + (i_bit/8)] = out_byte;
                 out_byte = (uint8_t) 0;
             }
         }
@@ -168,5 +168,5 @@ void decodeLDPC(uint8_t* rxinput) {
 }
 
 int getBlockSizeBits(){//double get! agh!
-    return info_len;
+    return info_len_bits;
 }

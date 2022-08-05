@@ -277,26 +277,30 @@ int getNumBlocksPerPacket(){
 	return num_blocks_pckt;
 }
 
+int roundDown(int number_to_round, int multiple){
+	return floor(((float)(number_to_round))/((float)(multiple)));
+}
+
 void setFrameLengthBasedOnElevation(int elevation_angle_degrees){
 
 	float freq_stability_ppm = getFreqStabilityInPPMUsingElevation(elevation_angle_degrees);
 	int max_frame_bits = getMaxFrameLengthInBits(freq_stability_ppm);
 
-	int num_blocks_per_packet = ((float)max_frame_bits)/((float)getBlockSizeBits());//TODO verify proper rounding
+	int num_blocks_per_packet = ((float)max_frame_bits*CODEWRD_R)/((float)getBlockSizeBits());//Rounds down, as it should
 	setNumBlocksPerPacket(num_blocks_per_packet);
-	packet_data_length_without_fec_bytes = (getBlockSizeBits()*num_blocks_per_packet -  CRC_DATA_LENGTH_BYTES - 2*NUM_PACKETS_LENGTH_BYTES);
+	packet_data_length_without_fec_bytes = (getBlockSizeBits()/8.0)*getNumBlocksPerPacket() - CRC_DATA_LENGTH_BYTES - 2*NUM_PACKETS_LENGTH_BYTES;
 }
 
 void setMLSOrderBasedOnChannel(){
 	int fade_length_bits = getFadeLengthBits();
-	mls_order = ceil(log2(fade_length_bits/FRACTION_OF_MLS_INTACT));
+	mls_order = ceil(log2(fade_length_bits/FRACTION_OF_MLS_INTACT))-1;
 	int mls_length = pow(2,mls_order) - 1;
 
 	//verify this next inequality...
 	//Is this what we want our comparison to be? Or do we want different relative size between mls and packet...?
 	if(mls_length > packet_data_length_without_fec_bytes){//fades too long compared with frame length, so accept risk and use bursts to dictate MLS order instead
 		int burst_length_bits = getBurstLengthBits();
-		mls_order = ceil(log2(burst_length_bits/FRACTION_OF_MLS_INTACT));
+		mls_order = ceil(log2(burst_length_bits/FRACTION_OF_MLS_INTACT))-1;
 	}
 
 }

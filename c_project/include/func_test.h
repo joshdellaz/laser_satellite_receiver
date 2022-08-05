@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-void getFECDataLengths(void);
+void setPacketDataLengthInclFEC(void);
 void softwareDACandADC(void);
 void testSyncEdgeCases(void);
 bool sendAndReceiveRandomlyGeneratedPacket(void);

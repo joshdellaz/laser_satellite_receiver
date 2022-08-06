@@ -26,10 +26,10 @@
 
 #define PI 3.142857
 #define IS_SIMULATION
-#define MLS_LENGTH 511
 
 int num_banks = 4;
-int mls_total_preamble_length_bits = 511+1;// + is to make it a multiple of 8. TODO: Make dependent on MLS order/
+int mls_total_preamble_length_bits;
+int mls_raw_preamble_length_bits;
 int N = 4;
 extern int packet_data_length_with_fec_bytes;
 
@@ -42,11 +42,12 @@ void initMLS(void){
     setMLSOrderBasedOnChannel();
 	//options
 	//TODO: Pick a good value for m
-	unsigned int m = 9;   // shift register length, n=2^m - 1
-	unsigned int mls_preamble_length_bits = (pow(2,m) - 1); // preamble length
+	unsigned int m = getMLSOrder();   // shift register length, n=2^m - 1
+	mls_raw_preamble_length_bits = (pow(2,m) - 1); // preamble length
+    mls_total_preamble_length_bits = mls_raw_preamble_length_bits + 1;
 
 	// create and initialize m-sequence
-	msequence ms = msequence_create_genpoly(LIQUID_MSEQUENCE_GENPOLY_M9);//Fix these struct name definitions... Liquid maybe borked?
+	msequence ms = msequence_create_genpoly(get_LIQUID_MSEQUENCE_GENPOLY(m));//Fix these struct name definitions... Liquid maybe borked?
 	//msequence_print(ms);
 	unsigned int n = msequence_get_length(ms);
 
@@ -54,7 +55,7 @@ void initMLS(void){
 	bsequence mls = bsequence_create(n);
 	bsequence_init_msequence(mls, ms);
 
-    MLS_array = (float *)malloc(MLS_LENGTH*sizeof(float));
+    MLS_array = (float *)malloc(mls_raw_preamble_length_bits*sizeof(float));
     //non-flipped
     for (unsigned int i = 0; i < n; i++) {
         MLS_array[i] = (float)bsequence_index(mls, i);
@@ -206,7 +207,7 @@ float findAutocorrelation(float * samples){
     // compute auto-correlation
     rxx_peak = 0;
     //josh (not liquid) style:
-    for (int i = 0; i < MLS_LENGTH; i++){
+    for (int i = 0; i < mls_raw_preamble_length_bits; i++){
         rxx_peak += samples[i]*MLS_array[i];
     }
 
@@ -254,7 +255,7 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
             // }
 
             if(new_autocorr > max_autocorr){
-                if(new_autocorr < MLS_LENGTH){//crude fix for ~inf autocor values. find root cause and improve fix
+                if(new_autocorr < mls_raw_preamble_length_bits){//crude fix for ~inf autocor values. find root cause and improve fix
                     max_autocorr = new_autocorr;
                     best_bank = i;//best_sample_in_bit?
                     best_shift_bits = j;
@@ -386,4 +387,41 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
     dev_printf("\n");
 
     return data;
+}
+
+uint16_t get_LIQUID_MSEQUENCE_GENPOLY(int order){
+    switch(order){
+        case (1 || 2):
+            printf("invalid MLS order (too low)\n");
+            exit(1);
+        case 3:
+            return LIQUID_MSEQUENCE_GENPOLY_M3;
+        case 4:
+            return LIQUID_MSEQUENCE_GENPOLY_M4;
+        case 5:
+            return LIQUID_MSEQUENCE_GENPOLY_M5;
+        case 6:
+            return LIQUID_MSEQUENCE_GENPOLY_M6;
+        case 7:
+            return LIQUID_MSEQUENCE_GENPOLY_M7;
+        case 8:
+            return LIQUID_MSEQUENCE_GENPOLY_M8;
+        case 9:
+            return LIQUID_MSEQUENCE_GENPOLY_M9;
+        case 10:
+            return LIQUID_MSEQUENCE_GENPOLY_M10;
+        case 11:
+            return LIQUID_MSEQUENCE_GENPOLY_M11;
+        case 12:
+            return LIQUID_MSEQUENCE_GENPOLY_M12;
+        case 13:
+            return LIQUID_MSEQUENCE_GENPOLY_M13;
+        case 14:
+            return LIQUID_MSEQUENCE_GENPOLY_M14;
+        case 15:
+            return LIQUID_MSEQUENCE_GENPOLY_M15;
+        default:
+            printf("invalid MLS order (too high)\n");
+            exit(1);
+    }
 }

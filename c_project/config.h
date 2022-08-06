@@ -18,9 +18,9 @@
 #define FRAME_LENGTH_BYTES //TODO determine proper value
 
 //Testing params (set to 0 to disable)
-#define LDPC_ENABLED 1
-#define INTRLV_SCRMBL_ENABLED 1
-#define CHANNEL_APPLIED_TO_SAMPLES 1
+#define LDPC_ENABLED 0
+#define INTRLV_SCRMBL_ENABLED 0
+#define CHANNEL_APPLIED_TO_SAMPLES 0
 #define CHANNEL_APPLIED_TO_BITS 0
 
 #define VERBOSE_ENABLED 0    //prints literally everything

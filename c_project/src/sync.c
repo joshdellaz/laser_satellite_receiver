@@ -117,16 +117,15 @@ uint8_t * syncFrame(float * samples, int length_samples_in, int * length_bytes_o
     float max_autocorr = 0;
     int best_bank = 0;
     int best_shift_bits = 0;
-    int max_shiftleft_bits = mls_total_preamble_length_bits/4;
-    int max_shiftright_bits = mls_total_preamble_length_bits/2;
+    int max_shiftleft_bits = mls_total_preamble_length_bits/8;
+    int max_shiftright_bits = mls_total_preamble_length_bits/4;//in case of fade
     int downhill_counter = 0;
-    //printf("\nautocorrelation vals:\n");
 
     for(int i = 0; i<UPSAMPLE_RATE*N; i++){
         prev_autocorr = 0;
         for (int j = -max_shiftleft_bits; j<max_shiftright_bits; j++){
 
-            for(int k = 0; k < mls_total_preamble_length_bits - 1; k++){// -2 because variable is meant to be multiple of 8
+            for(int k = 0; k < mls_raw_preamble_length_bits; k++){
                 buffer[k] = samples[frame_start_index_guess + i + (j + k)*N*UPSAMPLE_RATE];
             }
 
@@ -207,7 +206,7 @@ float * getIncomingSignalData(float * ADC_output_float, int * frame_start_index_
         if(calcSignalPower(buffer, buffersize) > power_threshold){
 
             //write new data first so samples aren't missed
-            for (int i = 0; i < (*output_length - buffersize - stuffing_len -68); i++){//figure out where -68 number comes from... but its needed to fix things
+            for (int i = 0; i < (*output_length - buffersize - stuffing_len); i++){
                 if((ADC_output_float[current_index] < 2.0) && (ADC_output_float[current_index] > -2.0)){//TODO: fix this from accessing memory beyond array
                     data[buffersize + stuffing_len + i] = ADC_output_float[current_index];//fill in with actual function for ADC data succ
                     current_index++;
@@ -261,7 +260,9 @@ float findAutocorrelation(float * samples){
     rxx_peak = 0;
 
     for (int i = 0; i < mls_raw_preamble_length_bits; i++){
-        rxx_peak += samples[i]*MLS_array[i];
+        if(abs(samples[i] - MLS_array[i]) < 0.5){
+            rxx_peak += 2*(samples[i] - 0.5)*2*(MLS_array[i] - 0.5);
+        }
     }
     
     return (float)rxx_peak;

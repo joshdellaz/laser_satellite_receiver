@@ -10,17 +10,16 @@
 #define CLOCK_STABILITY_PPM 1
 
 //pick MLS length based on bitrate and channel
-#define FRACTION_OF_MLS_INTACT 0.5 //If MLS hit with erasure, this is how much we want intact for sync purposes (TBC)
+#define FRACTION_OF_MLS_INTACT 0.95 //If MLS hit with single erasure, this is how much we want intact for sync purposes (TBC)
 
 //Sizes of fields in packet structure
 #define NUM_PACKETS_LENGTH_BYTES 2
 #define CRC_DATA_LENGTH_BYTES 4
-#define FRAME_LENGTH_BYTES //TODO determine proper value
 
 //Testing params (set to 0 to disable)
 #define LDPC_ENABLED 1
 #define INTRLV_SCRMBL_ENABLED 1
-#define CHANNEL_APPLIED_TO_SAMPLES 0
+#define CHANNEL_APPLIED_TO_SAMPLES 1
 #define CHANNEL_APPLIED_TO_BITS 0
 
 #define VERBOSE_ENABLED 0    //prints literally everything

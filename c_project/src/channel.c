@@ -22,6 +22,7 @@ int burst_len_usec = 50; //typical based on Y. Yamashita et al. "n Efficient LDG
 
 
 void _createBursts(bool *, unsigned);
+void _createBurstsWithStateMachine(bool *Bursts, unsigned input_data_length_bytes);
 void _applyBursts(bool *, uint8_t *, unsigned);
 void _applyFades(uint8_t *, unsigned);
 void _applyBurstsToSamples(bool *, float *, unsigned);
@@ -75,7 +76,8 @@ void setFadeParamsBasedOnElevation(float elevation_angle){
 bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr_packet_num)
 {
 	bool *bursts = (bool *)calloc(smpls_len / SAMP_PER_BIT, sizeof(bool));
-	_createBursts(bursts, smpls_len / (8*SAMP_PER_BIT));
+	int num_bytes = smpls_len / (8*SAMP_PER_BIT);
+	_createBurstsWithStateMachine(bursts, num_bytes);
 	_applyBurstsToSamples(bursts, samples, smpls_len);
 
 	//_applyFadesToSamples(samples, smpls_len);
@@ -95,9 +97,9 @@ bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr
 }
 
 
-void _createBursts(bool *Bursts, unsigned input_data_length)
+void _createBursts(bool *Bursts, unsigned input_data_length_bytes)
 {
-	unsigned int bits_per_cyc = bit_rate_mbps * burst_len_usec; // non-zero integer
+	unsigned int bits_per_cyc = bit_rate_mbps * CHNL_CYC; // non-zero integer
 	chnl_state chnl_st;								 // current state of the channel
 	float init_st = __randF();
 
@@ -118,7 +120,7 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 		Bursts[0] = false;
 	}
 	//chnl_st = GOOD_S;
-	for (unsigned int i = 1; i < 8 * input_data_length; i++)
+	for (unsigned int i = 1; i < 8 * input_data_length_bytes; i++)
 	{
 		if (i % bits_per_cyc == 0)
 		{
@@ -156,28 +158,87 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 }
 
 int state_at_start_of_frame = 0;
+chnl_state burst_chnl_st;
+
+void initChannelState(){
+	float init_st = __randF();
+	if (init_st < 0.250){
+		burst_chnl_st = GOOD_S;
+	}
+	else if (init_st < 0.50){
+		burst_chnl_st = BAD_S;
+	}
+	else if (init_st < 0.750){
+		burst_chnl_st = BAD_UNS;
+	}
+	else{
+		burst_chnl_st = GOOD_UNS;
+	}
+}
+
+void _createBurstsWithStateMachine(bool *Bursts, unsigned input_data_length_bytes)
+{
+	unsigned int bits_per_cyc = bit_rate_mbps * CHNL_CYC; // non-zero integer
+
+	for (unsigned int i = 0; i < 8 * input_data_length_bytes; i++)
+	{
+		if (i % bits_per_cyc == 0)
+		{
+			// switch case statement to change the channel state
+			switch (burst_chnl_st) {
+			case GOOD_S:
+				if (__randF() < P_a2) {burst_chnl_st = BAD_UNS;}
+				else {burst_chnl_st = GOOD_S;}
+				break;
+			case BAD_S:
+				if (__randF() < P_b2) {burst_chnl_st = GOOD_UNS;}
+				else {burst_chnl_st = BAD_S;}
+				break;
+			case BAD_UNS:
+				if (__randF() < P_b1) {burst_chnl_st = GOOD_UNS;}
+				else {burst_chnl_st = BAD_S;}
+				break;
+			case GOOD_UNS:
+				if (__randF() < P_a1) {burst_chnl_st = BAD_UNS;} 
+				else {burst_chnl_st = GOOD_S;}
+				break;
+			}
+		}
+		if ((burst_chnl_st == BAD_S) || (burst_chnl_st == BAD_UNS))
+		{
+			Bursts[i] = true;
+		}
+		else
+		{
+			Bursts[i] = false;
+		}
+		//printf("%d", Bursts[i]);
+	}
+}
+
+int fade_state_at_start_of_frame = 0;
 int samples_left_in_current_fade;
 
 void _applyFadesToSamplesWithStateMachine(float *samples, unsigned smpls_len){
 
-if(state_at_start_of_frame == 0){//resting state
-	samples_left_in_current_fade = getFadeLengthBits()*SAMP_PER_BIT;
-	int start_of_fade_index = 0;//use fade freq here...
-	int fade_len_in_current_frame = smpls_len - start_of_fade_index;//make 2 cases depending if fade ends in same or next frame
-	for(int i = 0; i< fade_len_in_current_frame; i++){
-		samples[start_of_fade_index + i] = (float)FADE_VALUE;
-		samples_left_in_current_fade--;
+	if(fade_state_at_start_of_frame == 0){//resting state
+		samples_left_in_current_fade = getFadeLengthBits()*SAMP_PER_BIT;
+		int start_of_fade_index = 0;//use fade freq here...
+		int fade_len_in_current_frame = smpls_len - start_of_fade_index;//make 2 cases depending if fade ends in same or next frame
+		for(int i = 0; i< fade_len_in_current_frame; i++){
+			samples[start_of_fade_index + i] = (float)FADE_VALUE;
+			samples_left_in_current_fade--;
+		}
+		fade_state_at_start_of_frame = 1;
 	}
-	state_at_start_of_frame = 1;
-}
-if(state_at_start_of_frame == 1){
-	for(int i = 0; i < samples_left_in_current_fade; i++){
-		samples[i] = (float)FADE_VALUE;
+	if(fade_state_at_start_of_frame == 1){
+		for(int i = 0; i < samples_left_in_current_fade; i++){
+			samples[i] = (float)FADE_VALUE;
+		}
+		fade_state_at_start_of_frame = 0;
 	}
-	state_at_start_of_frame = 0;
-}
-// //what if fade longer than frame? What if frame longer than fade?
-// Do bursts work this way too with state transitions across multiple packets?
+	// //what if fade longer than frame? What if frame longer than fade?
+	// Do bursts work this way too with state transitions across multiple packets?
 }
 
 void _applyFadesToSamples(float *samples, unsigned smpls_len)
@@ -194,29 +255,37 @@ void _applyFadesToSamples(float *samples, unsigned smpls_len)
 	}
 }
 
+float fade_len_to_print = 0;
 
 void _applyBurstsToSamples(bool *Bursts, float *samples, unsigned smpls_len)
 {
 	// maybe TODO: make the bursts sharp normal distrbutions instead of constant values, maybe relate the height to the busrt length
-	unsigned burst_len = 0;
-	for (unsigned int i = 0; i < smpls_len / SAMP_PER_BIT; i++)
+	unsigned burst_len_samples = 0;
+	int bits_len = smpls_len / SAMP_PER_BIT;
+	int offset = 0;
+	for (unsigned int i = 0; i < bits_len; i++)
 	{
 		if (Bursts[i])
 		{
-			for (unsigned j = SAMP_PER_BIT * i; j < SAMP_PER_BIT * (i + 1); j++)
+			for (unsigned j = 0; j < SAMP_PER_BIT; j++)
 			{
-				burst_len++;
-				if (burst_len == 1){ // random offset at the beginning of the burst
+				burst_len_samples++;
+				fade_len_to_print ++;
+				if (burst_len_samples == 1){ // random offset at the beginning of the burst
 					float chance = __randF();
 					if (chance < 0.33){
-						j++;
+						offset = 0;
 					} else if (chance < 0.67){
-						j += 2;
-					} else {j += 3;}
+						offset = 1;
+					} else {offset = 2;}
 				}
-				samples[j] = (float)BURST_VALUE;
+				samples[SAMP_PER_BIT*i + offset + j] = (float)BURST_VALUE;
 			}
-		} else {burst_len = 0;} // zero the burst length when burst ends
+		} else {
+			burst_len_samples = 0;
+			if(fade_len_to_print != 0){printf("%.1f ", fade_len_to_print);};
+			fade_len_to_print = 0;
+		} // zero the burst length when burst ends
 	}
 }
 

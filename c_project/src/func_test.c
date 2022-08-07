@@ -414,6 +414,8 @@ bool sendAndReceiveRandomlyGeneratedPacket(void) {
 	return 0;
 }
 
+void appendZeros(float **samples, int numsamples, int numzeros);
+void corruptFixedPercentageOfSamples(float * samples, int numsamples, int percent_of_corruption);
 //Returns % of successful (crc matching) packets
 float imageSendTest(char * filename) {
 	char buff[16];
@@ -530,10 +532,13 @@ float imageSendTest(char * filename) {
 		int numsamples = 0;
 		float phase = 0;
 		float *samples = bytestreamToSamplestream(frame_vector, frame_length, &numsamples, phase);
-
+		appendZeros(&samples, numsamples, 1000);//this is to simulate ADC output after signal received
+		numsamples += 1000;
 
 #if CHANNEL_APPLIED_TO_SAMPLES == 1
-		applyChannelToSamples(samples, numsamples);
+		//applyChannelToSamples(samples, numsamples);
+		corruptFixedPercentageOfSamples(samples, numsamples, 50);
+		
 #endif
 
 #if AD2_DEMO == 1
@@ -680,4 +685,31 @@ float checkEfficacy(void){
 	}
 
 	return num_biterrors/((float)(8*total_len_bytes));
+}
+
+void appendZeros(float **samples, int numsamples, int numzeros){
+	float * buffer = (float *)calloc((numsamples + numzeros),sizeof(float));
+	for(int i = 0; i < numsamples; i++){
+		buffer[i] = (*samples)[i];
+	}
+	free(*samples);
+	*samples = buffer;
+}
+
+void corruptFixedPercentageOfSamples(float * samples, int numsamples, int percent_of_corruption){
+	int num_corrupted_bits = percent_of_corruption*numsamples/100/SAMP_PER_BIT;
+	int max_sample_range;
+	bool only_apply_to_preamble = 0;
+
+	if(only_apply_to_preamble){
+		max_sample_range = mls_total_preamble_length_bits*SAMP_PER_BIT;
+	} else {
+		max_sample_range = numsamples;
+	}
+	for(int i = 0; i < max_sample_range; i += (numsamples/num_corrupted_bits)){
+		samples[i] = 1;//burst state
+		samples[i+1] = 1;//burst state
+		samples[i+2] = 1;//burst state
+		samples[i+3] = 1;//burst state
+	}
 }

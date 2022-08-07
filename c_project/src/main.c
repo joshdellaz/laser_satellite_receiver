@@ -21,15 +21,17 @@ void printAllStatistics();
 
 //clarify ambiguites in init order!
 int main(void) {
+	srand(time(NULL));
+
 	initLDPC();
 	//snr_db = 0;
-	elevation_angle_deg = 0;
-	setBitRateMbps(50);
+	elevation_angle_deg = 75;
+	setBitRateMbps(5);
 	setFadeParamsBasedOnElevation(elevation_angle_deg);//must be called before next function. Indicate this more clearly somehow...
 	setFrameLengthBasedOnElevation(elevation_angle_deg);
 	setPacketDataLengthInclFEC();
 	initMLS();
-	
+	initChannelState();
 
 	printAllStatistics();
 

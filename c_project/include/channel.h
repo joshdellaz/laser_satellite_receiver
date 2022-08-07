@@ -26,6 +26,7 @@ int getBurstLenUsec();
 void setBitRateMbps(int bitrate);
 int getBitRateMbps();
 void setFadeParamsBasedOnElevation(float elevation_angle);
+void initChannelState();
 bool applyChannelToSamples(float *samples, unsigned smpls_len); //, uint16_t curr_packet_num);
 bool applyChannel(uint8_t *input, unsigned int input_length);
 bool applyBitFlips(uint8_t *input, unsigned int input_length);

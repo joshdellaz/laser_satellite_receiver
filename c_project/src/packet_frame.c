@@ -294,16 +294,18 @@ void setFrameLengthBasedOnElevation(int elevation_angle_degrees){
 }
 
 void setMLSOrderBasedOnChannel(){
-	int fade_length_bits = getFadeLengthBits();
-	mls_order = ceil(log2(fade_length_bits/FRACTION_OF_MLS_INTACT))-1;
-	int mls_length = pow(2,mls_order) - 1;
+
+	//Based on fade:
+	// int fade_length_bits = getFadeLengthBits();
+	// mls_order = ceil(log2(fade_length_bits/FRACTION_OF_MLS_INTACT));
+	// int mls_length = pow(2,mls_order) - 1;
 
 	//verify this next inequality...
 	//Is this what we want our comparison to be? Or do we want different relative size between mls and packet...?
-	if(mls_length > packet_data_length_without_fec_bytes){//fades too long compared with frame length, so accept risk and use bursts to dictate MLS order instead
+	//if(mls_length > packet_data_length_without_fec_bytes){//fades too long compared with frame length, so accept risk and use bursts to dictate MLS order instead
 		int burst_length_bits = getBurstLengthBits();
-		mls_order = ceil(log2(burst_length_bits/FRACTION_OF_MLS_INTACT))-1;
-	}
+		mls_order = ceil(log2(burst_length_bits/(1-FRACTION_OF_MLS_INTACT)));
+	//}
 
 }
 

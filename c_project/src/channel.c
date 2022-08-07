@@ -20,6 +20,9 @@ int fade_freq_hz = 100; // Estimation based on KT06-04 results around 25 degree 
 int fade_len_usec = 700; // Same, for 25 degree elevation
 int burst_len_usec = 50; //typical based on Y. Yamashita et al. "n Efficient LDGM Coding Scheme for Optical Satellite-to-Ground Link Based on a New Channel Model"
 
+unsigned temp_burst_length = 0;
+chnl_state chnl_st;	// current state of the channel
+unsigned offset = 0;
 
 void _createBursts(bool *, unsigned);
 void _applyBursts(bool *, uint8_t *, unsigned);
@@ -36,6 +39,22 @@ void configChannel(int snr, int f_freq, int f_len, int b_len){
 	fade_freq_hz = f_freq;
 	fade_len_usec = f_len;
 	burst_len_usec = b_len;
+
+	float init_st = __randF();
+	if (init_st < 0.250) {
+		chnl_st = GOOD_S;
+	}
+	else if (init_st < 0.50){
+		chnl_st = BAD_S;
+		temp_burst_length++;
+	}
+	else if (init_st < 0.750){
+		chnl_st = BAD_UNS;
+		temp_burst_length++;
+	}
+	else{
+		chnl_st = GOOD_UNS;
+	}
 }
 
 int getFadeLenUsec(){
@@ -98,31 +117,26 @@ bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr
 void _createBursts(bool *Bursts, unsigned input_data_length)
 {
 	unsigned int bits_per_cyc = bit_rate_mbps * CHNL_CYC; // non-zero integer
-	chnl_state chnl_st;								 // current state of the channel
-	float init_st = __randF();
 	
-	unsigned temp_burst_length = 0;
-
-	if (init_st < 0.250){
-		chnl_st = GOOD_S;
-		Bursts[0] = false; // false represents absence of burst erasure
-	}
-	else if (init_st < 0.50){
-		chnl_st = BAD_S;
-		Bursts[0] = true; // true represents existence of burst erasure
-		temp_burst_length++;
-	}
-	else if (init_st < 0.750){
-		chnl_st = BAD_UNS;
+	if ((chnl_st == BAD_S) || (chnl_st == BAD_UNS)){
+		// insert 1 into array of bursts if the current state is bad
 		Bursts[0] = true;
-		temp_burst_length++;
 	}
-	else{
-		chnl_st = GOOD_UNS;
+	else {
 		Bursts[0] = false;
 	}
-	//chnl_st = GOOD_S;
-	for (unsigned int i = 1; i < 8 * input_data_length; i++)
+	
+	for (unsigned i = 1; i < offset; i++) {
+		if ((chnl_st == BAD_S) || (chnl_st == BAD_UNS)){
+			// insert 1 into array of bursts if the current state is bad
+			Bursts[i] = true;
+		}
+		else {
+			Bursts[i] = false;
+		}	
+	}
+	
+	for (unsigned int i = 1 + offset; i < 8 * input_data_length; i++)
 	{
 		if (i % bits_per_cyc == 0)
 		{
@@ -132,9 +146,9 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 				if (temp_burst_length != 0) {printf("%d,", temp_burst_length);}
 				temp_burst_length = 0;
 				if (__randF() < P_a2) {
-						chnl_st = BAD_UNS;
-						temp_burst_length++;
-					}
+					chnl_st = BAD_UNS;
+					temp_burst_length++;
+				}
 				else {chnl_st = GOOD_S;}
 				break;
 			case BAD_S:
@@ -155,9 +169,9 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 				if (temp_burst_length != 0) {printf("%d,", temp_burst_length);}
 				temp_burst_length = 0;
 				if (__randF() < P_a1) {
-						chnl_st = BAD_UNS;
-						temp_burst_length++;
-					} 
+					chnl_st = BAD_UNS;
+					temp_burst_length++;
+				} 
 				else {chnl_st = GOOD_S;}
 				break;
 			}
@@ -172,6 +186,8 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 			Bursts[i] = false;
 		}
 	}
+
+	offset = bits_per_cyc - (((8 * input_data_length) - offset) % bits_per_cyc);
 }
 
 int state_at_start_of_frame = 0;

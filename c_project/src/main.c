@@ -25,6 +25,7 @@ int main(void) {
 	//snr_db = 0;
 	elevation_angle_deg = 0;
 	setBitRateMbps(10);
+	configChannel(20,100,700,50); // new functionality: initializes channel's state 
 	setFadeParamsBasedOnElevation(elevation_angle_deg);//must be called before next function. Indicate this more clearly somehow...
 	setFrameLengthBasedOnElevation(elevation_angle_deg);
 	setPacketDataLengthInclFEC();

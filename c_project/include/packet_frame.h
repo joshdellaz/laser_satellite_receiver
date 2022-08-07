@@ -1,28 +1,13 @@
+#ifndef PACKET_FRAME_H
+#define PACKET_FRAME_H
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <liquid/liquid.h>
-
-//LDPC params
-#define CODEWRD_L 1296
-#define NUM_BLOCKS_PCKT 28
-#define CODEWRD_R 0.5 // for 1/3 write 0.33
-#define MAX_DECODE_ITERS 35 //25
-#define MIN_SUM false
-#define BLOCK_SIZE 81
-
-
-//Macros indicating size of various packet fields. Framing and packetizing code should be able to handle
-//different field lengths without any issues
-#define NUM_PACKETS_LENGTH_BYTES 2
-#define CRC_DATA_LENGTH_BYTES 4
-#define FRAME_LENGTH_BYTES //TODO determine proper value
-#define FEC_TYPE LIQUID_FEC_HAMMING74 //Other options = 
-#define PACKET_DATA_LENGTH_NO_FEC (BLOCK_SIZE*NUM_BLOCKS_PCKT -  CRC_DATA_LENGTH_BYTES - 2*NUM_PACKETS_LENGTH_BYTES)
-//^ 316 = 4 blocks 235 = 3 blocks, 154 = 2 blocks, 73 = 1 block
-
-
+#include "config.h"
 
 extern int packet_data_length_with_fec_bytes;
+extern int packet_data_length_without_fec_bytes;
 
 //Enum type to avoid magic numbers
 //TODO evaluate if needed for design
@@ -61,5 +46,14 @@ bool assembleFrame(uint8_t** frame, unsigned int* frame_length, uint8_t* packet,
 bool disassembleFrame(uint8_t* frame, uint8_t** packet, unsigned int frame_length);
 bool assemblePacket(packet_t* packet_data, uint8_t** packet, unsigned int* packet_length);
 bool disassemblePacket(packet_t* packet_data, uint8_t* packet, unsigned int packet_length);
+int getNumBlocksPerPacket();
+void setFrameLengthBasedOnElevation(int elevation_angle_degrees);
+int getMLSOrder();
+int getPassLengthInSeconds(unsigned min_elevation_degrees);
+float getFreqStabilityInPPMUsingElevation(int elevation_angle_degrees);
+int getMaxFrameLengthInBits(float total_freq_stability_ppm);
+void setMLSOrderBasedOnChannel();
 bool fragmentDataBufferIntoFrames(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length);
 bool assembleFramesIntoDataBuffer(uint8_t* input, unsigned int input_length, uint8_t* output, unsigned int output_length);
+
+#endif

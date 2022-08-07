@@ -7,6 +7,7 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
+                "-I../",
                 "-I../include",
                 "-I../lib/tavildarLDPC/LdpcC",
                 "${fileDirname}/*.c",
@@ -18,7 +19,6 @@
                 "-lstdc++",
                 "-lm",
                 "-lliquid",
-                "-ldwf"
             ],
             "options": {
                 "cwd": "${fileDirname}"

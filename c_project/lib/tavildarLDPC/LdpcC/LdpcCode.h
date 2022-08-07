@@ -193,15 +193,9 @@ public:
                         _Z = (unsigned int) (block_length / 52);
                         std::cout << _Z << std::endl;
                         break;
-                    case 1296:
-                        h_pointer = & WiFiLDPC::H_1296_5_6[0][0];
-                        break;
-                    case 1944:
-                        h_pointer = & WiFiLDPC::H_1944_5_6[0][0];
-                        break;
                     default:
-                        h_pointer = & WiFiLDPC::H_648_1_2[0][0];
-                        break;
+                        std::cout << "Block length value not supported" << std::endl;
+                        return;
                 }
                 break;
             default: // Not supported
@@ -217,6 +211,8 @@ public:
             case 1296: _Z = 54;
                 break;
             case 1944: _Z = 81;
+                break;
+            case 6656: _Z = 128;
                 break;
             default: std::cout << "Block length value not supported for WiFi LDPC" << std::endl;
         }
@@ -285,7 +281,59 @@ public:
                 parity.at(i_col + i_row - _K ) = (uint8_t) (( parity.at(i_col + i_row - _K) + parity.at(i_col + i_row - _K - _Z)) %2);
             }
         }
+        return codeword;
+    };
 
+
+    // Encoding defintion for 5G matrices
+    std::vector<uint8_t> encode_modern(std::vector<uint8_t> info_bits) {
+        // Does encoding by back substitution
+        // Assumes a very specific structure on the partiy check matrix
+        std::vector<uint8_t > codeword(_N, 0);
+        std::copy(info_bits.begin(), info_bits.end(), codeword.begin());
+
+        std::vector<uint8_t > parity(_M, 0);
+
+        // Finding the first 4*_Z parity bits (done separately because of the staircase structure)
+
+        for(unsigned i_row = 0; i_row < 4*_Z; ++i_row) {
+            for(unsigned i_col = 0; i_col < _row_mat.at(i_row).size(); ++i_col) {
+                if (_row_mat.at(i_row).at(i_col) < _K)
+                    parity.at(i_row) += codeword.at(_row_mat.at(i_row).at(i_col));
+            }
+            parity.at(i_row) = (uint8_t) (parity.at(i_row) % 2);
+        }
+
+        for (unsigned i_col = 0; i_col < _Z; ++i_col) {
+            for (unsigned i_row = i_col; i_row < 4*_Z; i_row = i_row + _Z) {
+                codeword.at(_K + i_col + 1) += parity.at(i_row);
+            }
+            codeword.at(_K + i_col + 1) = (uint8_t ) (codeword.at(_K + i_col + 1) % 2);
+        }
+
+        for(unsigned i_row = 0; i_row < 4*_Z; ++i_row) {
+            for(unsigned i_col = 0; i_col < _row_mat.at(i_row).size(); ++i_col) {
+                if ((_row_mat.at(i_row).at(i_col) >= _K) && (_row_mat.at(i_row).at(i_col) < _K + _Z))
+                    parity.at(i_row) += codeword.at(_row_mat.at(i_row).at(i_col));
+            }
+            parity.at(i_row) = (uint8_t) (parity.at(i_row) % 2);
+        }
+
+        for (unsigned i_col = _K + _Z; i_col < _K + 4*_Z; i_col = i_col + _Z  ) {
+            for (unsigned i_row = 0; i_row < _Z; ++i_row) {
+                codeword.at(i_col + i_row) = parity.at(i_col + i_row - _K - _Z);
+                parity.at(i_col + i_row - _K ) = (uint8_t) (( parity.at(i_col + i_row - _K) + parity.at(i_col + i_row - _K - _Z)) %2);
+            }
+        }
+
+        // Finding the rest of the parity bits
+        for(unsigned i_row = 4*_Z; i_row < _M; ++i_row) {
+            for(unsigned i_col = 0; i_col < _row_mat.at(i_row).size(); ++i_col) {
+                parity.at(i_row) += codeword.at(_row_mat.at(i_row).at(i_col));
+            }
+            parity.at(i_row) = (uint8_t) (parity.at(i_row) % 2);
+            codeword.at(_K + i_row) = parity.at(i_row);
+        }
         return codeword;
     };
 

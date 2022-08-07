@@ -1,27 +1,27 @@
 #include "channel.h"
+#include "config.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
+
 #define PI 3.1415926536
 
-/// Fixed Channel Parameters
-#define BIT_RATE 1 // in Mbps (should be 25)
-#define SAMP_PER_BIT 4
 #define BURST_VALUE 1 // = sample during a burst... should be something significantly higher than normal readings
 #define FADE_VALUE 0
 
-
+//Default channel characteristices
+//TODO make this a struct instead... mayble?
+int bit_rate_mbps = 10;
 int snr_db = 20; // for AWGN noise
-int fade_freq = 100; // per second, estimation based on KT06-04 results around 25 degree elevation = 3 or 4 //770 used originally
-int fade_len = 1; // in us 700 originally TODO make this dependent on bitrate!
-int burst_freq = 100;//get better default val
-int burst_len = 1;//get better default val
+int fade_freq_hz = 100; // Estimation based on KT06-04 results around 25 degree elevation = 3 or 4 //770 used originally
+int fade_len_usec = 700; // Same, for 25 degree elevation
+int burst_len_usec = 50; //typical based on Y. Yamashita et al. "n Efficient LDGM Coding Scheme for Optical Satellite-to-Ground Link Based on a New Channel Model"
 
 
 void _createBursts(bool *, unsigned);
-//void _createFades(bool *, unsigned);
 void _applyBursts(bool *, uint8_t *, unsigned);
 void _applyFades(uint8_t *, unsigned);
 void _applyBurstsToSamples(bool *, float *, unsigned);
@@ -31,28 +31,54 @@ float __AWGN_generator(void);
 float __randF(void); // rand float between 0 and 1
 int __randNum(int, int); // rand number between lower and upper inclusive
 
-void configChannel(int snr, int f_freq, int f_len, int b_freq, int b_len){
+void configChannel(int snr, int f_freq, int f_len, int b_len){
 	snr_db = snr;
-	fade_freq = f_freq;
-	fade_len = f_len;
-	burst_freq = b_freq;
-	burst_len = b_len;
+	fade_freq_hz = f_freq;
+	fade_len_usec = f_len;
+	burst_len_usec = b_len;
+}
+
+int getFadeLenUsec(){
+	return fade_len_usec;
+}
+
+int getFadeFreqHz(){
+	return fade_freq_hz;
+}
+
+int getBurstLenUsec(){
+	return burst_len_usec;
+}
+
+void setBitRateMbps(int bitrate){
+	bit_rate_mbps = bitrate;
+}
+
+int getBitRateMbps(){
+	return bit_rate_mbps;
+}
+
+//based on F. Moll, “Experimental analysis of channel coherence time and fading behavior in the LEO-ground link
+void setFadeParamsBasedOnElevation(float elevation_angle){
+	if(elevation_angle < 7.5){//outside of studied dataset; assume constant outside of range
+		fade_freq_hz = 20;
+		fade_len_usec = 1300;
+	} else if(elevation_angle > 27){//outside of studied dataset; assume constant outside of range
+		fade_freq_hz = 20;
+		fade_len_usec = 1300;
+	} else {//roughly estimated curve fits
+		fade_freq_hz = pow(10,(2.75-elevation_angle/13.0));
+		fade_len_usec = 1.7 - 0.05*elevation_angle;
+	}
 }
 
 bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr_packet_num)
 {
 	bool *bursts = (bool *)calloc(smpls_len / SAMP_PER_BIT, sizeof(bool));
-	//_createBursts(bursts, smpls_len / (8*SAMP_PER_BIT));
-	//_applyBurstsToSamples(bursts, samples, smpls_len);
+	_createBursts(bursts, smpls_len / (8*SAMP_PER_BIT));
+	_applyBurstsToSamples(bursts, samples, smpls_len);
 
-	_applyFadesToSamples(samples, smpls_len);
-
-	// printf("Note: samples of bursts are replaced by %d and faded ones by %d \n", BURST_VALUE, FADE_VALUE);
-	// printf("Samples before AWGN:\n");
-	// for (unsigned i = 0; i < smpls_len; i++) {
-	// 	printf("%.0f", samples[i]);
-	// }
-	// printf("\n\n");
+	//_applyFadesToSamples(samples, smpls_len);
 
 	//float current_packet_snr = _calcSNR(curr_packet_num);
 
@@ -71,7 +97,7 @@ bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr
 
 void _createBursts(bool *Bursts, unsigned input_data_length)
 {
-	unsigned int bits_per_cyc = BIT_RATE * CHNL_CYC; // non-zero integer
+	unsigned int bits_per_cyc = bit_rate_mbps * CHNL_CYC; // non-zero integer
 	chnl_state chnl_st;								 // current state of the channel
 	float init_st = __randF();
 
@@ -91,9 +117,7 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 		chnl_st = GOOD_UNS;
 		Bursts[0] = false;
 	}
-	//chnl_st = GOOD_S; 
-	printf("\n\n initial state: %d \n\n", chnl_st);
-	printf("Bursts: \n");
+	//chnl_st = GOOD_S;
 	for (unsigned int i = 1; i < 8 * input_data_length; i++)
 	{
 		if (i % bits_per_cyc == 0)
@@ -122,27 +146,47 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 		{
 			// insert 1 into array of bursts if the current state is bad
 			Bursts[i] = true;
-			printf("1");
 		}
 		else
 		{
 			Bursts[i] = false;
-			printf("0");
 		}
 	}
-	printf("\n\n");
 }
 
+int state_at_start_of_frame = 0;
+int samples_left_in_current_fade;
+
+void _applyFadesToSamplesWithStateMachine(float *samples, unsigned smpls_len){
+
+if(state_at_start_of_frame == 0){//resting state
+	samples_left_in_current_fade = getFadeLengthBits()*SAMP_PER_BIT;
+	int start_of_fade_index = 0;//use fade freq here...
+	int fade_len_in_current_frame = smpls_len - start_of_fade_index;//make 2 cases depending if fade ends in same or next frame
+	for(int i = 0; i< fade_len_in_current_frame; i++){
+		samples[start_of_fade_index + i] = (float)FADE_VALUE;
+		samples_left_in_current_fade--;
+	}
+	state_at_start_of_frame = 1;
+}
+if(state_at_start_of_frame == 1){
+	for(int i = 0; i < samples_left_in_current_fade; i++){
+		samples[i] = (float)FADE_VALUE;
+	}
+	state_at_start_of_frame = 0;
+}
+// //what if fade longer than frame? What if frame longer than fade?
+// Do bursts work this way too with state transitions across multiple packets?
+}
 
 void _applyFadesToSamples(float *samples, unsigned smpls_len)
 {
-	float fade_certain_period = 1e6 / fade_freq; // [us] period of time in which there should be a fade
-	int total_fades = (int) floor(smpls_len / (fade_certain_period*BIT_RATE*SAMP_PER_BIT)); 
+	float fade_certain_period = 1e6 / fade_freq_hz; // [us] period of time in which there should be a fade
+	int total_fades = (int) floor(smpls_len / (fade_certain_period*bit_rate_mbps*SAMP_PER_BIT)); 
 	int N = smpls_len / total_fades;
-	int M = fade_len * BIT_RATE * SAMP_PER_BIT; // in every N samples there's a fade of length M
+	int M = fade_len_usec * bit_rate_mbps * SAMP_PER_BIT; // in every N samples there's a fade of length M
 	for (unsigned i = 0; i < total_fades; i++){
 		int fade_start = (i*N) + __randNum(0,N-M-1);
-		//printf("testing fade_start: %d\n", fade_start);
 		for (int j = fade_start; j < fade_start + M; j++){
 			samples[j] = (float) FADE_VALUE;
 		}
@@ -187,7 +231,7 @@ int __randNum(int lower, int upper)
 }
 
 float __AWGN_generator(void)
-{ // feels like overkill but fuck it
+{ // feels like overkill but screw it
 	// from https://www.embeddedrelated.com/showcode/311.php
 	/* Generates additive white Gaussian Noise samples with zero mean and a standard deviation of 1. */
 	double temp1;
@@ -279,24 +323,23 @@ void _applyBursts(bool *Bursts, uint8_t *input_data, unsigned int input_data_len
 
 void _applyFades(uint8_t *input_data, unsigned int input_data_length)
 {
-	float fade_certain_period = 1e6 / fade_freq; // [us] period of time in which there should be a fade
-	int total_fades = (int) floor(8*input_data_length / (fade_certain_period*BIT_RATE)); 
+	float fade_certain_period = 1e6 / fade_freq_hz; // [us] period of time in which there should be a fade
+	int total_fades = (int) floor(8*input_data_length / (fade_certain_period*bit_rate_mbps)); 
 	int N = (int) floor(8*input_data_length / total_fades); // in bits
-	int M = fade_len * BIT_RATE; // in bits
-	printf("Fades:\n");
+	int M = fade_len_usec * bit_rate_mbps; // in bits
 	for (unsigned i = 0; i < total_fades; i++){
 		int fade_start = (i*N) + __randNum(0,N-M-1);
 		int leadingZeros = (fade_start % 8) ? 8 - (fade_start % 8) : 0;
 		int trailingZeros = (fade_start + M) % 8;
 		for (int j = fade_start/8; j < (fade_start + M)/8; j++){
 			input_data[j] = input_data[j] & 0x00;
-			printf("0");
 		}
 		printf("\n\n");
 		input_data[fade_start/8] &= (uint8_t) (255 - pow(2,(leadingZeros-1)));
 		input_data[(fade_start + M - 1) / 8] &= (uint8_t) (pow(2,(8-trailingZeros)) - 1);
 	}
 }
+
 
 bool applyBitFlips(uint8_t *input_data, unsigned int input_data_length) // works with bit stream (not samples)
 {
@@ -309,4 +352,11 @@ bool applyBitFlips(uint8_t *input_data, unsigned int input_data_length) // works
 		}
 	}
 	return true;
+}
+
+int getBurstLengthBits(){
+	return burst_len_usec * bit_rate_mbps;
+}
+int getFadeLengthBits(){
+	return fade_len_usec * bit_rate_mbps;
 }

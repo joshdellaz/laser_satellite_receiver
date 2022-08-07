@@ -8,6 +8,7 @@
 void initLDPC(void);
 void applyLDPC(uint8_t * input);
 void decodeLDPC(uint8_t * rxinput);
+int getBlockSizeBits();
 // #ifdef __cplusplus
 // }
 // #endif

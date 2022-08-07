@@ -1,5 +1,5 @@
-
 #define SAMP_PER_BIT 4
+#define UPSAMPLE_RATE 4
 
 //LDPC params
 #define CODEWRD_L 6656
@@ -18,8 +18,8 @@
 #define FRAME_LENGTH_BYTES //TODO determine proper value
 
 //Testing params (set to 0 to disable)
-#define LDPC_ENABLED 0
-#define INTRLV_SCRMBL_ENABLED 0
+#define LDPC_ENABLED 1
+#define INTRLV_SCRMBL_ENABLED 1
 #define CHANNEL_APPLIED_TO_SAMPLES 0
 #define CHANNEL_APPLIED_TO_BITS 0
 

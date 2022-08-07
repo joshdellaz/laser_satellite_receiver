@@ -15,7 +15,7 @@
 //Default channel characteristices
 //TODO make this a struct instead... mayble?
 int bit_rate_mbps = 10;
-int snr_db = 20; // for AWGN noise
+int snr_db = 100; // for AWGN noise
 int fade_freq_hz = 100; // Estimation based on KT06-04 results around 25 degree elevation = 3 or 4 //770 used originally
 int fade_len_usec = 700; // Same, for 25 degree elevation
 int burst_len_usec = 50; //typical based on Y. Yamashita et al. "n Efficient LDGM Coding Scheme for Optical Satellite-to-Ground Link Based on a New Channel Model"
@@ -97,7 +97,7 @@ bool applyChannelToSamples(float *samples, unsigned smpls_len) //, uint16_t curr
 
 void _createBursts(bool *Bursts, unsigned input_data_length)
 {
-	unsigned int bits_per_cyc = bit_rate_mbps * CHNL_CYC; // non-zero integer
+	unsigned int bits_per_cyc = bit_rate_mbps * burst_len_usec; // non-zero integer
 	chnl_state chnl_st;								 // current state of the channel
 	float init_st = __randF();
 
@@ -151,6 +151,7 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 		{
 			Bursts[i] = false;
 		}
+		printf("%d", Bursts[i]);
 	}
 }
 

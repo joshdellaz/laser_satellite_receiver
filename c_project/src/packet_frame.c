@@ -9,7 +9,8 @@
 #include "ldpc_implementation.h"
 #include "config.h"
 #include "channel.h"
-#include "samples_to_bits.h"
+#include "sample_handling.h"
+#include "sync.h"
 
 #define PI 3.1415926536
 

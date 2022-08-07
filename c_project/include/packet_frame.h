@@ -32,6 +32,15 @@ typedef struct packet_t {
 
 } packet_t;
 
+/*
+FRAME DEFINITIONS
+-------------------------------------------------
+| MLS PREAMBLE | 8 BYTES STUFFING | PACKET DATA |
+-------------------------------------------------
+*/
+
+
+
 bool applyFEC(uint8_t* input);
 bool removeFEC(uint8_t* input);
 bool checkCRC(packet_t* received_packet);

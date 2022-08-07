@@ -1,13 +1,13 @@
 #include "func_test.h"
-#include "samples_to_bits.h"
+#include "sample_handling.h"
 #include <stdlib.h>
-//#include "ad2_io.hpp"
 #include "ldpc_implementation.h"
 #include "stress_test.h"
 #include <time.h>
 #include "plot.h"
 #include "channel.h"
 #include "packet_frame.h"
+#include "sync.h"
 
 int packet_data_length_with_fec_bytes = 0;
 int packet_data_length_without_fec_bytes = 0;
@@ -24,7 +24,7 @@ int main(void) {
 	initLDPC();
 	//snr_db = 0;
 	elevation_angle_deg = 0;
-	setBitRateMbps(10);
+	setBitRateMbps(50);
 	setFadeParamsBasedOnElevation(elevation_angle_deg);//must be called before next function. Indicate this more clearly somehow...
 	setFrameLengthBasedOnElevation(elevation_angle_deg);
 	setPacketDataLengthInclFEC();
@@ -37,7 +37,7 @@ int main(void) {
 	for(int i = 0; i < repititions; i++){
 		sendAndReceiveRandomlyGeneratedPacket();
 	}
-	
+	//testSyncEdgeCases();
 	//testSNR();
 	//testFades();
 	//testLDPC();

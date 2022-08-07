@@ -4,6 +4,7 @@
 #include "plot.h"
 #include <math.h>
 #include "config.h"
+#include "packet_frame.h"
 #define PI 3.1415926536
 
 extern int snr_db;
@@ -89,4 +90,24 @@ void testBursts(){
 //wrapper
 void testSpecialCases(){
     testSyncEdgeCases();
+}
+
+
+void testThroughputDependingOnElevationAngle(){
+
+    setBitRateMbps(10);
+    int passlength = 0;
+    int throughput[(85/5)] = {0};
+    int index = 0;
+
+    for(int angle = 0; angle < 85; angle + 5){
+        setFadeParamsBasedOnElevation(angle);
+        setFrameLengthBasedOnElevation(angle);
+        setPacketDataLengthInclFEC();
+        //initMLS();
+        passlength = getPassLengthInSeconds(angle);
+        // dropped_packets_percent[index] = imageSendTest("../testdata/engphys.ppm");
+        // bad_bits_percent[index] = checkEfficacy();
+        index++;
+    }
 }

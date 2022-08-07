@@ -9,7 +9,7 @@
 #define P_a2 0.060
 #define P_b1 0.240
 #define P_b2 0.050
-#define CHNL_CYC 10 // in us (e-6s) should be 50 based on the paper
+#define CHNL_CYC 50 // in us (e-6s) should be 50 based on the paper
 
 typedef enum chnl_state
 {

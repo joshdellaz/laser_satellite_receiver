@@ -589,6 +589,8 @@ float imageSendTest(char * filename) {
 	double pckt_processing_time = 0;
 	float incorrect_crcs = 0;
 
+	printf("Total number of packets: %d\n\n",packet_data.total_num_packets);
+
 	for (int i = 0; i < packet_data.total_num_packets; i++){ // each iteration is a Tx and Rx of a packet (goes up to packet_data.total_num_packets)
 		
 		if (fread(packet_data.data, packet_data_length_without_fec_bytes, 1, fp_origin) != 1){
@@ -598,10 +600,10 @@ float imageSendTest(char * filename) {
 
 		packet_data.current_packet_num = (uint16_t) i;
 		getCRC(&packet_data);
-		printf(">>>> Packet %d being transmitted\n", i);
+		//printf(">>>> Packet %d being transmitted\n", i);
 
 		assemblePacket(&packet_data, &packet_vector, &packet_length);
-#if LDPC_ENABLED == 1
+#if LDPC_ENABLED
 		applyLDPC(packet_vector);
 #endif
 #if INTRLV_SCRMBL_ENABLED == 1
@@ -695,11 +697,11 @@ float imageSendTest(char * filename) {
 		dev_printf("\n\n");
 
 		if (checkCRC(&rxpacket_data)) {
-			printf("CRC Doesn't Match!\n\n");
+			//printf("CRC Doesn't Match!\n\n");
 			incorrect_crcs++;
 		}
 		else {
-			printf("CRC Matches!\n\n");
+			//printf("CRC Matches!\n\n");
 		}
 		fwrite(rxpacket_data.data, packet_data_length_without_fec_bytes, 1, fp_corrected); // write to corrected file
 		

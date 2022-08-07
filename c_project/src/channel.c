@@ -100,6 +100,8 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 	unsigned int bits_per_cyc = bit_rate_mbps * CHNL_CYC; // non-zero integer
 	chnl_state chnl_st;								 // current state of the channel
 	float init_st = __randF();
+	
+	unsigned temp_burst_length = 0;
 
 	if (init_st < 0.250){
 		chnl_st = GOOD_S;
@@ -108,10 +110,12 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 	else if (init_st < 0.50){
 		chnl_st = BAD_S;
 		Bursts[0] = true; // true represents existence of burst erasure
+		temp_burst_length++;
 	}
 	else if (init_st < 0.750){
 		chnl_st = BAD_UNS;
 		Bursts[0] = true;
+		temp_burst_length++;
 	}
 	else{
 		chnl_st = GOOD_UNS;
@@ -125,19 +129,35 @@ void _createBursts(bool *Bursts, unsigned input_data_length)
 			// switch case statement to change the channel state
 			switch (chnl_st) {
 			case GOOD_S:
-				if (__randF() < P_a2) {chnl_st = BAD_UNS;}
+				if (temp_burst_length != 0) {printf("%d,", temp_burst_length);}
+				temp_burst_length = 0;
+				if (__randF() < P_a2) {
+						chnl_st = BAD_UNS;
+						temp_burst_length++;
+					}
 				else {chnl_st = GOOD_S;}
 				break;
 			case BAD_S:
 				if (__randF() < P_b2) {chnl_st = GOOD_UNS;}
-				else {chnl_st = BAD_S;}
+				else {
+					chnl_st = BAD_S;
+					temp_burst_length++;
+				}
 				break;
 			case BAD_UNS:
 				if (__randF() < P_b1) {chnl_st = GOOD_UNS;}
-				else {chnl_st = BAD_S;}
+				else {
+					chnl_st = BAD_S;
+					temp_burst_length++;
+				}
 				break;
 			case GOOD_UNS:
-				if (__randF() < P_a1) {chnl_st = BAD_UNS;} 
+				if (temp_burst_length != 0) {printf("%d,", temp_burst_length);}
+				temp_burst_length = 0;
+				if (__randF() < P_a1) {
+						chnl_st = BAD_UNS;
+						temp_burst_length++;
+					} 
 				else {chnl_st = GOOD_S;}
 				break;
 			}

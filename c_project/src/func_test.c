@@ -23,6 +23,8 @@ extern int number_of_mls_repititions;
 #define dev_printf(...) stub()
 #endif
 
+int findNumOfDifferentBits(uint8_t a, uint8_t b);
+
 //Returns pointer to a randomized uint8_t array of length packet_data_length_with_fec_bytes
 uint8_t * generateRandPacket(void) {
 	uint8_t* data = (uint8_t*)malloc(packet_data_length_with_fec_bytes);
@@ -537,7 +539,7 @@ float imageSendTest(char * filename) {
 
 #if CHANNEL_APPLIED_TO_SAMPLES == 1
 		//applyChannelToSamples(samples, numsamples);
-		corruptFixedPercentageOfSamples(samples, numsamples, 50);
+		corruptFixedPercentageOfSamples(samples, numsamples, 42);
 		
 #endif
 
@@ -617,10 +619,17 @@ float imageSendTest(char * filename) {
 		if (checkCRC(&rxpacket_data)) {
 			printf("CRC Doesn't Match!\n\n");
 			incorrect_crcs++;
+			int num_bit_diffs = 0;
+			for(int j = 0; j <packet_data_length_without_fec_bytes; j++){
+				num_bit_diffs += findNumOfDifferentBits(packet_data.data[j], rxpacket_data.data[j]);
+			}
+			printf("Total number of different bits in frame = %d,   ", num_bit_diffs);
+			printf("BER = %.2f\n", ((float)(num_bit_diffs/8))/((float)packet_data_length_without_fec_bytes));
 		}
 		else {
 			printf("CRC Matches!\n\n");
 		}
+
 		fwrite(rxpacket_data.data, packet_data_length_without_fec_bytes, 1, fp_corrected); // write to corrected file
 		
 		dev_printf("freeing the children \n");

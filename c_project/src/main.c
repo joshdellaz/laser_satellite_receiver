@@ -22,7 +22,6 @@ void printAllStatistics();
 //clarify ambiguites in init order!
 int main(void) {
 	srand(time(NULL));
-
 	initLDPC();
 	//snr_db = 0;
 	elevation_angle_deg = 75;
